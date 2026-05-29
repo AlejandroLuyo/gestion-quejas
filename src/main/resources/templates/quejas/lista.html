@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CSManager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/dashboard.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- ICON RAIL -->
+<div class="icon-rail">
+    <div class="rail-logo" onclick="toggleSidebar()">
+        <i class="ti ti-headset"></i>
+    </div>
+    <a href="/quejas" class="rail-btn active" title="Quejas">
+        <i class="ti ti-inbox"></i>
+    </a>
+    <a href="#" class="rail-btn" title="Estadísticas">
+        <i class="ti ti-chart-bar"></i>
+    </a>
+    <a href="#" class="rail-btn" title="Usuarios">
+        <i class="ti ti-users"></i>
+    </a>
+    <a href="#" class="rail-btn" title="Configuración">
+        <i class="ti ti-settings"></i>
+    </a>
+    <div class="rail-bottom">
+        <div class="rail-btn" onclick="toggleDark()" title="Modo oscuro">
+            <i class="ti ti-moon" id="dark-icon"></i>
+        </div>
+        <div class="avatar-small">AJ</div>
+    </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <span>CSManager</span>
+    </div>
+    <div class="sidebar-menu">
+        <div class="menu-section">Bandeja</div>
+        <a href="/quejas" class="menu-item active">
+            <i class="ti ti-layout-dashboard"></i> Vista general
+        </a>
+        <a href="#" class="menu-item">
+            <i class="ti ti-user-check"></i> Asignadas a mí
+        </a>
+        <a href="#" class="menu-item">
+            <i class="ti ti-users"></i> Sin asignar
+        </a>
+        <div class="menu-section">Filtros</div>
+        <a href="#" class="menu-item">
+            <i class="ti ti-clock"></i> Pendientes
+        </a>
+        <a href="#" class="menu-item">
+            <i class="ti ti-loader"></i> En proceso
+        </a>
+        <a href="#" class="menu-item">
+            <i class="ti ti-circle-check"></i> Resueltas
+        </a>
+        <div class="menu-section">Reportes</div>
+        <a href="#" class="menu-item">
+            <i class="ti ti-chart-bar"></i> Estadísticas
+        </a>
+    </div>
+    <div class="sidebar-agent">
+        <div class="sidebar-avatar">AJ</div>
+        <div>
+            <div class="sidebar-agent-name">Alejandro</div>
+            <div class="sidebar-agent-role">Agente</div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN WRAPPER -->
+<div class="main-wrapper" id="main-wrapper">
+    <div class="topbar">
+        <span class="topbar-title">Vista general de quejas</span>
+        <div class="topbar-right">
+            <i class="ti ti-bell" style="font-size:22px; color:#94a3b8;"></i>
+            <button onclick="toggleDark()" id="dark-btn" class="btn btn-sm" style="border:1px solid #e2e8f0; color:#64748b; font-size:13px;">
+                <i class="ti ti-moon" id="dark-icon-btn"></i> Modo oscuro
+            </button>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total quejas</div>
+                <div class="stat-value" th:text="${totalQuejas}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pendientes</div>
+                <div class="stat-value" style="color:#d97706;" th:text="${pendientes}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">En proceso</div>
+                <div class="stat-value" style="color:#2563eb;" th:text="${enProceso}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Resueltas</div>
+                <div class="stat-value" style="color:#16a34a;" th:text="${resueltas}">0</div>
+            </div>
+        </div>
+
+        <div class="quejas-table">
+            <table class="table mb-0">
+                <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Contact reason</th>
+                    <th>Origen</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="queja : ${quejas}" th:onclick="|openPanel(${queja.id})|">
+                    <td th:text="${queja.nombreCliente}"></td>
+                    <td th:text="${queja.contactReason}"></td>
+                    <td>
+                            <span class="source-badge source-ticket">
+                                <i class="ti ti-ticket"></i> Ticket
+                            </span>
+                    </td>
+                    <td>
+                            <span class="status-badge"
+                                  th:classappend="'status-' + ${queja.estado}"
+                                  th:text="${queja.estado}"></span>
+                    </td>
+                    <td th:text="${#temporals.format(queja.fechaRegistro, 'dd MMM')}"></td>
+                    <td><i class="ti ti-chevron-right"></i></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+
+<!-- SLIDE PANEL -->
+<div class="slide-panel" id="slide-panel">
+    <div class="slide-header">
+        <div>
+            <div class="slide-name" id="sp-name"></div>
+            <div class="slide-sub" id="sp-sub"></div>
+        </div>
+        <button class="close-btn" onclick="closePanel()">
+            <i class="ti ti-x"></i>
+        </button>
+    </div>
+    <div class="slide-body">
+        <div class="slide-attrs">
+            <div>
+                <div class="attr-label">Contact reason</div>
+                <div class="attr-value" id="sp-reason"></div>
+            </div>
+            <div>
+                <div class="attr-label">Estado</div>
+                <div class="attr-value" id="sp-estado"></div>
+            </div>
+            <div>
+                <div class="attr-label">Origen</div>
+                <div class="attr-value" id="sp-origen"></div>
+            </div>
+            <div>
+                <div class="attr-label">Fecha</div>
+                <div class="attr-value" id="sp-fecha"></div>
+            </div>
+        </div>
+        <div class="conversation">
+            <div class="conv-title">Descripción</div>
+            <div class="msg-wrap">
+                <div class="bubble bubble-in" id="sp-descripcion"></div>
+                <div class="msg-time" id="sp-time"></div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-reply">
+        <input type="text" placeholder="Escribe una respuesta..." />
+        <button class="reply-send"><i class="ti ti-send"></i> Enviar</button>
+    </div>
+</div>
+
+<!-- CHATBOT -->
+<div class="chat-window closed" id="chat-window">
+    <div class="chat-header">
+        <div class="chat-dot"></div>
+        <span class="chat-title">Asistente IA</span>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+        <div class="msg msg-bot">Hola, soy tu asistente. ¿En qué puedo ayudarte?</div>
+    </div>
+    <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Escribe aquí..." onkeydown="if(event.key==='Enter') sendMsg()" />
+        <button class="chat-send" onclick="sendMsg()"><i class="ti ti-send"></i></button>
+    </div>
+</div>
+
+<div class="fab" onclick="toggleChat()">
+    <i class="ti ti-message-chatbot"></i>
+</div>
+
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

@@ -20,14 +20,15 @@ function toggleDark() {
 function openPanel(id) {
     fetch('/quejas/' + id + '/json')
         .then(res => res.json())
-        .then(q => {
-            document.getElementById('sp-name').textContent = q.nombreCliente;
-            document.getElementById('sp-reason').textContent = q.contactReason;
-            document.getElementById('sp-estado').textContent = q.estado;
-            document.getElementById('sp-origen').textContent = q.origen || 'Ticket';
-            document.getElementById('sp-fecha').textContent = q.fechaRegistro;
-            document.getElementById('sp-descripcion').textContent = q.descripcion;
-            document.getElementById('sp-sub').textContent = q.contactReason;
+        .then(c => {
+            document.getElementById('sp-name').textContent = c.orderId || '-';
+            document.getElementById('sp-sub').textContent = c.contactReason || '-';
+            document.getElementById('sp-reason').textContent = c.contactReason || '-';
+            document.getElementById('sp-estado').textContent = c.estado || '-';
+            document.getElementById('sp-origen').textContent = c.canal || '-';
+            document.getElementById('sp-fecha').textContent = c.orderId || '-';
+            document.getElementById('sp-agente').textContent = c.agente || 'Sin asignar';
+            document.getElementById('sp-fechaCreacion').textContent = c.fechaCreacion || '-';
             document.getElementById('slide-panel').classList.add('open');
             document.getElementById('overlay').classList.add('show');
         });

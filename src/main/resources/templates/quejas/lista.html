@@ -89,16 +89,16 @@
     <div class="content-area">
         <div class="stats-row">
             <div class="stat-card">
-                <div class="stat-label">Total quejas</div>
+                <div class="stat-label">Total conversaciones</div>
                 <div class="stat-value" th:text="${totalQuejas}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Abiertas</div>
+                <div class="stat-value" style="color:#2563eb;" th:text="${abiertas}">0</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Pendientes</div>
                 <div class="stat-value" style="color:#d97706;" th:text="${pendientes}">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">En proceso</div>
-                <div class="stat-value" style="color:#2563eb;" th:text="${enProceso}">0</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Resueltas</div>
@@ -110,35 +110,38 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th>Cliente</th>
+                    <th>Order ID</th>
                     <th>Contact reason</th>
-                    <th>Origen</th>
+                    <th>Canal</th>
                     <th>Estado</th>
+                    <th>Agente</th>
                     <th>Fecha</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="queja : ${quejas}" th:onclick="|openPanel(${queja.id})|">
-                    <td th:text="${queja.nombreCliente}"></td>
-                    <td th:text="${queja.contactReason}"></td>
+                <tr th:each="conv : ${conversaciones}" th:onclick="|openPanel(${conv.conversacionId})|">
+                    <td th:text="${conv.orderId != null ? conv.orderId : '-'}"></td>
+                    <td th:text="${conv.contactReason != null ? conv.contactReason : '-'}"></td>
                     <td>
-                            <span class="source-badge source-ticket">
-                                <i class="ti ti-ticket"></i> Ticket
-                            </span>
+                    <span class="source-badge"
+                          th:classappend="${conv.channel == 'email'} ? 'source-email' : (${conv.channel == 'whatsapp'} ? 'source-whatsapp' : 'source-ticket')">
+                        <i th:classappend="${conv.channel == 'email'} ? 'ti ti-mail' : (${conv.channel == 'whatsapp'} ? 'ti ti-brand-whatsapp' : 'ti ti-ticket')"></i>
+                        <span th:text="${conv.channel != null ? conv.channel : 'ticket'}"></span>
+                    </span>
                     </td>
                     <td>
-                            <span class="status-badge"
-                                  th:classappend="'status-' + ${queja.estado}"
-                                  th:text="${queja.estado}"></span>
+                    <span class="status-badge"
+                          th:classappend="${conv.currentConversationState == 'open'} ? 'status-EN_PROCESO' : (${conv.currentConversationState == 'resolved'} ? 'status-RESUELTO' : 'status-PENDIENTE')"
+                          th:text="${conv.currentConversationState != null ? conv.currentConversationState : '-'}"></span>
                     </td>
-                    <td th:text="${#temporals.format(queja.fechaRegistro, 'dd MMM')}"></td>
+                    <td th:text="${conv.teammateCurrentlyAssigned != null ? conv.teammateCurrentlyAssigned : 'Sin asignar'}"></td>
+                    <td th:text="${conv.conversationCreatedAt != null ? #temporals.format(conv.conversationCreatedAt, 'dd MMM') : '-'}"></td>
                     <td><i class="ti ti-chevron-right"></i></td>
                 </tr>
                 </tbody>
             </table>
         </div>
-    </div>
 </div>
 
 <!-- OVERLAY -->
@@ -166,19 +169,20 @@
                 <div class="attr-value" id="sp-estado"></div>
             </div>
             <div>
-                <div class="attr-label">Origen</div>
+                <div class="attr-label">Canal</div>
                 <div class="attr-value" id="sp-origen"></div>
             </div>
             <div>
-                <div class="attr-label">Fecha</div>
+                <div class="attr-label">Order ID</div>
                 <div class="attr-value" id="sp-fecha"></div>
             </div>
-        </div>
-        <div class="conversation">
-            <div class="conv-title">Descripción</div>
-            <div class="msg-wrap">
-                <div class="bubble bubble-in" id="sp-descripcion"></div>
-                <div class="msg-time" id="sp-time"></div>
+            <div>
+                <div class="attr-label">Agente asignado</div>
+                <div class="attr-value" id="sp-agente"></div>
+            </div>
+            <div>
+                <div class="attr-label">Fecha</div>
+                <div class="attr-value" id="sp-fechaCreacion"></div>
             </div>
         </div>
     </div>

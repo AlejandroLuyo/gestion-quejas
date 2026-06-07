@@ -53,4 +53,18 @@ public class ConversacionController {
                 c.getConversationCreatedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) : "-");
         return data;
     }
+
+    @PostMapping("/{id}/estado")
+    @ResponseBody
+    public Map<String, String> cambiarEstado(@PathVariable Long id, @RequestParam String estado) {
+        Conversacion c = conversacionService.buscarPorId(id);
+        if (c != null) {
+            c.setCurrentConversationState(estado);
+            conversacionService.guardar(c);
+        }
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "ok");
+        response.put("estado", estado);
+        return response;
+    }
 }

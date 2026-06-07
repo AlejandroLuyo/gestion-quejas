@@ -17,7 +17,7 @@
     <a href="/quejas" class="rail-btn active" title="Quejas">
         <i class="ti ti-inbox"></i>
     </a>
-    <a href="#" class="rail-btn" title="Estadísticas">
+    <a href="/estadisticas" class="rail-btn" title="Estadísticas">
         <i class="ti ti-chart-bar"></i>
     </a>
     <a href="#" class="rail-btn" title="Usuarios">
@@ -61,7 +61,7 @@
             <i class="ti ti-circle-check"></i> Resueltas
         </a>
         <div class="menu-section">Reportes</div>
-        <a href="#" class="menu-item">
+        <a href="/estadisticas" class="menu-item">
             <i class="ti ti-chart-bar"></i> Estadísticas
         </a>
     </div>
@@ -187,6 +187,20 @@
         </div>
     </div>
     <div class="slide-reply">
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <button class="btn-estado" onclick="cambiarEstado('open')"
+                    style="flex:1; padding:8px; border:1px solid #e2e8f0; border-radius:8px; background:#dbeafe; color:#1d4ed8; font-size:12px; cursor:pointer;">
+                <i class="ti ti-loader"></i> Abrir
+            </button>
+            <button class="btn-estado" onclick="cambiarEstado('pending')"
+                    style="flex:1; padding:8px; border:1px solid #e2e8f0; border-radius:8px; background:#fef3c7; color:#92400e; font-size:12px; cursor:pointer;">
+                <i class="ti ti-clock"></i> Pendiente
+            </button>
+            <button class="btn-estado" onclick="cambiarEstado('resolved')"
+                    style="flex:1; padding:8px; border:1px solid #e2e8f0; border-radius:8px; background:#dcfce7; color:#166634; font-size:12px; cursor:pointer;">
+                <i class="ti ti-circle-check"></i> Resolver
+            </button>
+        </div>
         <input type="text" placeholder="Escribe una respuesta..." />
         <button class="reply-send"><i class="ti ti-send"></i> Enviar</button>
     </div>

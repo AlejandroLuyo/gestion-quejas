@@ -1,3 +1,5 @@
+let conversacionActualId = null;
+
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const wrapper = document.getElementById('main-wrapper');
@@ -18,6 +20,7 @@ function toggleDark() {
 }
 
 function openPanel(id) {
+    conversacionActualId = id;
     fetch('/quejas/' + id + '/json')
         .then(res => res.json())
         .then(c => {
@@ -37,6 +40,37 @@ function openPanel(id) {
 function closePanel() {
     document.getElementById('slide-panel').classList.remove('open');
     document.getElementById('overlay').classList.remove('show');
+    conversacionActualId = null;
+}
+
+function cambiarEstado(nuevoEstado) {
+    if (!conversacionActualId) return;
+
+    fetch('/quejas/' + conversacionActualId + '/estado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'estado=' + nuevoEstado
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                document.getElementById('sp-estado').textContent = nuevoEstado;
+                // Actualizar el badge en la tabla
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    if (row.getAttribute('onclick').includes(conversacionActualId)) {
+                        const badge = row.querySelector('.status-badge');
+                        if (badge) {
+                            badge.textContent = nuevoEstado;
+                            badge.className = 'status-badge';
+                            if (nuevoEstado === 'open') badge.classList.add('status-EN_PROCESO');
+                            else if (nuevoEstado === 'resolved') badge.classList.add('status-RESUELTO');
+                            else badge.classList.add('status-PENDIENTE');
+                        }
+                    }
+                });
+            }
+        });
 }
 
 function sendMsg() {

@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import com.cibertec.gestion_quejas.model.Mensaje;
+import com.cibertec.gestion_quejas.repository.MensajeRepository;
+import java.util.ArrayList;
 
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -18,6 +21,9 @@ public class ConversacionController {
 
     @Autowired
     private ConversacionService conversacionService;
+
+    @Autowired
+    private MensajeRepository mensajeRepository;
 
     @GetMapping
     public String listar(Model model) {
@@ -66,5 +72,21 @@ public class ConversacionController {
         response.put("status", "ok");
         response.put("estado", estado);
         return response;
+    }
+
+    @GetMapping("/{id}/mensajes")
+    @ResponseBody
+    public List<Map<String, String>> getMensajes(@PathVariable Long id) {
+        List<Mensaje> mensajes = mensajeRepository.findByConversacionConversacionIdOrderByFechaEnvioAsc(id);
+        List<Map<String, String>> result = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, HH:mm");
+        for (Mensaje m : mensajes) {
+            Map<String, String> msg = new HashMap<>();
+            msg.put("contenido", m.getContenido());
+            msg.put("remitente", m.getRemitente());
+            msg.put("fechaEnvio", m.getFechaEnvio().format(formatter));
+            result.add(msg);
+        }
+        return result;
     }
 }

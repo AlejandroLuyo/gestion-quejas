@@ -34,7 +34,37 @@ function openPanel(id) {
             document.getElementById('sp-fechaCreacion').textContent = c.fechaCreacion || '-';
             document.getElementById('slide-panel').classList.add('open');
             document.getElementById('overlay').classList.add('show');
+            cargarMensajes(id);
         });
+}
+
+function cargarMensajes(id) {
+    const lista = document.getElementById('mensajes-list');
+    lista.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Cargando...</div>';
+    fetch('/quejas/' + id + '/mensajes')
+        .then(res => {
+            console.log('Status mensajes:', res.status);
+            return res.json();
+        })
+        .then(mensajes => {
+            console.log('Mensajes recibidos:', mensajes);
+            if (mensajes.length === 0) {
+                lista.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Sin mensajes aún.</div>';
+                return;
+            }
+            lista.innerHTML = '';
+            mensajes.forEach(m => {
+                const esAgente = m.remitente === 'AGENTE';
+                const div = document.createElement('div');
+                div.className = 'msg-wrap' + (esAgente ? ' right' : '');
+                div.innerHTML = `
+                    <div class="bubble ${esAgente ? 'bubble-out' : 'bubble-in'}">${m.contenido}</div>
+                    <div class="msg-time">${m.remitente} · ${m.fechaEnvio}</div>
+                `;
+                lista.appendChild(div);
+            });
+        })
+        .catch(err => console.error('Error cargando mensajes:', err));
 }
 
 function closePanel() {

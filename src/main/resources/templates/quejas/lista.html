@@ -185,6 +185,14 @@
                 <div class="attr-value" id="sp-fechaCreacion"></div>
             </div>
         </div>
+        <div class="conversation">
+            <div class="conv-title">Conversación</div>
+            <div id="mensajes-list" style="display:flex; flex-direction:column; gap:10px; padding:0 18px 16px;">
+                <div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">
+                    Cargando mensajes...
+                </div>
+            </div>
+        </div>
     </div>
     <div class="slide-reply">
         <div style="display:flex; gap:8px; margin-bottom:8px;">
@@ -201,8 +209,8 @@
                 <i class="ti ti-circle-check"></i> Resolver
             </button>
         </div>
-        <input type="text" placeholder="Escribe una respuesta..." />
-        <button class="reply-send"><i class="ti ti-send"></i> Enviar</button>
+        <input type="text" id="reply-input" placeholder="Escribe una respuesta..." />
+        <button class="reply-send" onclick="enviarRespuesta()"><i class="ti ti-send"></i> Enviar</button>
     </div>
 </div>
 

@@ -113,8 +113,77 @@ function sendMsg() {
     msgs.scrollTop = msgs.scrollHeight;
 }
 
+function enviarRespuesta() {
+    if (!conversacionActualId) return;
+    const input = document.getElementById('reply-input');
+    const contenido = input.value.trim();
+    if (!contenido) return;
+
+    fetch('/quejas/' + conversacionActualId + '/responder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'contenido=' + encodeURIComponent(contenido)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                input.value = '';
+                cargarMensajes(conversacionActualId);
+            }
+        })
+        .catch(err => console.error('Error enviando respuesta:', err));
+}
+
 if (localStorage.getItem('darkMode') === 'true') {
     document.body.classList.add('dark');
     const icon = document.getElementById('dark-icon');
     if (icon) icon.className = 'ti ti-sun';
 }
+
+// FAB arrastrable
+const fab = document.querySelector('.fab');
+let isDragging = false;
+let startX, startY, startLeft, startBottom;
+
+fab.addEventListener('mousedown', (e) => {
+    isDragging = false;
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = fab.getBoundingClientRect().left;
+    startBottom = window.innerHeight - fab.getBoundingClientRect().bottom;
+
+    const onMouseMove = (e) => {
+        const dx = Math.abs(e.clientX - startX);
+        const dy = Math.abs(e.clientY - startY);
+        if (dx > 5 || dy > 5) isDragging = true;
+
+        const newLeft = startLeft + (e.clientX - startX);
+        const newBottom = startBottom - (e.clientY - startY);
+
+        const newFabLeft = Math.max(0, Math.min(window.innerWidth - 60, newLeft));
+        const newFabBottom = Math.max(0, Math.min(window.innerHeight - 60, newBottom));
+        fab.style.left = newFabLeft + 'px';
+        fab.style.bottom = newFabBottom + 'px';
+        fab.style.right = 'auto';
+        const chatWindow = document.getElementById('chat-window');
+        chatWindow.style.left = newFabLeft + 'px';
+        chatWindow.style.bottom = (newFabBottom + 60) + 'px';
+        chatWindow.style.right = 'auto';
+    };
+
+    const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+});
+
+fab.addEventListener('click', (e) => {
+    if (isDragging) {
+        e.stopPropagation();
+        return;
+    }
+    toggleChat();
+});

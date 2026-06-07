@@ -142,7 +142,10 @@
                 </tbody>
             </table>
         </div>
+    </div>
 </div>
+
+<!-- OVERLAY -->
 
 <!-- OVERLAY -->
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
@@ -195,7 +198,7 @@
         </div>
     </div>
     <div class="slide-reply">
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
+        <div style="display:flex; gap:8px; margin-bottom:4px;">
             <button class="btn-estado" onclick="cambiarEstado('open')"
                     style="flex:1; padding:8px; border:1px solid #e2e8f0; border-radius:8px; background:#dbeafe; color:#1d4ed8; font-size:12px; cursor:pointer;">
                 <i class="ti ti-loader"></i> Abrir
@@ -209,8 +212,15 @@
                 <i class="ti ti-circle-check"></i> Resolver
             </button>
         </div>
-        <input type="text" id="reply-input" placeholder="Escribe una respuesta..." />
-        <button class="reply-send" onclick="enviarRespuesta()"><i class="ti ti-send"></i> Enviar</button>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <input type="text" id="reply-input" placeholder="Escribe una respuesta..."
+                   style="flex:1; font-size:13px; padding:9px 14px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc; outline:none;"
+                   onkeydown="if(event.key==='Enter') enviarRespuesta()"/>
+            <button onclick="enviarRespuesta()"
+                    style="background:#16a34a; color:#fff; border:none; border-radius:8px; padding:9px 14px; cursor:pointer; display:flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap;">
+                <i class="ti ti-send"></i> Enviar
+            </button>
+        </div>
     </div>
 </div>
 
@@ -229,7 +239,7 @@
     </div>
 </div>
 
-<div class="fab" onclick="toggleChat()">
+<div class="fab">
     <i class="ti ti-message-chatbot"></i>
 </div>
 

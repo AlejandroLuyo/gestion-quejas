@@ -89,4 +89,24 @@ public class ConversacionController {
         }
         return result;
     }
+
+    @PostMapping("/{id}/responder")
+    @ResponseBody
+    public Map<String, String> responder(@PathVariable Long id, @RequestParam String contenido) {
+        Conversacion conversacion = conversacionService.buscarPorId(id);
+        Map<String, String> response = new HashMap<>();
+
+        if (conversacion != null && !contenido.isBlank()) {
+            Mensaje mensaje = new Mensaje();
+            mensaje.setConversacion(conversacion);
+            mensaje.setContenido(contenido);
+            mensaje.setRemitente("AGENTE");
+            mensaje.setCanal(conversacion.getChannel() != null ? conversacion.getChannel().toUpperCase() : "INTERNO");
+            mensajeRepository.save(mensaje);
+            response.put("status", "ok");
+        } else {
+            response.put("status", "error");
+        }
+        return response;
+    }
 }

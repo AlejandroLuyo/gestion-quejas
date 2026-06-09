@@ -1,0 +1,77 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0fdf4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 32px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    text-align: center;
+}
+.logo { font-size: 20px; font-weight: 600; color: #166634; margin-bottom: 8px; }
+.logo span { color: #16a34a; }
+.order-id { font-size: 13px; color: #94a3b8; margin-bottom: 28px; }
+.titulo { font-size: 18px; font-weight: 500; color: #1e293b; margin-bottom: 8px; }
+.subtitulo { font-size: 14px; color: #64748b; margin-bottom: 28px; }
+.estrellas { display: flex; justify-content: center; gap: 8px; margin-bottom: 24px; }
+.estrella {
+    font-size: 40px;
+    cursor: pointer;
+    color: #e2e8f0;
+    transition: color 0.15s, transform 0.1s;
+}
+.estrella:hover, .estrella.activa { color: #f59e0b; }
+.estrella:hover { transform: scale(1.1); }
+.labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    color: #1e293b;
+    background: #f8fafc;
+    margin-bottom: 20px;
+}
+textarea:focus { border-color: #16a34a; }
+.btn-enviar {
+    width: 100%;
+    padding: 12px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 500;
+}
+.btn-enviar:disabled { background: #94a3b8; cursor: not-allowed; }
+.gracias { display: none; text-align: center; }
+.gracias .icono { font-size: 48px; margin-bottom: 16px; }
+.gracias h2 { font-size: 20px; color: #1e293b; margin-bottom: 8px; }
+.gracias p { font-size: 14px; color: #64748b; }
+.ya-respondio {
+    background: #fef3c7;
+    border-radius: 8px;
+    padding: 16px;
+    color: #92400e;
+    font-size: 14px;
+    margin-top: 16px;
+}

@@ -4,6 +4,7 @@ import com.cibertec.gestion_quejas.model.Conversacion;
 import com.cibertec.gestion_quejas.repository.ConversacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,12 +18,17 @@ public class ConversacionService {
         return conversacionRepository.findAll();
     }
 
+    @Transactional
     public Conversacion guardar(Conversacion conversacion) {
         return conversacionRepository.save(conversacion);
     }
 
     public Conversacion buscarPorId(Long id) {
         return conversacionRepository.findById(id).orElse(null);
+    }
+
+    public Conversacion buscarPorToken(String token) {
+        return conversacionRepository.findByCsatToken(token).orElse(null);
     }
 
     public void eliminar(Long id) {

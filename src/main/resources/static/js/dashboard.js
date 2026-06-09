@@ -140,6 +140,32 @@ if (localStorage.getItem('darkMode') === 'true') {
     if (icon) icon.className = 'ti ti-sun';
 }
 
+function resolverYEnviarEncuesta() {
+    if (!conversacionActualId) return;
+    cambiarEstado('resolved');
+    fetch('/csat/generar/' + conversacionActualId)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                const baseUrl = window.location.origin;
+                const linkCompleto = baseUrl + data.link;
+                document.getElementById('encuesta-url').value = linkCompleto;
+                document.getElementById('link-encuesta').style.display = 'block';
+            }
+        })
+        .catch(err => console.error('Error generando encuesta:', err));
+}
+
+function copiarLink() {
+    const input = document.getElementById('encuesta-url');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = input.nextElementSibling;
+        btn.innerHTML = '<i class="ti ti-check"></i>';
+        setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i>', 2000);
+    });
+}
+
 // FAB arrastrable
 const fab = document.querySelector('.fab');
 let isDragging = false;

@@ -71,6 +71,9 @@ public class Conversacion {
     @Column(name = "bot_transfer_reason")
     private String botTransferReason;
 
+    @Column(name = "csat_token")
+    private String csatToken;
+
     @PrePersist
     public void prePersist() {
         this.conversationCreatedAt = LocalDateTime.now();

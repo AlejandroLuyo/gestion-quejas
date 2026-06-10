@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSManager - Iniciar sesión</title>
+    <link th:href="@{/css/login.css}" rel="stylesheet">
+</head>
+<body>
+<div class="login-wrap">
+    <div class="login-card">
+        <div class="login-logo">
+            <div class="logo-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8 19.79 19.79 0 01.22 2.18 2 2 0 012.18 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91"/>
+                </svg>
+            </div>
+            <span class="logo-text">CS<span>Manager</span></span>
+        </div>
+
+        <div class="login-title">Bienvenido</div>
+        <div class="login-sub">Ingresa tus credenciales para continuar</div>
+
+        <div th:if="${param.error}" class="alert-error">
+            Email o contraseña incorrectos.
+        </div>
+        <div th:if="${param.logout}" class="alert-success">
+            Sesión cerrada correctamente.
+        </div>
+
+        <form th:action="@{/login}" method="post">
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="username" placeholder="tu@email.com" required autofocus/>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" name="password" placeholder="••••••••" required/>
+            </div>
+            <button type="submit" class="btn-login">Iniciar sesión</button>
+        </form>
+    </div>
+</div>
+<script th:src="@{/js/login.js}"></script>
+</body>
+</html>

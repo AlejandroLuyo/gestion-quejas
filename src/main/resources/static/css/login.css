@@ -1,0 +1,106 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0fdf4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+.login-wrap {
+    width: 100%;
+    max-width: 400px;
+}
+.login-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 40px 36px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+}
+.login-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+.logo-icon {
+    width: 36px; height: 36px;
+    background: #16a34a;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+}
+.logo-text {
+    font-size: 20px;
+    font-weight: 600;
+    color: #166634;
+}
+.logo-text span { color: #16a34a; }
+.login-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+.login-sub {
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 28px;
+}
+.alert-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+.alert-success {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #16a34a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+.form-group {
+    margin-bottom: 16px;
+}
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+.form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    background: #f8fafc;
+    outline: none;
+    transition: border-color 0.15s;
+}
+.form-group input:focus {
+    border-color: #16a34a;
+    background: #fff;
+}
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
+}
+.btn-login:hover { background: #15803d; }

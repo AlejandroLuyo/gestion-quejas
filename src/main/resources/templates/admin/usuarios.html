@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CSManager - Usuarios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/dashboard.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- ICON RAIL -->
+<div class="icon-rail">
+    <div class="rail-logo" onclick="toggleSidebar()">
+        <i class="ti ti-headset"></i>
+    </div>
+    <a href="/quejas" class="rail-btn" title="Quejas">
+        <i class="ti ti-inbox"></i>
+    </a>
+    <a href="/estadisticas" class="rail-btn" title="Estadísticas">
+        <i class="ti ti-chart-bar"></i>
+    </a>
+    <a href="/admin/usuarios" class="rail-btn active" title="Usuarios">
+        <i class="ti ti-users"></i>
+    </a>
+    <a href="#" class="rail-btn" title="Configuración">
+        <i class="ti ti-settings"></i>
+    </a>
+    <div class="rail-bottom">
+        <div class="rail-btn" onclick="toggleDark()" title="Modo oscuro">
+            <i class="ti ti-moon" id="dark-icon"></i>
+        </div>
+        <div class="avatar-small">AJ</div>
+    </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <span>CSManager</span>
+    </div>
+    <div class="sidebar-menu">
+        <div class="menu-section">Administración</div>
+        <a href="/admin/usuarios" class="menu-item active">
+            <i class="ti ti-users"></i> Usuarios
+        </a>
+        <div class="menu-section">Navegación</div>
+        <a href="/quejas" class="menu-item">
+            <i class="ti ti-layout-dashboard"></i> Vista general
+        </a>
+        <a href="/estadisticas" class="menu-item">
+            <i class="ti ti-chart-bar"></i> Estadísticas
+        </a>
+    </div>
+    <div class="sidebar-agent">
+        <div class="sidebar-avatar">AJ</div>
+        <div>
+            <div class="sidebar-agent-name">Alejandro</div>
+            <div class="sidebar-agent-role">Administrador</div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN WRAPPER -->
+<div class="main-wrapper" id="main-wrapper">
+    <div class="topbar">
+        <span class="topbar-title">Gestión de usuarios</span>
+        <div class="topbar-right">
+            <a href="/admin/usuarios/nuevo" class="btn btn-sm"
+               style="background:#16a34a; color:#fff; border:none; padding:8px 16px; border-radius:8px; font-size:13px; text-decoration:none;">
+                <i class="ti ti-plus"></i> Nuevo usuario
+            </a>
+            <button onclick="toggleDark()" id="dark-btn" class="btn btn-sm"
+                    style="border:1px solid #e2e8f0; color:#64748b; font-size:13px;">
+                <i class="ti ti-moon" id="dark-icon-btn"></i> Modo oscuro
+            </button>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div class="quejas-table">
+            <table class="table mb-0">
+                <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Estado</th>
+                    <th>Fecha creación</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="usuario : ${usuarios}">
+                    <td th:text="${usuario.nombre}"></td>
+                    <td th:text="${usuario.email}"></td>
+                    <td>
+                            <span class="status-badge"
+                                  th:classappend="${usuario.rol == 'ADMINISTRADOR'} ? 'status-RESUELTO' :
+                                                 (${usuario.rol == 'SUPERVISOR'} ? 'status-EN_PROCESO' : 'status-PENDIENTE')"
+                                  th:text="${usuario.rol}"></span>
+                    </td>
+                    <td>
+                            <span class="status-badge"
+                                  th:classappend="${usuario.activo} ? 'status-RESUELTO' : 'status-PENDIENTE'"
+                                  th:text="${usuario.activo} ? 'Activo' : 'Inactivo'"></span>
+                    </td>
+                    <td th:text="${#temporals.format(usuario.fechaCreacion, 'dd MMM yyyy')}"></td>
+                    <td>
+                        <form th:action="@{/admin/usuarios/{id}/toggle(id=${usuario.usuarioId})}"
+                              method="post" style="display:inline;">
+                            <button type="submit" class="btn btn-sm"
+                                    th:style="${usuario.activo} ? 'background:#fef3c7; color:#92400e; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;' :
+                                                                      'background:#dcfce7; color:#166634; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;'"
+                                    th:text="${usuario.activo} ? 'Desactivar' : 'Activar'">
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/dashboard.js}"></script>
+</body>
+</html>

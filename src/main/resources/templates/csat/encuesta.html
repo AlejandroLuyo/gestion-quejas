@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -48,7 +48,7 @@
 </div>
 
 <script th:inline="javascript">
-    const token = [[${token}]];
+    const token = '[[${token}]]';
 </script>
 <script th:src="@{/js/encuesta.js}"></script>
 </body>

@@ -1,0 +1,77 @@
+.form-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 520px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    background: #f8fafc;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #16a34a;
+    background: #fff;
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 28px;
+}
+
+.btn-cancelar {
+    padding: 10px 20px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #64748b;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.btn-guardar {
+    padding: 10px 20px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-guardar:hover { background: #15803d; }
+
+/* DARK MODE */
+body.dark .form-card { background: #1e293b; border-color: rgba(255,255,255,0.08); }
+body.dark .form-group label { color: #e2e8f0; }
+body.dark .form-group input,
+body.dark .form-group select { background: #162032; border-color: rgba(255,255,255,0.08); color: #e2e8f0; }
+body.dark .btn-cancelar { border-color: rgba(255,255,255,0.08); color: #94a3b8; }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
 <head>
     <meta charset="UTF-8">
     <title>CSManager - Estadísticas</title>
@@ -21,7 +21,7 @@
     <a href="/estadisticas" class="rail-btn active" title="Estadísticas">
         <i class="ti ti-chart-bar"></i>
     </a>
-    <a href="#" class="rail-btn" title="Usuarios">
+    <a href="/admin/usuarios" class="rail-btn" title="Usuarios">
         <i class="ti ti-users"></i>
     </a>
     <a href="#" class="rail-btn" title="Configuración">
@@ -152,14 +152,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script th:inline="javascript">
-    const abiertas = [[${abiertas}]];
-    const pendientes = [[${pendientes}]];
-    const resueltas = [[${resueltas}]];
-    const porEmail = [[${porEmail}]];
-    const porWhatsapp = [[${porWhatsapp}]];
-    const porTicket = [[${porTicket}]];
-    const contactReasons = [[${contactReasonLabels}]];
-    const contactReasonData = [[${contactReasonData}]];
+    const abiertas = '[[${abiertas}]]';
+    const pendientes = '[[${pendientes}]]';
+    const resueltas = '[[${resueltas}]]';
+    const porEmail = '[[${porEmail}]]';
+    const porWhatsapp = '[[${porWhatsapp}]]';
+    const porTicket = '[[${porTicket}]]';
+    const contactReasons = '[[${contactReasonLabels}]]';
+    const contactReasonData = '[[${contactReasonData}]]';
 </script>
 <script th:src="@{/js/estadisticas.js}"></script>
 <script th:src="@{/js/dashboard.js}"></script>

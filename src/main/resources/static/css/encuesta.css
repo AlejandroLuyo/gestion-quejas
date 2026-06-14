@@ -75,3 +75,13 @@ textarea:focus { border-color: #16a34a; }
     font-size: 14px;
     margin-top: 16px;
 }
+
+.mensaje-error {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fde8e8;
+    color: #c0392b;
+    border-radius: 8px;
+    font-size: 13px;
+    text-align: center;
+}

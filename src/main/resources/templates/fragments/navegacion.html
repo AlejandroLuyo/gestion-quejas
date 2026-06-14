@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<body>
+
+<th:block th:fragment="navegacion(paginaActiva)">
+
+    <!-- ICON RAIL -->
+    <div class="icon-rail">
+        <div class="rail-logo" onclick="toggleSidebar()">
+            <i class="ti ti-headset"></i>
+        </div>
+        <a href="/quejas" class="rail-btn" th:classappend="${paginaActiva == 'quejas'} ? 'active' : ''" title="Quejas">
+            <i class="ti ti-inbox"></i>
+        </a>
+        <a href="/estadisticas" class="rail-btn" th:classappend="${paginaActiva == 'estadisticas'} ? 'active' : ''"
+           sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')" title="Estadísticas">
+            <i class="ti ti-chart-bar"></i>
+        </a>
+        <a href="/admin/usuarios" class="rail-btn" th:classappend="${paginaActiva == 'usuarios'} ? 'active' : ''"
+           sec:authorize="hasRole('ADMINISTRADOR')" title="Usuarios">
+            <i class="ti ti-users"></i>
+        </a>
+        <a href="#" class="rail-btn" title="Configuración">
+            <i class="ti ti-settings"></i>
+        </a>
+        <div class="rail-bottom">
+            <div class="rail-btn" onclick="toggleDark()" title="Modo oscuro">
+                <i class="ti ti-moon" id="dark-icon"></i>
+            </div>
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <button type="submit" class="avatar-small" title="Cerrar sesión" style="border:none; cursor:pointer;"
+                        th:text="${#authentication.principal.username.substring(0,2).toUpperCase()}">AJ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>CSManager</span>
+        </div>
+        <div class="sidebar-menu">
+
+            <div class="menu-section">Bandeja</div>
+            <a href="/quejas" class="menu-item" th:classappend="${paginaActiva == 'quejas'} ? 'active' : ''">
+                <i class="ti ti-layout-dashboard"></i> Vista general
+            </a>
+            <a href="#" class="menu-item">
+                <i class="ti ti-user-check"></i> Asignadas a mí
+            </a>
+            <a href="#" class="menu-item">
+                <i class="ti ti-users"></i> Sin asignar
+            </a>
+
+            <div class="menu-section" sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">Filtros</div>
+            <a href="#" class="menu-item" sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+                <i class="ti ti-clock"></i> Pendientes
+            </a>
+            <a href="#" class="menu-item" sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+                <i class="ti ti-loader"></i> En proceso
+            </a>
+            <a href="#" class="menu-item" sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+                <i class="ti ti-circle-check"></i> Resueltas
+            </a>
+
+            <div class="menu-section" sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">Reportes</div>
+            <a href="/estadisticas" class="menu-item"
+               th:classappend="${paginaActiva == 'estadisticas'} ? 'active' : ''"
+               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+                <i class="ti ti-chart-bar"></i> Estadísticas
+            </a>
+
+            <div class="menu-section" sec:authorize="hasRole('ADMINISTRADOR')">Administración</div>
+            <a href="/admin/usuarios" class="menu-item"
+               th:classappend="${paginaActiva == 'usuarios'} ? 'active' : ''"
+               sec:authorize="hasRole('ADMINISTRADOR')">
+                <i class="ti ti-users"></i> Usuarios
+            </a>
+
+        </div>
+        <div class="sidebar-agent">
+            <div class="sidebar-avatar" th:text="${#authentication.principal.username.substring(0,2).toUpperCase()}">AJ</div>
+            <div>
+                <div class="sidebar-agent-name" th:text="${#authentication.principal.username}">Usuario</div>
+                <div class="sidebar-agent-role" sec:authorize="hasRole('ADMINISTRADOR')">Administrador</div>
+                <div class="sidebar-agent-role" sec:authorize="hasRole('SUPERVISOR')">Supervisor</div>
+                <div class="sidebar-agent-role" sec:authorize="hasRole('AGENTE')">Agente</div>
+            </div>
+        </div>
+    </div>
+
+</th:block>
+
+</body>
+</html>

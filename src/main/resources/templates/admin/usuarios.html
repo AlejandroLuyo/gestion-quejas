@@ -9,64 +9,7 @@
 </head>
 <body>
 
-<!-- ICON RAIL -->
-<div class="icon-rail">
-    <div class="rail-logo" onclick="toggleSidebar()">
-        <i class="ti ti-headset"></i>
-    </div>
-    <a href="/quejas" class="rail-btn" title="Quejas">
-        <i class="ti ti-inbox"></i>
-    </a>
-    <a href="/estadisticas" class="rail-btn" title="Estadísticas">
-        <i class="ti ti-chart-bar"></i>
-    </a>
-    <a href="/admin/usuarios" class="rail-btn active" title="Usuarios">
-        <i class="ti ti-users"></i>
-    </a>
-    <a href="#" class="rail-btn" title="Configuración">
-        <i class="ti ti-settings"></i>
-    </a>
-    <div class="rail-bottom">
-        <div class="rail-btn" onclick="toggleDark()" title="Modo oscuro">
-            <i class="ti ti-moon" id="dark-icon"></i>
-        </div>
-        <form th:action="@{/logout}" method="post" style="margin:0;">
-            <button type="submit" class="avatar-small" title="Cerrar sesión"
-                    style="border:none; cursor:pointer;">
-                AJ
-            </button>
-        </form>
-    </div>
-</div>
-
-<!-- SIDEBAR -->
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-        <span>CSManager</span>
-    </div>
-    <div class="sidebar-menu">
-        <div class="menu-section">Administración</div>
-        <a href="/admin/usuarios" class="menu-item active">
-            <i class="ti ti-users"></i> Usuarios
-        </a>
-        <div class="menu-section">Navegación</div>
-        <a href="/quejas" class="menu-item">
-            <i class="ti ti-layout-dashboard"></i> Vista general
-        </a>
-        <a href="/estadisticas" class="menu-item">
-            <i class="ti ti-chart-bar"></i> Estadísticas
-        </a>
-    </div>
-    <div class="sidebar-agent">
-        <div class="sidebar-avatar"
-             th:text="${#authentication.principal.username.substring(0,2).toUpperCase()}">AJ</div>
-        <div>
-            <div class="sidebar-agent-name"
-                 th:text="${#authentication.principal.username}">Usuario</div>
-            <div class="sidebar-agent-role">Agente</div>
-        </div>
-    </div>
-</div>
+<div th:replace="~{fragments/navegacion :: navegacion('usuarios')}"></div>
 
 <!-- MAIN WRAPPER -->
 <div class="main-wrapper" id="main-wrapper">

@@ -27,10 +27,10 @@ public class UsuarioDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("Usuario inactivo: " + email);
         }
 
-        return new User(
-                usuario.getEmail(),
-                usuario.getPasswordHash(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + usuario.getRol()))
-        );
+        return org.springframework.security.core.userdetails.User
+                .withUsername(usuario.getNombre())
+                .password(usuario.getPasswordHash())
+                .authorities("ROLE_" + usuario.getRol())
+                .build();
     }
 }

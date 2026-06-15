@@ -17,6 +17,10 @@ public class Conversacion {
     @Column(name = "order_id")
     private String orderId;
 
+    @ManyToOne
+    @JoinColumn(name = "order_id", insertable = false, updatable = false)
+    private Orden orden;
+
     @Column(name = "channel")
     private String channel;
 

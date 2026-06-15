@@ -9,12 +9,12 @@ import lombok.Data;
 public class Orden {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "order_id")
-    private Long orderId;
+    private String orderId;
 
-    @Column(name = "producto_id")
-    private Long productoId;
+    @ManyToOne
+    @JoinColumn(name = "producto_id")
+    private Producto producto;
 
     @Column(name = "order_status")
     private String orderStatus;

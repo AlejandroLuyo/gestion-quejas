@@ -9,12 +9,12 @@
 </head>
 <body>
 
-<div th:replace="~{fragments/navegacion :: navegacion('quejas')}"></div>
+<div th:replace="~{fragments/navegacion :: navegacion('quejas', ${vista})}"></div>
 
 <!-- MAIN WRAPPER -->
 <div class="main-wrapper" id="main-wrapper">
     <div class="topbar">
-        <span class="topbar-title">Vista general de quejas</span>
+        <span class="topbar-title" th:text="${tituloVista}">Vista general de quejas</span>
         <div class="topbar-right">
             <i class="ti ti-bell" style="font-size:22px; color:#94a3b8;"></i>
             <button onclick="toggleDark()" id="dark-btn" class="btn btn-sm"
@@ -51,9 +51,33 @@
                     <th>Order ID</th>
                     <th>Contact reason</th>
                     <th>Canal</th>
-                    <th>Estado</th>
-                    <th>Agente</th>
-                    <th>Fecha</th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'estado'} ? ' active' : ''"
+                           th:href="@{/quejas(vista=${vista}, orden='estado', dir=${orden == 'estado' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Estado
+                            <i th:if="${orden == 'estado' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'estado' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'estado'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'agente'} ? ' active' : ''"
+                           th:href="@{/quejas(vista=${vista}, orden='agente', dir=${orden == 'agente' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Agente
+                            <i th:if="${orden == 'agente' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'agente' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'agente'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'fecha'} ? ' active' : ''"
+                           th:href="@{/quejas(vista=${vista}, orden='fecha', dir=${orden == 'fecha' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Fecha
+                            <i th:if="${orden == 'fecha' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'fecha' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'fecha'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
                     <th></th>
                 </tr>
                 </thead>

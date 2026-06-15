@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.cibertec.gestion_quejas.model.Mensaje;
 import com.cibertec.gestion_quejas.repository.MensajeRepository;
 import java.util.ArrayList;
+import org.springframework.data.domain.Sort;
 
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -26,21 +27,69 @@ public class ConversacionController {
     private MensajeRepository mensajeRepository;
 
     @GetMapping
-    public String listar(Model model) {
-        List<Conversacion> conversaciones = conversacionService.listarTodas();
+    public String listar(@RequestParam(required = false, defaultValue = "todas") String vista,
+                         @RequestParam(required = false, defaultValue = "fecha") String orden,
+                         @RequestParam(required = false, defaultValue = "desc") String dir,
+                         Model model,
+                         java.security.Principal principal) {
 
-        long abiertas = conversaciones.stream()
+        String campoOrden = switch (orden) {
+            case "agente" -> "teammateCurrentlyAssigned";
+            case "estado" -> "currentConversationState";
+            default -> "conversationCreatedAt";
+        };
+
+        Sort sort = "asc".equalsIgnoreCase(dir)
+                ? Sort.by(campoOrden).ascending()
+                : Sort.by(campoOrden).descending();
+
+        List<Conversacion> todas = conversacionService.listarTodas(sort);
+        List<Conversacion> conversaciones;
+        String tituloVista;
+
+        switch (vista) {
+            case "asignadas":
+                conversaciones = conversacionService.listarAsignadasA(principal.getName(), sort);
+                tituloVista = "Asignadas a mí";
+                break;
+            case "sin-asignar":
+                conversaciones = conversacionService.listarSinAsignar(sort);
+                tituloVista = "Sin asignar";
+                break;
+            case "pendientes":
+                conversaciones = conversacionService.listarPorEstado("pending", sort);
+                tituloVista = "Pendientes";
+                break;
+            case "en-proceso":
+                conversaciones = conversacionService.listarPorEstado("open", sort);
+                tituloVista = "En proceso";
+                break;
+            case "resueltas":
+                conversaciones = conversacionService.listarPorEstado("resolved", sort);
+                tituloVista = "Resueltas";
+                break;
+            default:
+                conversaciones = todas;
+                tituloVista = "Vista general de quejas";
+                vista = "todas";
+        }
+
+        long abiertas = todas.stream()
                 .filter(c -> "open".equals(c.getCurrentConversationState())).count();
-        long resueltas = conversaciones.stream()
+        long resueltas = todas.stream()
                 .filter(c -> "resolved".equals(c.getCurrentConversationState())).count();
-        long pendientes = conversaciones.stream()
+        long pendientes = todas.stream()
                 .filter(c -> "pending".equals(c.getCurrentConversationState())).count();
 
         model.addAttribute("conversaciones", conversaciones);
-        model.addAttribute("totalQuejas", conversaciones.size());
+        model.addAttribute("totalQuejas", todas.size());
         model.addAttribute("abiertas", abiertas);
         model.addAttribute("resueltas", resueltas);
         model.addAttribute("pendientes", pendientes);
+        model.addAttribute("tituloVista", tituloVista);
+        model.addAttribute("vista", vista);
+        model.addAttribute("orden", orden);
+        model.addAttribute("dir", dir);
 
         return "quejas/lista";
     }

@@ -5,7 +5,7 @@ import com.cibertec.gestion_quejas.repository.ConversacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.data.domain.Sort;
 import java.util.List;
 
 @Service
@@ -14,8 +14,19 @@ public class ConversacionService {
     @Autowired
     private ConversacionRepository conversacionRepository;
 
-    public List<Conversacion> listarTodas() {
-        return conversacionRepository.findAll();
+    public List<Conversacion> listarTodas(Sort sort) {
+        return conversacionRepository.findAll(sort);
+    }
+    public List<Conversacion> listarPorEstado(String estado, Sort sort) {
+        return conversacionRepository.findByCurrentConversationState(estado, sort);
+    }
+
+    public List<Conversacion> listarAsignadasA(String nombre, Sort sort) {
+        return conversacionRepository.findByTeammateCurrentlyAssigned(nombre, sort);
+    }
+
+    public List<Conversacion> listarSinAsignar(Sort sort) {
+        return conversacionRepository.findByTeammateCurrentlyAssignedIsNull(sort);
     }
 
     @Transactional
@@ -35,7 +46,4 @@ public class ConversacionService {
         conversacionRepository.deleteById(id);
     }
 
-    public List<Conversacion> listarPorEstado(String estado) {
-        return conversacionRepository.findByCurrentConversationState(estado);
-    }
 }

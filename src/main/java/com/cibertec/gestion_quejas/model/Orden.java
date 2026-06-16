@@ -19,6 +19,12 @@ public class Orden {
     @Column(name = "order_status")
     private String orderStatus;
 
+    @Column(name = "nombre_cliente")
+    private String nombreCliente;
+
+    @Column(name = "email_cliente")
+    private String emailCliente;
+
     @Column(name = "date_entered_order_status")
     private String dateEnteredOrderStatus;
 
@@ -36,4 +42,7 @@ public class Orden {
 
     @Column(name = "country")
     private String country;
+
+    @Column(name = "precio")
+    private Double precio;
 }

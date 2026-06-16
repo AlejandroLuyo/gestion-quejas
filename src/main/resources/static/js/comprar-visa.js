@@ -37,3 +37,32 @@ function actualizarResumen() {
     const precio = precios[seleccionado.value] || 0;
     document.getElementById('resumen-precio').textContent = 'S/ ' + precio.toFixed(2);
 }
+
+function verificarOrden() {
+    const orderId = document.getElementById('order-id-input').value.trim();
+    const errorDiv = document.getElementById('orden-error');
+    errorDiv.style.display = 'none';
+
+    if (!orderId) {
+        errorDiv.textContent = 'Ingresa un número de orden.';
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    fetch('/admin/portal-cliente/verificar-orden?orderId=' + encodeURIComponent(orderId))
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                document.getElementById('confirmacion-nombre').textContent = data.nombreCliente;
+                document.getElementById('confirmacion-email').textContent = data.emailCliente;
+                mostrarPaso(2);
+            } else {
+                errorDiv.textContent = 'No se encontró ninguna orden con ese número.';
+                errorDiv.style.display = 'block';
+            }
+        })
+        .catch(() => {
+            errorDiv.textContent = 'Error al verificar la orden. Intenta nuevamente.';
+            errorDiv.style.display = 'block';
+        });
+}

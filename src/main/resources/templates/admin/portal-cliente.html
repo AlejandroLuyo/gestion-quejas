@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CSManager - Portal Cliente (prueba)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/dashboard.css}" rel="stylesheet">
+    <link th:href="@{/css/usuario-form.css}" rel="stylesheet">
+    <link th:href="@{/css/comprar-visa.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="~{fragments/navegacion :: navegacion('portal-cliente', null)}"></div>
+
+<div class="main-wrapper" id="main-wrapper">
+    <div class="topbar">
+        <span class="topbar-title">Portal Cliente (prueba)</span>
+        <div class="topbar-right">
+            <a href="/quejas" class="btn btn-sm" style="border:1px solid #e2e8f0; color:#64748b; font-size:13px; text-decoration:none; padding:8px 16px; border-radius:8px;">
+                <i class="ti ti-arrow-left"></i> Volver
+            </a>
+        </div>
+    </div>
+
+    <div class="content-area">
+
+        <div class="wizard-progress">
+            <div class="wizard-step-indicator active" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Datos</div>
+            </div>
+            <div class="wizard-line"></div>
+            <div class="wizard-step-indicator" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Queja</div>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <form th:action="@{/admin/portal-cliente}" method="post" id="form-portal-cliente">
+
+                <div class="wizard-part active" data-part="1">
+                    <h3>Datos del solicitante</h3>
+                    <p style="font-size:13px; color:#64748b; margin-bottom:16px;">Ingresa tu número de orden para continuar.</p>
+                    <div class="form-group">
+                        <label>Número de orden (Order ID)</label>
+                        <input type="text" id="order-id-input" name="orderId" placeholder="Ej: ORD-001" required/>
+                    </div>
+                    <div id="orden-error" class="campo-error" style="display:none;"></div>
+                    <div class="form-actions">
+                        <span></span>
+                        <button type="button" class="btn-guardar" onclick="verificarOrden()">Continuar <i class="ti ti-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="wizard-part" data-part="2">
+                    <h3>Detalle de la queja</h3>
+                    <p style="font-size:13px; color:#64748b; margin-bottom:16px;">
+                        Solicitante: <strong id="confirmacion-nombre"></strong> (<span id="confirmacion-email"></span>)
+                    </p>
+                    <div class="form-group">
+                        <label>Razón de contacto</label>
+                        <select name="contactReason" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="refund_request">Solicitud de reembolso</option>
+                            <option value="status_information">Información de estado</option>
+                            <option value="upload_support">Soporte para subir documentos</option>
+                            <option value="download_support">Soporte para descargar documentos</option>
+                            <option value="payment_issues">Problemas de pago</option>
+                            <option value="requirements_assistance">Asistencia con requisitos</option>
+                            <option value="deliverable_information">Información del entregable</option>
+                            <option value="cx_modify">Modificación de datos</option>
+                            <option value="spam">Spam</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Descripción</label>
+                        <textarea name="mensaje" rows="4" placeholder="Describe tu situación con detalle..." required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancelar" onclick="pasoAnterior(2)"><i class="ti ti-arrow-left"></i> Atrás</button>
+                        <button type="submit" class="btn-guardar">Registrar queja <i class="ti ti-send"></i></button>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/comprar-visa.js}"></script>
+</body>
+</html>

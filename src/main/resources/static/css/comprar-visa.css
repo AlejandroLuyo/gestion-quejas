@@ -45,7 +45,15 @@
     padding: 14px 16px; background: #f0fdf4; border-radius: 10px;
     font-size: 15px; font-weight: 600; color: #166634; margin-bottom: 16px;
 }
-
+/*CAMPO ERROR*/
+.campo-error {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #fde8e8;
+    color: #c0392b;
+    border-radius: 8px;
+    font-size: 12px;
+}
 /* DARK MODE */
 body.dark .wizard-step-indicator .step-circle { background: #334155; color: #64748b; }
 body.dark .wizard-line { background: #334155; }
@@ -54,3 +62,4 @@ body.dark .processing-option { border-color: rgba(255,255,255,0.08); }
 body.dark .processing-option:has(input:checked) { background: #162032; border-color: #22c55e; }
 body.dark .processing-option-title { color: #e2e8f0; }
 body.dark .resumen-total { background: #162032; color: #22c55e; }
+body.dark .campo-error { background: #3a1f1f; color: #f5a3a3; }

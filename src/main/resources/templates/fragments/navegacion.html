@@ -87,6 +87,18 @@
                 <i class="ti ti-users"></i> Usuarios
             </a>
 
+            <div class="menu-section" sec:authorize="hasRole('ADMINISTRADOR')">Pruebas</div>
+            <a href="/admin/comprar-visa" class="menu-item"
+               th:classappend="${paginaActiva == 'comprar-visa'} ? 'active' : ''"
+               sec:authorize="hasRole('ADMINISTRADOR')">
+                <i class="ti ti-shopping-cart"></i> Comprar visa
+            </a>
+            <a href="/admin/portal-cliente" class="menu-item"
+               th:classappend="${paginaActiva == 'portal-cliente'} ? 'active' : ''"
+               sec:authorize="hasRole('ADMINISTRADOR')">
+                <i class="ti ti-message-2"></i> Portal cliente
+            </a>
+
         </div>
         <div class="sidebar-agent">
             <div class="sidebar-avatar" th:text="${#authentication.principal.username.substring(0,2).toUpperCase()}">AJ</div>

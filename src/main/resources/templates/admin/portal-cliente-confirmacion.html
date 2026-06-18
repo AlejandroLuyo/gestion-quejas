@@ -39,7 +39,7 @@
         <div class="form-card" style="text-align:center;">
             <div style="font-size:48px; color:#16a34a; margin-bottom:12px;"><i class="ti ti-circle-check"></i></div>
             <h3>Queja registrada</h3>
-            <p style="font-size:13px; color:#64748b; margin-bottom:20px;">Tu queja fue registrada. El chatbot iVy comenzará a atenderla en breve.</p>
+            <p style="font-size:13px; color:#64748b; margin-bottom:20px;">Tu queja fue registrada. El chatbot CSMate comenzará a atenderla en breve.</p>
 
             <div style="text-align:left; max-width:360px; margin:0 auto;">
                 <div class="resumen-total" style="margin-bottom:8px;">
@@ -52,8 +52,49 @@
                 </div>
                 <div class="resumen-total" style="margin-bottom:8px; background:#dbeafe; color:#1d4ed8;">
                     <span>Agente asignado</span>
-                    <span th:text="${conversacion.teammateCurrentlyAssigned} + ' (Bot IA)'"></span>
+                    <span th:text="${conversacion.teammateCurrentlyAssigned != null ? conversacion.teammateCurrentlyAssigned + ' (Bot IA)' : 'Pendiente de asignar'}"></span>
                 </div>
+            </div>
+
+            <div th:if="${conversacion.teammateCurrentlyAssigned == 'CSMate' && conversacion.currentConversationState == 'pending'}"
+                 id="portal-chat" class="portal-chat" th:attr="data-id=${conversacion.conversacionId}">
+                <div class="portal-chat-titulo">Conversación con CSMate</div>
+                <div id="portal-mensajes-list" class="portal-chat-mensajes">
+                    <div style="text-align:center; color:#94a3b8; font-size:12px; padding:10px;">Cargando mensajes...</div>
+                </div>
+
+                <div id="portal-link-encuesta" class="portal-chat-link-box" style="display:none;">
+                    <div class="portal-chat-link-label">
+                        <i class="ti ti-link"></i> Link de encuesta generado:
+                    </div>
+                    <div class="portal-chat-link-row">
+                        <input type="text" id="portal-encuesta-url" class="portal-chat-link-input" readonly/>
+                        <button class="portal-chat-link-copiar" onclick="copiarLinkPortal()">
+                            <i class="ti ti-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="portal-escalado-msg" class="portal-chat-escalado" style="display:none;">
+                    Tu consulta fue derivada a un agente humano. Te contactaremos pronto.
+                </div>
+
+                <div id="portal-reply-row" class="portal-chat-input-row">
+                    <input type="text" id="portal-reply-input" class="portal-chat-input"
+                           placeholder="Escribe tu mensaje..."
+                           onkeydown="if(event.key==='Enter') enviarMensajePortal()"/>
+                    <button class="portal-chat-send" onclick="enviarMensajePortal()">
+                        <i class="ti ti-send"></i>
+                    </button>
+                </div>
+                <button id="portal-btn-no-mas" class="portal-chat-no-mas" onclick="cerrarSinMasPreguntas()">
+                    No tengo más preguntas, gracias
+                </button>
+            </div>
+
+            <div th:if="${conversacion.teammateCurrentlyAssigned == null}" class="portal-chat-escalado"
+                 style="max-width:360px; margin:24px auto 0;">
+                Tu consulta fue derivada a un agente humano. Te contactaremos pronto.
             </div>
 
             <a href="/admin/portal-cliente" class="btn-guardar" style="display:inline-flex; margin-top:20px; text-decoration:none;">

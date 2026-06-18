@@ -127,6 +127,13 @@
         </button>
     </div>
     <div class="slide-body">
+        <div id="sp-banner-ia" class="banner-resuelta-ia" style="display:none;">
+            <div class="banner-resuelta-ia-titulo">
+                <i class="ti ti-robot"></i> Resuelta automáticamente por CSMate
+            </div>
+            <p id="sp-csat-info" class="banner-resuelta-ia-csat"></p>
+            <button class="btn-reabrir-derivar" onclick="reabrirYDerivar()">Reabrir y derivar a un agente</button>
+        </div>
         <div class="slide-attrs">
             <div>
                 <div class="attr-label">Contact reason</div>
@@ -162,17 +169,29 @@
             </div>
         </div>
     </div>
-    <div class="slide-reply">
-        <div class="slide-reply-actions">
+    <div class="slide-reply" id="slide-reply">
+        <div class="slide-reply-actions" id="slide-reply-actions">
             <button class="btn-estado btn-estado-abrir" onclick="cambiarEstado('open')">
                 <i class="ti ti-loader"></i> Abrir
             </button>
-            <button class="btn-estado btn-estado-pendiente" onclick="cambiarEstado('pending')">
-                <i class="ti ti-clock"></i> Pendiente
+            <button class="btn-estado btn-estado-pendiente" onclick="mostrarFormularioTransferencia()">
+                <i class="ti ti-clock"></i> Re-asignar
             </button>
             <button class="btn-estado btn-estado-resolver" onclick="resolverYEnviarEncuesta()">
                 <i class="ti ti-circle-check"></i> Resolver
             </button>
+        </div>
+
+        <div id="form-transferencia" class="form-transferencia" style="display:none;">
+            <label class="transferencia-label">Transferir a</label>
+            <select id="transferencia-select" class="transferencia-select"></select>
+            <label class="transferencia-label">Nota para el nuevo agente</label>
+            <textarea id="transferencia-nota" class="transferencia-textarea" rows="3"
+                      placeholder="Contexto del caso para quien lo recibe..."></textarea>
+            <div class="transferencia-botones">
+                <button class="btn-cancelar-transferencia" onclick="cancelarTransferencia()">Cancelar</button>
+                <button class="btn-confirmar-transferencia" id="btn-confirmar-transferencia" onclick="confirmarTransferencia()">Confirmar transferencia</button>
+            </div>
         </div>
         <div id="link-encuesta" class="link-encuesta-box" style="display:none;">
             <div class="link-encuesta-label">

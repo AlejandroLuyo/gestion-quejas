@@ -1,6 +1,10 @@
 package com.cibertec.gestion_quejas.controller;
 
 import com.cibertec.gestion_quejas.model.Conversacion;
+import com.cibertec.gestion_quejas.model.Csat;
+import com.cibertec.gestion_quejas.model.Usuario;
+import com.cibertec.gestion_quejas.repository.CsatRepository;
+import com.cibertec.gestion_quejas.repository.UsuarioRepository;
 import com.cibertec.gestion_quejas.service.ConversacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -9,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import com.cibertec.gestion_quejas.model.Mensaje;
 import com.cibertec.gestion_quejas.repository.MensajeRepository;
 import java.util.ArrayList;
+import java.util.Optional;
 import org.springframework.data.domain.Sort;
 
 import java.time.format.DateTimeFormatter;
@@ -25,6 +30,12 @@ public class ConversacionController {
 
     @Autowired
     private MensajeRepository mensajeRepository;
+
+    @Autowired
+    private CsatRepository csatRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @GetMapping
     public String listar(@RequestParam(required = false, defaultValue = "todas") String vista,
@@ -68,6 +79,10 @@ public class ConversacionController {
                 conversaciones = conversacionService.listarPorEstado("resolved", sort);
                 tituloVista = "Resueltas";
                 break;
+            case "resueltas-ia":
+                conversaciones = conversacionService.listarResueltasPorIA(sort);
+                tituloVista = "Resueltas por IA";
+                break;
             default:
                 conversaciones = todas;
                 tituloVista = "Vista general de quejas";
@@ -106,20 +121,74 @@ public class ConversacionController {
         data.put("agente", c.getTeammateCurrentlyAssigned() != null ? c.getTeammateCurrentlyAssigned() : "Sin asignar");
         data.put("fechaCreacion", c.getConversationCreatedAt() != null ?
                 c.getConversationCreatedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) : "-");
+
+        Optional<Csat> csat = csatRepository.findByConversacionConversacionId(id);
+        data.put("csatPuntuacion", csat.map(x -> String.valueOf(x.getPuntuacion())).orElse(null));
+
         return data;
     }
 
     @PostMapping("/{id}/estado")
     @ResponseBody
-    public Map<String, String> cambiarEstado(@PathVariable Long id, @RequestParam String estado) {
+    public Map<String, String> cambiarEstado(@PathVariable Long id, @RequestParam String estado,
+                                             java.security.Principal principal) {
         Conversacion c = conversacionService.buscarPorId(id);
+        Map<String, String> response = new HashMap<>();
         if (c != null) {
             c.setCurrentConversationState(estado);
+            if ("resolved".equals(estado) || "open".equals(estado)) {
+                c.setTeammateCurrentlyAssigned(principal.getName());
+            }
             conversacionService.guardar(c);
+            response.put("agente", c.getTeammateCurrentlyAssigned() != null ? c.getTeammateCurrentlyAssigned() : "Sin asignar");
         }
-        Map<String, String> response = new HashMap<>();
         response.put("status", "ok");
         response.put("estado", estado);
+        return response;
+    }
+
+    @GetMapping("/agentes-activos")
+    @ResponseBody
+    public List<Map<String, String>> agentesActivos(java.security.Principal principal) {
+        List<Usuario> agentes = usuarioRepository.findByRolAndActivoTrue("AGENTE");
+        List<Map<String, String>> result = new ArrayList<>();
+        for (Usuario u : agentes) {
+            if (u.getNombre().equals(principal.getName())) continue;
+            Map<String, String> m = new HashMap<>();
+            m.put("nombre", u.getNombre());
+            result.add(m);
+        }
+        return result;
+    }
+
+    @PostMapping("/{id}/transferir")
+    @ResponseBody
+    public Map<String, String> transferir(@PathVariable Long id,
+                                          @RequestParam String agenteDestino,
+                                          @RequestParam(required = false) String nota,
+                                          java.security.Principal principal) {
+        Map<String, String> response = new HashMap<>();
+        Conversacion c = conversacionService.buscarPorId(id);
+        if (c == null) {
+            response.put("status", "error");
+            return response;
+        }
+
+        c.setCurrentConversationState("pending");
+        c.setTeammateCurrentlyAssigned(agenteDestino);
+        conversacionService.guardar(c);
+
+        if (nota != null && !nota.isBlank()) {
+            Mensaje notaInterna = new Mensaje();
+            notaInterna.setConversacion(c);
+            notaInterna.setContenido(principal.getName() + " transfirió el caso a " + agenteDestino + ": " + nota);
+            notaInterna.setRemitente("NOTA_INTERNA");
+            notaInterna.setCanal("INTERNO");
+            mensajeRepository.save(notaInterna);
+        }
+
+        response.put("status", "ok");
+        response.put("agente", agenteDestino);
         return response;
     }
 
@@ -141,7 +210,8 @@ public class ConversacionController {
 
     @PostMapping("/{id}/responder")
     @ResponseBody
-    public Map<String, String> responder(@PathVariable Long id, @RequestParam String contenido) {
+    public Map<String, String> responder(@PathVariable Long id, @RequestParam String contenido,
+                                         java.security.Principal principal) {
         Conversacion conversacion = conversacionService.buscarPorId(id);
         Map<String, String> response = new HashMap<>();
 
@@ -152,6 +222,10 @@ public class ConversacionController {
             mensaje.setRemitente("AGENTE");
             mensaje.setCanal(conversacion.getChannel() != null ? conversacion.getChannel().toUpperCase() : "INTERNO");
             mensajeRepository.save(mensaje);
+
+            conversacion.setTeammateCurrentlyAssigned(principal.getName());
+            conversacionService.guardar(conversacion);
+
             response.put("status", "ok");
         } else {
             response.put("status", "error");

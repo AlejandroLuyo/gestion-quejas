@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 import java.util.HashMap;
-import java.util.UUID;
 
 @Controller
 @RequestMapping("/csat")
@@ -34,9 +33,7 @@ public class CsatController {
             return response;
         }
 
-        String token = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-        conv.setCsatToken(token);
-        conversacionService.guardar(conv);
+        String token = conversacionService.generarTokenCsat(conv);
 
         response.put("status", "ok");
         response.put("link", "/csat/responder?token=" + token);

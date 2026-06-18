@@ -72,6 +72,11 @@
                th:classappend="${paginaActiva == 'quejas' && vistaActiva == 'resueltas'} ? 'active' : ''">
                 <i class="ti ti-circle-check"></i> Resueltas
             </a>
+            <a href="/quejas?vista=resueltas-ia" class="menu-item"
+               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
+               th:classappend="${paginaActiva == 'quejas' && vistaActiva == 'resueltas-ia'} ? 'active' : ''">
+                <i class="ti ti-robot"></i> Resueltas por IA
+            </a>
 
             <div class="menu-section" sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">Reportes</div>
             <a href="/estadisticas" class="menu-item"

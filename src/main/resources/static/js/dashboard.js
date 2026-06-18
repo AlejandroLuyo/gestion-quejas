@@ -32,10 +32,45 @@ function openPanel(id) {
             document.getElementById('sp-fecha').textContent = c.orderId || '-';
             document.getElementById('sp-agente').textContent = c.agente || 'Sin asignar';
             document.getElementById('sp-fechaCreacion').textContent = c.fechaCreacion || '-';
+
+            const banner = document.getElementById('sp-banner-ia');
+            const esRevisionIA = c.estado === 'resolved' && c.agente === 'CSMate';
+
+            if (esRevisionIA) {
+                const csatTexto = c.csatPuntuacion
+                    ? 'Calificación del cliente: ' + '★'.repeat(c.csatPuntuacion) + '☆'.repeat(5 - c.csatPuntuacion) + ' (' + c.csatPuntuacion + '/5)'
+                    : 'Encuesta enviada, esperando respuesta del cliente.';
+                document.getElementById('sp-csat-info').textContent = csatTexto;
+                banner.style.display = 'block';
+            } else {
+                banner.style.display = 'none';
+            }
+
+            document.getElementById('slide-reply').style.display = esRevisionIA ? 'none' : '';
+            document.getElementById('link-encuesta').style.display = 'none';
+
             document.getElementById('slide-panel').classList.add('open');
             document.getElementById('overlay').classList.add('show');
             cargarMensajes(id);
         });
+}
+
+function reabrirYDerivar() {
+    if (!conversacionActualId) return;
+    if (!confirm('¿Seguro que quieres reabrir esta conversación y derivarla a un agente?')) return;
+
+    fetch('/quejas/' + conversacionActualId + '/reabrir-derivar', {
+        method: 'POST'
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                document.getElementById('sp-estado').textContent = 'open';
+                document.getElementById('sp-agente').textContent = data.agente;
+                document.getElementById('sp-banner-ia').style.display = 'none';
+            }
+        })
+        .catch(err => console.error('Error al reabrir y derivar:', err));
 }
 
 function cargarMensajes(id) {
@@ -54,6 +89,13 @@ function cargarMensajes(id) {
             }
             lista.innerHTML = '';
             mensajes.forEach(m => {
+                if (m.remitente === 'NOTA_INTERNA') {
+                    const div = document.createElement('div');
+                    div.className = 'nota-interna';
+                    div.innerHTML = `<i class="ti ti-note" style="font-size:14px; margin-top:1px;"></i><span>${m.contenido}</span>`;
+                    lista.appendChild(div);
+                    return;
+                }
                 const esAgente = m.remitente === 'AGENTE';
                 const div = document.createElement('div');
                 div.className = 'msg-wrap' + (esAgente ? ' right' : '');
@@ -65,6 +107,74 @@ function cargarMensajes(id) {
             });
         })
         .catch(err => console.error('Error cargando mensajes:', err));
+}
+
+function mostrarFormularioTransferencia() {
+    document.getElementById('slide-reply-actions').style.display = 'none';
+    document.getElementById('form-transferencia').style.display = 'block';
+
+    const btnConfirmar = document.getElementById('btn-confirmar-transferencia');
+    fetch('/quejas/agentes-activos')
+        .then(res => res.json())
+        .then(agentes => {
+            const select = document.getElementById('transferencia-select');
+            select.innerHTML = '';
+            if (agentes.length === 0) {
+                select.innerHTML = '<option value="">No hay otros agentes disponibles</option>';
+                btnConfirmar.disabled = true;
+                return;
+            }
+            btnConfirmar.disabled = false;
+            agentes.forEach(a => {
+                const option = document.createElement('option');
+                option.value = a.nombre;
+                option.textContent = a.nombre;
+                select.appendChild(option);
+            });
+        })
+        .catch(err => console.error('Error cargando agentes:', err));
+}
+
+function cancelarTransferencia() {
+    document.getElementById('form-transferencia').style.display = 'none';
+    document.getElementById('slide-reply-actions').style.display = 'flex';
+    document.getElementById('transferencia-nota').value = '';
+}
+
+function confirmarTransferencia() {
+    if (!conversacionActualId) return;
+    const agenteDestino = document.getElementById('transferencia-select').value;
+    if (!agenteDestino) return;
+    const nota = document.getElementById('transferencia-nota').value.trim();
+
+    fetch('/quejas/' + conversacionActualId + '/transferir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'agenteDestino=' + encodeURIComponent(agenteDestino) + '&nota=' + encodeURIComponent(nota)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                document.getElementById('sp-estado').textContent = 'pending';
+                document.getElementById('sp-agente').textContent = data.agente;
+                cancelarTransferencia();
+                cargarMensajes(conversacionActualId);
+
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    if (row.getAttribute('onclick').includes(conversacionActualId)) {
+                        const badge = row.querySelector('.status-badge');
+                        if (badge) {
+                            badge.textContent = 'pending';
+                            badge.className = 'status-badge status-PENDIENTE';
+                        }
+                        const celdas = row.querySelectorAll('td');
+                        if (celdas[4]) celdas[4].textContent = data.agente;
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('Error al transferir:', err));
 }
 
 function closePanel() {
@@ -85,7 +195,9 @@ function cambiarEstado(nuevoEstado) {
         .then(data => {
             if (data.status === 'ok') {
                 document.getElementById('sp-estado').textContent = nuevoEstado;
-                // Actualizar el badge en la tabla
+                if (data.agente) {
+                    document.getElementById('sp-agente').textContent = data.agente;
+                }
                 const rows = document.querySelectorAll('tbody tr');
                 rows.forEach(row => {
                     if (row.getAttribute('onclick').includes(conversacionActualId)) {
@@ -96,6 +208,10 @@ function cambiarEstado(nuevoEstado) {
                             if (nuevoEstado === 'open') badge.classList.add('status-EN_PROCESO');
                             else if (nuevoEstado === 'resolved') badge.classList.add('status-RESUELTO');
                             else badge.classList.add('status-PENDIENTE');
+                        }
+                        if (data.agente) {
+                            const celdas = row.querySelectorAll('td');
+                            if (celdas[4]) celdas[4].textContent = data.agente;
                         }
                     }
                 });
@@ -164,6 +280,116 @@ function copiarLink() {
         btn.innerHTML = '<i class="ti ti-check"></i>';
         setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i>', 2000);
     });
+}
+
+// === Chat CSMate (Portal Cliente) ===
+function cargarMensajesPortal(id) {
+    const lista = document.getElementById('portal-mensajes-list');
+    fetch('/quejas/' + id + '/mensajes')
+        .then(res => res.json())
+        .then(mensajes => {
+            lista.innerHTML = '';
+            mensajes.forEach(m => {
+                const esBot = m.remitente === 'BOT';
+                const div = document.createElement('div');
+                div.className = esBot ? 'portal-bubble portal-bubble-bot' : 'portal-bubble portal-bubble-cliente';
+                div.textContent = m.contenido;
+                lista.appendChild(div);
+            });
+            lista.scrollTop = lista.scrollHeight;
+        })
+        .catch(err => console.error('Error cargando mensajes del portal:', err));
+}
+
+let portalEnviando = false;
+
+function enviarMensajePortal() {
+    if (portalEnviando) return;
+
+    const chatDiv = document.getElementById('portal-chat');
+    const conversacionId = chatDiv.getAttribute('data-id');
+    const input = document.getElementById('portal-reply-input');
+    const mensaje = input.value.trim();
+    if (!mensaje) return;
+
+    portalEnviando = true;
+    input.disabled = true;
+    const sendBtn = document.querySelector('#portal-reply-row .portal-chat-send');
+    const noMasBtn = document.getElementById('portal-btn-no-mas');
+    if (sendBtn) sendBtn.disabled = true;
+    if (noMasBtn) noMasBtn.disabled = true;
+
+    mostrarEscribiendoPortal();
+
+    fetch('/admin/portal-cliente/' + conversacionId + '/mensaje', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'mensaje=' + encodeURIComponent(mensaje)
+    })
+        .then(res => res.json())
+        .then(data => {
+            ocultarEscribiendoPortal();
+            if (data.status !== 'ok') return;
+            input.value = '';
+            cargarMensajesPortal(conversacionId);
+
+            if (data.estadoConversacion === 'CERRAR_SATISFECHO') {
+                document.getElementById('portal-reply-row').style.display = 'none';
+                document.getElementById('portal-btn-no-mas').style.display = 'none';
+                const baseUrl = window.location.origin;
+                document.getElementById('portal-encuesta-url').value = baseUrl + data.link;
+                document.getElementById('portal-link-encuesta').style.display = 'block';
+            } else if (data.estadoConversacion === 'ESCALAR') {
+                document.getElementById('portal-reply-row').style.display = 'none';
+                document.getElementById('portal-btn-no-mas').style.display = 'none';
+                document.getElementById('portal-escalado-msg').style.display = 'block';
+            }
+        })
+        .catch(err => {
+            ocultarEscribiendoPortal();
+            console.error('Error enviando mensaje del portal:', err);
+        })
+        .finally(() => {
+            portalEnviando = false;
+            input.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
+            if (noMasBtn) noMasBtn.disabled = false;
+        });
+}
+
+function mostrarEscribiendoPortal() {
+    const lista = document.getElementById('portal-mensajes-list');
+    const typing = document.createElement('div');
+    typing.id = 'portal-typing';
+    typing.className = 'portal-bubble portal-bubble-bot portal-typing';
+    typing.innerHTML = '<span></span><span></span><span></span>';
+    lista.appendChild(typing);
+    lista.scrollTop = lista.scrollHeight;
+}
+
+function ocultarEscribiendoPortal() {
+    const typing = document.getElementById('portal-typing');
+    if (typing) typing.remove();
+}
+
+function cerrarSinMasPreguntas() {
+    document.getElementById('portal-reply-input').value = 'No tengo más preguntas, gracias';
+    enviarMensajePortal();
+}
+
+function copiarLinkPortal() {
+    const input = document.getElementById('portal-encuesta-url');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = input.nextElementSibling;
+        btn.innerHTML = '<i class="ti ti-check"></i>';
+        setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i>', 2000);
+    });
+}
+
+const portalChatDiv = document.getElementById('portal-chat');
+if (portalChatDiv) {
+    cargarMensajesPortal(portalChatDiv.getAttribute('data-id'));
 }
 
 // FAB arrastrable

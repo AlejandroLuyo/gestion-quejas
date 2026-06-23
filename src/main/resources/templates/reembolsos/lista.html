@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head>
+    <meta charset="UTF-8">
+    <title>CSManager - Reembolsos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/dashboard.css}" rel="stylesheet">
+    <link th:href="@{/css/reembolsos.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="~{fragments/navegacion :: navegacion('reembolsos', null)}"></div>
+
+<div class="main-wrapper" id="main-wrapper">
+    <div class="topbar">
+        <span class="topbar-title">Reembolsos</span>
+        <div class="topbar-right">
+            <i class="ti ti-bell" style="font-size:22px; color:#94a3b8;"></i>
+            <button onclick="toggleDark()" id="dark-btn" class="btn btn-sm"
+                    style="border:1px solid #e2e8f0; color:#64748b; font-size:13px;">
+                <i class="ti ti-moon" id="dark-icon-btn"></i> Modo oscuro
+            </button>
+        </div>
+    </div>
+
+    <div class="content-area">
+
+        <!-- Tarjetas resumen -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total solicitudes</div>
+                <div class="stat-value" th:text="${totalReembolsos}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pendientes</div>
+                <div class="stat-value" style="color:#d97706;" th:text="${pendientes}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Aprobados</div>
+                <div class="stat-value" style="color:#16a34a;" th:text="${aprobados}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Denegados</div>
+                <div class="stat-value" style="color:#dc2626;" th:text="${denegados}">0</div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="reembolsos-filtros">
+            <form th:action="@{/reembolso/lista}" method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                <select name="estado" class="reembolso-select" onchange="this.form.submit()">
+                    <option value="todos" th:selected="${estadoFiltro == 'todos'}">Todos los estados</option>
+                    <option value="pendiente_supervisor" th:selected="${estadoFiltro == 'pendiente_supervisor'}">Pendiente supervisor</option>
+                    <option value="aprobado" th:selected="${estadoFiltro == 'aprobado'}">Aprobado</option>
+                    <option value="denegado" th:selected="${estadoFiltro == 'denegado'}">Denegado</option>
+                    <option value="rechazado_supervisor" th:selected="${estadoFiltro == 'rechazado_supervisor'}">Rechazado por supervisor</option>
+                </select>
+                <select name="agente" class="reembolso-select" onchange="this.form.submit()">
+                    <option value="todos" th:selected="${agenteFiltro == 'todos'}">Todos los agentes</option>
+                    <option th:each="a : ${agentes}"
+                            th:value="${a}"
+                            th:text="${a}"
+                            th:selected="${agenteFiltro == a}"></option>
+                </select>
+            </form>
+        </div>
+
+        <!-- Tabla -->
+        <div class="quejas-table">
+            <table class="table mb-0">
+                <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Agente</th>
+                    <th>Motivo</th>
+                    <th>Monto solicitado</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${reembolsos}"
+                    th:onclick="|abrirDetalle(${r.reembolsoId})|"
+                    style="cursor:pointer;">
+                    <td th:text="${r.conversacion.orderId}">-</td>
+                    <td th:text="${r.conversacion.teammateCurrentlyAssigned != null ? r.conversacion.teammateCurrentlyAssigned : 'Sin asignar'}">-</td>
+                    <td th:text="${r.refundReasonCategory != null ?
+                        (r.refundReasonCategory == 'amenaza_legal' ? 'Amenaza de acción legal' :
+                        (r.refundReasonCategory == 'redes_sociales' ? 'Publicación en redes sociales' :
+                        'Error comprobado de la empresa')) : '-'}">-</td>
+                    <td>
+                        <span th:if="${r.refundAmount != null}"
+                              th:text="'S/ ' + ${#numbers.formatDecimal(r.refundAmount, 1, 2)}">-</span>
+                        <span th:unless="${r.refundAmount != null}" style="color:#94a3b8;">—</span>
+                    </td>
+                    <td>
+                        <span class="reembolso-badge"
+                              th:classappend="${r.botRefundStatus == 'pendiente_supervisor'} ? 'badge-pendiente' :
+                                             (${r.refundResult == 'aprobado'} ? 'badge-aprobado' :
+                                             (${r.refundResult == 'denegado' || r.refundResult == 'rechazado_supervisor'} ? 'badge-denegado' : 'badge-pendiente'))"
+                              th:text="${r.botRefundStatus == 'pendiente_supervisor'} ? 'Pendiente' :
+                                       (${r.refundResult == 'aprobado'} ? 'Aprobado' :
+                                       (${r.refundResult == 'denegado'} ? 'Denegado' :
+                                       (${r.refundResult == 'rechazado_supervisor'} ? 'Rechazado' : '-')))">
+                        </span>
+                    </td>
+                    <td th:text="${r.conversacion.conversationCreatedAt != null ?
+                        #temporals.format(r.conversacion.conversationCreatedAt, 'dd MMM') : '-'}">-</td>
+                    <td><i class="ti ti-chevron-right"></i></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(reembolsos)}">
+                    <td colspan="7" style="text-align:center; color:#94a3b8; padding:32px;">
+                        No hay solicitudes de reembolso con los filtros seleccionados.
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="cerrarDetalle()"></div>
+
+<!-- PANEL DETALLE -->
+<div class="slide-panel" id="detalle-panel">
+    <div class="slide-header">
+        <div>
+            <div class="slide-name" id="dp-titulo">Solicitud de reembolso</div>
+            <div class="slide-sub" id="dp-sub"></div>
+        </div>
+        <button class="close-btn" onclick="cerrarDetalle()">
+            <i class="ti ti-x"></i>
+        </button>
+    </div>
+    <div class="slide-body" id="dp-body">
+        <div style="text-align:center; color:#94a3b8; font-size:13px; padding:40px;">
+            Cargando...
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/reembolsos.js}"></script>
+</body>
+</html>

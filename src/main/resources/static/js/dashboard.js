@@ -52,6 +52,13 @@ function openPanel(id) {
             document.getElementById('slide-panel').classList.add('open');
             document.getElementById('overlay').classList.add('show');
             cargarMensajes(id);
+            // Mostrar u ocultar el botón de reembolso según el contact reason
+            const btnReembolsoWrap = document.getElementById('btn-reembolso-wrap');
+            if (btnReembolsoWrap) {
+                btnReembolsoWrap.style.display = c.contactReason === 'refund_request' ? 'block' : 'none';
+            }
+            // Cerrar panel de reembolso si quedó abierto de la conversación anterior
+            cerrarPanelReembolso();
         });
 }
 
@@ -180,6 +187,7 @@ function confirmarTransferencia() {
 function closePanel() {
     document.getElementById('slide-panel').classList.remove('open');
     document.getElementById('overlay').classList.remove('show');
+    cerrarPanelReembolso();
     conversacionActualId = null;
 }
 
@@ -296,7 +304,7 @@ function cargarMensajesPortal(id) {
                 div.textContent = m.contenido;
                 lista.appendChild(div);
             });
-            lista.scrollTop = lista.scrollHeight;
+            lista.scrollTop = lista.scrollHeight; // auto-scroll al último mensaje
         })
         .catch(err => console.error('Error cargando mensajes del portal:', err));
 }
@@ -353,7 +361,7 @@ function enviarMensajePortal() {
             portalEnviando = false;
             input.disabled = false;
             if (sendBtn) sendBtn.disabled = false;
-            if (noMasBtn) noMasBtn.disabled = false;
+            if (noMasBtn && noMasBtn.style.display !== 'none') noMasBtn.disabled = false;
         });
 }
 
@@ -373,6 +381,8 @@ function ocultarEscribiendoPortal() {
 }
 
 function cerrarSinMasPreguntas() {
+    const btn = document.getElementById('portal-btn-no-mas');
+    if (btn) btn.disabled = true;
     document.getElementById('portal-reply-input').value = 'No tengo más preguntas, gracias';
     enviarMensajePortal();
 }
@@ -391,51 +401,305 @@ const portalChatDiv = document.getElementById('portal-chat');
 if (portalChatDiv) {
     cargarMensajesPortal(portalChatDiv.getAttribute('data-id'));
 }
+// === Panel de reembolso ===
+let reembolsoData = {};
+
+function abrirPanelReembolso() {
+    if (!conversacionActualId) return;
+    fetch('/reembolso/' + conversacionActualId)
+        .then(res => res.json())
+        .then(data => {
+            if (data.status !== 'ok') return;
+            reembolsoData = data;
+            renderPanelReembolso(data);
+            document.getElementById('reembolso-panel').style.display = 'flex';
+            setTimeout(() => document.getElementById('reembolso-panel').classList.add('open'), 10);
+        })
+        .catch(err => console.error('Error cargando reembolso:', err));
+}
+
+function cerrarPanelReembolso() {
+    const panel = document.getElementById('reembolso-panel');
+    panel.classList.remove('open');
+    setTimeout(() => panel.style.display = 'none', 200);
+}
+
+function renderPanelReembolso(data) {
+    const body = document.getElementById('reembolso-panel-body');
+    const precio = data.precio || 0;
+    const bloqueado = data.orderStatus === 'completed';
+    const estado = data.botRefundStatus;
+
+    // Caso: visa ya entregada — formulario bloqueado
+    if (bloqueado) {
+        body.innerHTML = `
+            <div class="reembolso-alerta">
+                <i class="ti ti-alert-circle"></i>
+                <div>
+                    <strong>Reembolso no procede</strong><br>
+                    La visa ya fue entregada (estado: completed). Según política, no se puede procesar un reembolso.
+                </div>
+            </div>`;
+        return;
+    }
+
+    // Caso: ya tiene resultado final
+    // Caso: rechazado por supervisor — el agente puede reintentar o cerrar
+    if (estado === 'rechazado_supervisor') {
+        body.innerHTML = `
+        <div class="reembolso-alerta" style="background:#fef3c7; border-color:#fde68a; color:#92400e;">
+            <i class="ti ti-alert-circle" style="color:#d97706;"></i>
+            <div>
+                <strong>Solicitud rechazada por el supervisor</strong><br>
+                ${data.supervisorNotes ? data.supervisorNotes : 'Sin nota adicional.'}
+            </div>
+        </div>
+        <div class="reembolso-field">
+            <label>Motivo que justifica el reembolso</label>
+            <select id="ref-motivo">
+                <option value="amenaza_legal" ${data.refundReasonCategory === 'amenaza_legal' ? 'selected' : ''}>Amenaza de acción legal</option>
+                <option value="redes_sociales" ${data.refundReasonCategory === 'redes_sociales' ? 'selected' : ''}>Publicación en redes sociales</option>
+                <option value="error_empresa" ${data.refundReasonCategory === 'error_empresa' ? 'selected' : ''}>Error comprobado de la empresa</option>
+            </select>
+        </div>
+        <div class="reembolso-grid">
+            <div class="reembolso-field">
+                <label>Sugerido (S/)</label>
+                <input type="text" value="${precio.toFixed(2)}" readonly/>
+            </div>
+            <div class="reembolso-field">
+                <label>Acordado (S/)</label>
+                <input type="number" id="ref-monto" value="${data.refundAmount?.toFixed(2)}"
+                       step="0.01" oninput="actualizarPorcentaje(${precio})"/>
+            </div>
+        </div>
+        <div class="reembolso-field">
+            <label>Porcentaje</label>
+            <input type="text" id="ref-porcentaje" value="${data.refundPercent}%" readonly/>
+        </div>
+        <div class="reembolso-field">
+            <label>Notas para el supervisor</label>
+            <textarea id="ref-notas" rows="2" placeholder="Explica los cambios realizados...">${data.agentNotes || ''}</textarea>
+        </div>
+        <div class="reembolso-acciones">
+            <button class="btn-reembolso-aprobar" onclick="enviarASupervisor(${precio})">
+                Reintentar solicitud
+            </button>
+            <button class="btn-reembolso-denegar" onclick="cerrarDefinitivamente()">
+                Cerrar definitivamente
+            </button>
+        </div>`;
+        return;
+    }
+
+// Caso: cerrado definitivamente
+    if (estado === 'cerrado') {
+        const textos = {
+            'aprobado': '✅ Reembolso aprobado y enviado a finanzas.',
+            'denegado': '❌ Reembolso denegado definitivamente.',
+        };
+        body.innerHTML = `<div class="reembolso-resultado">${textos[data.refundResult] || 'Caso cerrado.'}</div>`;
+        return;
+    }
+
+    // Caso: pendiente de aprobación del supervisor
+    if (estado === 'pendiente_supervisor') {
+        const esSupervisor = document.querySelector('.sidebar-agent-role')?.textContent?.includes('Supervisor')
+            || document.querySelector('.sidebar-agent-role')?.textContent?.includes('Administrador');
+
+        body.innerHTML = `
+            <div class="reembolso-info-box">
+                <strong style="font-size:13px; margin-bottom:4px;">Pendiente de aprobación</strong>
+                <div class="reembolso-info-row"><span>Motivo</span><span>${traducirMotivo(data.refundReasonCategory)}</span></div>
+                <div class="reembolso-info-row"><span>Monto acordado</span><span>S/ ${data.refundAmount?.toFixed(2)}</span></div>
+                <div class="reembolso-info-row"><span>Porcentaje</span><span>${data.refundPercent}%</span></div>
+                ${data.agentNotes ? `<div class="reembolso-info-row"><span>Notas agente</span><span>${data.agentNotes}</span></div>` : ''}
+            </div>
+            ${esSupervisor ? `
+            <div class="reembolso-field">
+                <label>Monto final a devolver (S/)</label>
+                <input type="number" id="sup-monto" value="${data.refundAmount?.toFixed(2)}" step="0.01"/>
+            </div>
+            <div class="reembolso-field">
+                <label>Notas para finanzas</label>
+                <textarea id="sup-notas" rows="3" placeholder="Instrucciones para el área de finanzas..."></textarea>
+            </div>
+            <div class="reembolso-acciones">
+                <button class="btn-reembolso-aprobar" onclick="aprobarReembolso()">Aprobar y enviar a finanzas</button>
+                <button class="btn-reembolso-denegar" onclick="rechazarReembolso()">Rechazar solicitud</button>
+            </div>` : `<p style="font-size:12px; color:var(--color-text-tertiary); text-align:center;">En espera de aprobación del supervisor.</p>`}
+        `;
+        return;
+    }
+
+    // Caso: formulario inicial para el agente
+    body.innerHTML = `
+        <div class="reembolso-field">
+            <label>Motivo que justifica el reembolso</label>
+            <select id="ref-motivo">
+                <option value="amenaza_legal">Amenaza de acción legal</option>
+                <option value="redes_sociales">Publicación en redes sociales</option>
+                <option value="error_empresa">Error comprobado de la empresa</option>
+            </select>
+        </div>
+        <div class="reembolso-grid">
+            <div class="reembolso-field">
+                <label>Monto sugerido (S/)</label>
+                <input type="text" id="ref-sugerido" value="${precio.toFixed(2)}" readonly/>
+            </div>
+            <div class="reembolso-field">
+                <label>Monto acordado (S/)</label>
+                <input type="number" id="ref-monto" value="${precio.toFixed(2)}" step="0.01"
+                       oninput="actualizarPorcentaje(${precio})"/>
+            </div>
+        </div>
+        <div class="reembolso-field">
+            <label>Porcentaje del precio original</label>
+            <input type="text" id="ref-porcentaje" value="100%" readonly/>
+        </div>
+        <div class="reembolso-field">
+            <label>Notas para el supervisor</label>
+            <textarea id="ref-notas" rows="3" placeholder="Contexto adicional para la aprobación..."></textarea>
+        </div>
+        <div class="reembolso-acciones">
+            <button class="btn-reembolso-aprobar" onclick="enviarASupervisor(${precio})">Enviar a supervisor</button>
+            <button class="btn-reembolso-denegar" onclick="denegarReembolso()">Denegar reembolso</button>
+        </div>
+    `;
+}
+
+function traducirMotivo(key) {
+    const map = {
+        'amenaza_legal': 'Amenaza de acción legal',
+        'redes_sociales': 'Publicación en redes sociales',
+        'error_empresa': 'Error comprobado de la empresa'
+    };
+    return map[key] || key;
+}
+
+function actualizarPorcentaje(precio) {
+    const monto = parseFloat(document.getElementById('ref-monto').value) || 0;
+    const pct = precio > 0 ? ((monto / precio) * 100).toFixed(1) : 0;
+    document.getElementById('ref-porcentaje').value = pct + '%';
+}
+
+function enviarASupervisor(precio) {
+    const motivo = document.getElementById('ref-motivo').value;
+    const monto = parseFloat(document.getElementById('ref-monto').value);
+    const notas = document.getElementById('ref-notas').value;
+
+    if (!monto || monto <= 0) { alert('Ingresa un monto válido.'); return; }
+
+    fetch('/reembolso/' + conversacionActualId + '/enviar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `reasonCategory=${encodeURIComponent(motivo)}&amount=${monto}&precio=${precio}&agentNotes=${encodeURIComponent(notas)}`
+    })
+        .then(res => res.json())
+        .then(data => { if (data.status === 'ok') abrirPanelReembolso(); })
+        .catch(err => console.error(err));
+}
+
+function denegarReembolso() {
+    if (!confirm('¿Confirmas que el reembolso será denegado?')) return;
+    fetch('/reembolso/' + conversacionActualId + '/denegar', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => { if (data.status === 'ok') abrirPanelReembolso(); })
+        .catch(err => console.error(err));
+}
+
+function aprobarReembolso() {
+    const montoFinal = parseFloat(document.getElementById('sup-monto').value);
+    const notas = document.getElementById('sup-notas').value;
+    const precio = reembolsoData.precio || 0;
+
+    if (!montoFinal || montoFinal <= 0) { alert('Ingresa un monto final válido.'); return; }
+    if (!confirm('¿Confirmas la aprobación y envío a finanzas?')) return;
+
+    fetch('/reembolso/' + conversacionActualId + '/aprobar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `montoFinal=${montoFinal}&precio=${precio}&supervisorNotes=${encodeURIComponent(notas)}`
+    })
+        .then(res => res.json())
+        .then(data => { if (data.status === 'ok') abrirPanelReembolso(); })
+        .catch(err => console.error(err));
+}
+
+function rechazarReembolso() {
+    const notas = document.getElementById('sup-notas')?.value || '';
+    if (!confirm('¿Confirmas el rechazo de esta solicitud?')) return;
+
+    fetch('/reembolso/' + conversacionActualId + '/rechazar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `supervisorNotes=${encodeURIComponent(notas)}`
+    })
+        .then(res => res.json())
+        .then(data => { if (data.status === 'ok') abrirPanelReembolso(); })
+        .catch(err => console.error(err));
+}
+
+function cerrarDefinitivamente() {
+    if (!conversacionActualId) return;
+    if (!confirm('¿Confirmas que el reembolso será denegado definitivamente?')) return;
+
+    fetch('/reembolso/' + conversacionActualId + '/cerrar-definitivo', {
+        method: 'POST'
+    })
+        .then(res => res.json())
+        .then(data => { if (data.status === 'ok') abrirPanelReembolso(); })
+        .catch(err => console.error(err));
+}
+
 
 // FAB arrastrable
 const fab = document.querySelector('.fab');
-let isDragging = false;
-let startX, startY, startLeft, startBottom;
+if (fab) {
+    let isDragging = false;
+    let startX, startY, startLeft, startBottom;
 
-fab.addEventListener('mousedown', (e) => {
-    isDragging = false;
-    startX = e.clientX;
-    startY = e.clientY;
-    startLeft = fab.getBoundingClientRect().left;
-    startBottom = window.innerHeight - fab.getBoundingClientRect().bottom;
+    fab.addEventListener('mousedown', (e) => {
+        isDragging = false;
+        startX = e.clientX;
+        startY = e.clientY;
+        startLeft = fab.getBoundingClientRect().left;
+        startBottom = window.innerHeight - fab.getBoundingClientRect().bottom;
 
-    const onMouseMove = (e) => {
-        const dx = Math.abs(e.clientX - startX);
-        const dy = Math.abs(e.clientY - startY);
-        if (dx > 5 || dy > 5) isDragging = true;
+        const onMouseMove = (e) => {
+            const dx = Math.abs(e.clientX - startX);
+            const dy = Math.abs(e.clientY - startY);
+            if (dx > 5 || dy > 5) isDragging = true;
 
-        const newLeft = startLeft + (e.clientX - startX);
-        const newBottom = startBottom - (e.clientY - startY);
+            const newLeft = startLeft + (e.clientX - startX);
+            const newBottom = startBottom - (e.clientY - startY);
+            const newFabLeft = Math.max(0, Math.min(window.innerWidth - 60, newLeft));
+            const newFabBottom = Math.max(0, Math.min(window.innerHeight - 60, newBottom));
+            fab.style.left = newFabLeft + 'px';
+            fab.style.bottom = newFabBottom + 'px';
+            fab.style.right = 'auto';
+            const chatWindow = document.getElementById('chat-window');
+            if (chatWindow) {
+                chatWindow.style.left = newFabLeft + 'px';
+                chatWindow.style.bottom = (newFabBottom + 60) + 'px';
+                chatWindow.style.right = 'auto';
+            }
+        };
 
-        const newFabLeft = Math.max(0, Math.min(window.innerWidth - 60, newLeft));
-        const newFabBottom = Math.max(0, Math.min(window.innerHeight - 60, newBottom));
-        fab.style.left = newFabLeft + 'px';
-        fab.style.bottom = newFabBottom + 'px';
-        fab.style.right = 'auto';
-        const chatWindow = document.getElementById('chat-window');
-        chatWindow.style.left = newFabLeft + 'px';
-        chatWindow.style.bottom = (newFabBottom + 60) + 'px';
-        chatWindow.style.right = 'auto';
-    };
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
 
-    const onMouseUp = () => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-    };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-});
-
-fab.addEventListener('click', (e) => {
-    if (isDragging) {
-        e.stopPropagation();
-        return;
-    }
-    toggleChat();
-});
+    fab.addEventListener('click', (e) => {
+        if (isDragging) {
+            e.stopPropagation();
+            return;
+        }
+        toggleChat();
+    });
+}

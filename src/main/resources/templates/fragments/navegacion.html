@@ -17,6 +17,12 @@
            sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')" title="Estadísticas">
             <i class="ti ti-chart-bar"></i>
         </a>
+        <a href="/reembolso/lista" class="rail-btn"
+           th:classappend="${paginaActiva == 'reembolsos'} ? 'active' : ''"
+           sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
+           title="Reembolsos">
+            <i class="ti ti-receipt-refund"></i>
+        </a>
         <a href="/admin/usuarios" class="rail-btn" th:classappend="${paginaActiva == 'usuarios'} ? 'active' : ''"
            sec:authorize="hasRole('ADMINISTRADOR')" title="Usuarios">
             <i class="ti ti-users"></i>
@@ -83,6 +89,11 @@
                th:classappend="${paginaActiva == 'estadisticas'} ? 'active' : ''"
                sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
                 <i class="ti ti-chart-bar"></i> Estadísticas
+            </a>
+            <a href="/reembolso/lista" class="menu-item"
+               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
+               th:classappend="${paginaActiva == 'reembolsos'} ? 'active' : ''">
+                <i class="ti ti-receipt-refund"></i> Reembolsos
             </a>
 
             <div class="menu-section" sec:authorize="hasRole('ADMINISTRADOR')">Administración</div>

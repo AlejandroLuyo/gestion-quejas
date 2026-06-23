@@ -13,14 +13,25 @@ function mostrarPaso(n) {
 
 function validarPaso(n) {
     const part = document.querySelector('.wizard-part[data-part="' + n + '"]');
-    const campos = part.querySelectorAll('[required]');
+    const campos = part.querySelectorAll('input[required], select[required]');
+    let valido = true;
+
+    // Limpiar errores previos
+    part.querySelectorAll('.campo-error').forEach(e => e.remove());
+
     for (const campo of campos) {
-        if (!campo.value) {
-            campo.reportValidity();
-            return false;
+        if (!campo.value || campo.value.trim() === '') {
+            campo.style.borderColor = '#dc2626';
+            const error = document.createElement('div');
+            error.className = 'campo-error';
+            error.textContent = 'Este campo es obligatorio.';
+            campo.parentNode.appendChild(error);
+            valido = false;
+        } else {
+            campo.style.borderColor = '';
         }
     }
-    return true;
+    return valido;
 }
 
 function siguientePaso(actual) {
@@ -65,4 +76,14 @@ function verificarOrden() {
             errorDiv.textContent = 'Error al verificar la orden. Intenta nuevamente.';
             errorDiv.style.display = 'block';
         });
+}
+
+
+const formComprarVisa = document.getElementById('form-comprar-visa');
+if (formComprarVisa) {
+    formComprarVisa.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
+    });
 }

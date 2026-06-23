@@ -170,6 +170,11 @@
         </div>
     </div>
     <div class="slide-reply" id="slide-reply">
+        <div id="btn-reembolso-wrap" style="display:none; padding:0 0 8px;">
+            <button class="btn-procesar-reembolso" onclick="abrirPanelReembolso()">
+                <i class="ti ti-receipt-refund"></i> Procesar reembolso
+            </button>
+        </div>
         <div class="slide-reply-actions" id="slide-reply-actions">
             <button class="btn-estado btn-estado-abrir" onclick="cambiarEstado('open')">
                 <i class="ti ti-loader"></i> Abrir
@@ -212,6 +217,17 @@
                 <i class="ti ti-send"></i> Enviar
             </button>
         </div>
+    </div>
+</div>
+
+<!-- PANEL DE REEMBOLSO (izquierda del slide panel) -->
+<div class="reembolso-panel" id="reembolso-panel" style="display:none;">
+    <div class="reembolso-panel-header">
+        <span><i class="ti ti-receipt-refund"></i> Reembolso</span>
+        <button onclick="cerrarPanelReembolso()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="reembolso-panel-body" id="reembolso-panel-body">
+        <!-- Se rellena dinámicamente -->
     </div>
 </div>
 

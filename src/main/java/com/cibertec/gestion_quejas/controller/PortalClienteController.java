@@ -6,7 +6,7 @@ import com.cibertec.gestion_quejas.model.Orden;
 import com.cibertec.gestion_quejas.repository.MensajeRepository;
 import com.cibertec.gestion_quejas.repository.OrdenRepository;
 import com.cibertec.gestion_quejas.service.ConversacionService;
-import com.cibertec.gestion_quejas.service.GeminiService;
+import com.cibertec.gestion_quejas.service.IaService;
 import com.cibertec.gestion_quejas.service.ResultadoCsmate;
 import com.cibertec.gestion_quejas.service.ResultadoTurno;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +34,7 @@ public class PortalClienteController {
     private MensajeRepository mensajeRepository;
 
     @Autowired
-    private GeminiService geminiService;
+    private IaService iaService;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -87,7 +87,7 @@ public class PortalClienteController {
         msgCliente.setCanal("TICKET");
         mensajeRepository.save(msgCliente);
 
-        ResultadoCsmate resultado = geminiService.evaluarConsulta(
+        ResultadoCsmate resultado = iaService.evaluarConsulta(
                 contactReason,
                 mensaje,
                 orden.getProducto().getProductName(),
@@ -143,7 +143,7 @@ public class PortalClienteController {
                 .map(m -> m.getRemitente() + ": " + m.getContenido())
                 .collect(Collectors.joining("\n"));
 
-        ResultadoTurno resultado = geminiService.evaluarTurno(
+        ResultadoTurno resultado = iaService.evaluarTurno(
                 conversacion.getContactReason(),
                 historialTexto,
                 mensaje,
@@ -181,5 +181,23 @@ public class PortalClienteController {
         response.put("estadoConversacion", resultado.getEstado().toString());
         response.put("respuestaBot", contenidoBot);
         return response;
+    }
+
+    @GetMapping("/probar-ia")
+    @ResponseBody
+    public String probarIa() {
+        try {
+            ResultadoCsmate r = iaService.evaluarConsulta(
+                    "status_information",
+                    "Quiero saber el estado de mi orden",
+                    "Visa Turismo",
+                    "Estados Unidos",
+                    "in_progress",
+                    "standard"
+            );
+            return "OK - puede_resolver: " + r.isPuedeResolver() + " | respuesta: " + r.getRespuesta();
+        } catch (Exception e) {
+            return "ERROR: " + e.getMessage();
+        }
     }
 }

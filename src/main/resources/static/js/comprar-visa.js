@@ -78,6 +78,40 @@ function verificarOrden() {
         });
 }
 
+function activarCargaQueja() {
+    const texto = document.getElementById('btn-registrar-texto');
+    const carga = document.getElementById('btn-registrar-carga');
+    if (texto) texto.style.display = 'none';
+    if (carga) carga.style.display = 'inline';
+    // Solo cambio visual — no deshabilitamos el botón para no cancelar el submit
+}
+
+const formPortalCliente = document.getElementById('form-portal-cliente');
+if (formPortalCliente) {
+    formPortalCliente.addEventListener('submit', function() {
+        const btn = document.getElementById('btn-registrar-queja');
+        const texto = document.getElementById('btn-registrar-texto');
+        const carga = document.getElementById('btn-registrar-carga');
+        if (btn && texto && carga) {
+            // Pequeño delay para que el navegador procese el submit primero
+            setTimeout(() => {
+                btn.disabled = true;
+                texto.style.display = 'none';
+                carga.style.display = 'inline';
+            }, 10);
+        }
+
+        setTimeout(() => {
+            if (btn && btn.disabled) {
+                btn.disabled = false;
+                if (texto) texto.style.display = 'inline';
+                if (carga) carga.style.display = 'none';
+                if (texto) texto.innerHTML = '<i class="ti ti-send"></i> Reintentar';
+                if (btn) btn.style.background = '#d97706';
+            }
+        }, 45000);
+    });
+}
 
 const formComprarVisa = document.getElementById('form-comprar-visa');
 if (formComprarVisa) {

@@ -38,7 +38,8 @@
         </div>
 
         <div class="form-card">
-            <form th:action="@{/admin/portal-cliente}" method="post" id="form-portal-cliente">
+            <form th:action="@{/admin/portal-cliente}" method="post" id="form-portal-cliente"
+                  onsubmit="activarCargaQueja()">
 
                 <div class="wizard-part active" data-part="1">
                     <h3>Datos del solicitante</h3>
@@ -80,7 +81,12 @@
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-cancelar" onclick="pasoAnterior(2)"><i class="ti ti-arrow-left"></i> Atrás</button>
-                        <button type="submit" class="btn-guardar">Registrar queja <i class="ti ti-send"></i></button>
+                        <button type="submit" class="btn-guardar" id="btn-registrar-queja">
+                            <span id="btn-registrar-texto"><i class="ti ti-send"></i> Registrar queja</span>
+                            <span id="btn-registrar-carga" style="display:none;">
+                                <i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Procesando...
+                            </span>
+                        </button>
                     </div>
                 </div>
 

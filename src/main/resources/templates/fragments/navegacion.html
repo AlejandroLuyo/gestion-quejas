@@ -5,126 +5,130 @@
 
 <th:block th:fragment="navegacion(paginaActiva, vistaActiva)">
 
-    <!-- ICON RAIL -->
-    <div class="icon-rail">
-        <div class="rail-logo" onclick="toggleSidebar()">
-            <i class="ti ti-headset"></i>
-        </div>
-        <a href="/quejas" class="rail-btn" th:classappend="${paginaActiva == 'quejas'} ? 'active' : ''" title="Quejas">
-            <i class="ti ti-inbox"></i>
-        </a>
-        <a href="/estadisticas" class="rail-btn" th:classappend="${paginaActiva == 'estadisticas'} ? 'active' : ''"
-           sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')" title="Estadísticas">
-            <i class="ti ti-chart-bar"></i>
-        </a>
-        <a href="/reembolso/lista" class="rail-btn"
-           th:classappend="${paginaActiva == 'reembolsos'} ? 'active' : ''"
-           sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
-           title="Reembolsos">
-            <i class="ti ti-receipt-refund"></i>
-        </a>
-        <a href="/admin/usuarios" class="rail-btn" th:classappend="${paginaActiva == 'usuarios'} ? 'active' : ''"
-           sec:authorize="hasRole('ADMINISTRADOR')" title="Usuarios">
-            <i class="ti ti-users"></i>
-        </a>
-        <a href="#" class="rail-btn" title="Configuración">
-            <i class="ti ti-settings"></i>
-        </a>
-        <div class="rail-bottom">
-            <div class="rail-btn" onclick="toggleDark()" title="Modo oscuro">
-                <i class="ti ti-moon" id="dark-icon"></i>
-            </div>
-            <form th:action="@{/logout}" method="post" style="margin:0;">
-                <button type="submit" class="avatar-small" title="Cerrar sesión" style="border:none; cursor:pointer;"
-                        th:text="${#authentication.principal.username.substring(0,2).toUpperCase()}">AJ</button>
-            </form>
-        </div>
-    </div>
-
     <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <span>CSManager</span>
+    <div class="icon-rail sidebar-unificada" id="sidebar">
+
+        <!-- Logo -->
+        <div class="rail-logo sidebar-toggle" onclick="toggleSidebar()">
+            <i class="ti ti-headset"></i>
+            <span class="sidebar-brand">CSManager</span>
         </div>
-        <div class="sidebar-menu">
 
-            <div class="menu-section">Bandeja</div>
-            <a href="/quejas" class="menu-item"
-               th:classappend="${paginaActiva == 'quejas' && (vistaActiva == null || vistaActiva == 'todas')} ? 'active' : ''">
-                <i class="ti ti-layout-dashboard"></i> Vista general
-            </a>
-            <a href="/quejas?vista=asignadas" class="menu-item"
-               th:classappend="${paginaActiva == 'quejas' && vistaActiva == 'asignadas'} ? 'active' : ''">
-                <i class="ti ti-user-check"></i> Asignadas a mí
-            </a>
-            <a href="/quejas?vista=sin-asignar" class="menu-item"
-               th:classappend="${paginaActiva == 'quejas' && vistaActiva == 'sin-asignar'} ? 'active' : ''">
-                <i class="ti ti-users"></i> Sin asignar
+        <!-- Menú -->
+        <div class="sidebar-menu-unificada">
+
+            <div class="menu-section">BANDEJA</div>
+
+            <a href="/quejas"
+               class="rail-btn menu-item-unificado"
+               th:classappend="${paginaActiva == 'quejas'} ? 'active' : ''">
+                <i class="ti ti-inbox"></i>
+                <span>Quejas</span>
             </a>
 
-            <div class="menu-section" sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">Filtros</div>
-            <a href="/quejas?vista=pendientes" class="menu-item"
+            <a href="/estadisticas"
+               class="rail-btn menu-item-unificado"
                sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
-               th:classappend="${paginaActiva == 'quejas' && vistaActiva == 'pendientes'} ? 'active' : ''">
-                <i class="ti ti-clock"></i> Pendientes
-            </a>
-            <a href="/quejas?vista=en-proceso" class="menu-item"
-               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
-               th:classappend="${paginaActiva == 'quejas' && vistaActiva == 'en-proceso'} ? 'active' : ''">
-                <i class="ti ti-loader"></i> En proceso
-            </a>
-            <a href="/quejas?vista=resueltas" class="menu-item"
-               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
-               th:classappend="${paginaActiva == 'quejas' && vistaActiva == 'resueltas'} ? 'active' : ''">
-                <i class="ti ti-circle-check"></i> Resueltas
-            </a>
-            <a href="/quejas?vista=resueltas-ia" class="menu-item"
-               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
-               th:classappend="${paginaActiva == 'quejas' && vistaActiva == 'resueltas-ia'} ? 'active' : ''">
-                <i class="ti ti-robot"></i> Resueltas por IA
+               th:classappend="${paginaActiva == 'estadisticas'} ? 'active' : ''">
+                <i class="ti ti-chart-bar"></i>
+                <span>Estadísticas</span>
             </a>
 
-            <div class="menu-section" sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">Reportes</div>
-            <a href="/estadisticas" class="menu-item"
-               th:classappend="${paginaActiva == 'estadisticas'} ? 'active' : ''"
-               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
-                <i class="ti ti-chart-bar"></i> Estadísticas
-            </a>
-            <a href="/reembolso/lista" class="menu-item"
+            <a href="/reembolso/lista"
+               class="rail-btn menu-item-unificado"
                sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')"
                th:classappend="${paginaActiva == 'reembolsos'} ? 'active' : ''">
-                <i class="ti ti-receipt-refund"></i> Reembolsos
+                <i class="ti ti-receipt-refund"></i>
+                <span>Reembolsos</span>
             </a>
 
-            <div class="menu-section" sec:authorize="hasRole('ADMINISTRADOR')">Administración</div>
-            <a href="/admin/usuarios" class="menu-item"
-               th:classappend="${paginaActiva == 'usuarios'} ? 'active' : ''"
-               sec:authorize="hasRole('ADMINISTRADOR')">
-                <i class="ti ti-users"></i> Usuarios
-            </a>
-
-            <div class="menu-section" sec:authorize="hasRole('ADMINISTRADOR')">Pruebas</div>
-            <a href="/admin/comprar-visa" class="menu-item"
-               th:classappend="${paginaActiva == 'comprar-visa'} ? 'active' : ''"
-               sec:authorize="hasRole('ADMINISTRADOR')">
-                <i class="ti ti-shopping-cart"></i> Comprar visa
-            </a>
-            <a href="/admin/portal-cliente" class="menu-item"
-               th:classappend="${paginaActiva == 'portal-cliente'} ? 'active' : ''"
-               sec:authorize="hasRole('ADMINISTRADOR')">
-                <i class="ti ti-message-2"></i> Portal cliente
-            </a>
-
-        </div>
-        <div class="sidebar-agent">
-            <div class="sidebar-avatar" th:text="${#authentication.principal.username.substring(0,2).toUpperCase()}">AJ</div>
-            <div>
-                <div class="sidebar-agent-name" th:text="${#authentication.principal.username}">Usuario</div>
-                <div class="sidebar-agent-role" sec:authorize="hasRole('ADMINISTRADOR')">Administrador</div>
-                <div class="sidebar-agent-role" sec:authorize="hasRole('SUPERVISOR')">Supervisor</div>
-                <div class="sidebar-agent-role" sec:authorize="hasRole('AGENTE')">Agente</div>
+            <div class="menu-section"
+                 sec:authorize="hasRole('ADMINISTRADOR')">
+                ADMINISTRACIÓN
             </div>
+
+            <a href="/admin/usuarios"
+               class="rail-btn menu-item-unificado"
+               sec:authorize="hasRole('ADMINISTRADOR')"
+               th:classappend="${paginaActiva == 'usuarios'} ? 'active' : ''">
+                <i class="ti ti-users"></i>
+                <span>Usuarios</span>
+            </a>
+
+            <a href="#"
+               class="rail-btn menu-item-unificado">
+                <i class="ti ti-settings"></i>
+                <span>Configuración</span>
+            </a>
+
+            <div class="menu-section"
+                 sec:authorize="hasRole('ADMINISTRADOR')">
+                PRUEBAS
+            </div>
+
+            <a href="/admin/comprar-visa"
+               class="rail-btn menu-item-unificado"
+               sec:authorize="hasRole('ADMINISTRADOR')"
+               th:classappend="${paginaActiva == 'comprar-visa'} ? 'active' : ''">
+                <i class="ti ti-shopping-cart"></i>
+                <span>Comprar visa</span>
+            </a>
+
+            <a href="/admin/portal-cliente"
+               class="rail-btn menu-item-unificado"
+               sec:authorize="hasRole('ADMINISTRADOR')"
+               th:classappend="${paginaActiva == 'portal-cliente'} ? 'active' : ''">
+                <i class="ti ti-message-2"></i>
+                <span>Portal cliente</span>
+            </a>
+
         </div>
+
+        <!-- Parte inferior -->
+        <div class="sidebar-bottom-unificada">
+
+            <div class="rail-btn menu-item-unificado"
+                 onclick="toggleDark()">
+                <i class="ti ti-moon" id="dark-icon"></i>
+                <span>Modo</span>
+            </div>
+
+            <form th:action="@{/logout}" method="post" style="margin:0;">
+                <button type="submit"
+                        class="sidebar-user-btn">
+
+                    <div class="sidebar-avatar"
+                         th:text="${#authentication.principal.username.substring(0,2).toUpperCase()}">
+                        AJ
+                    </div>
+
+                    <div class="sidebar-user-info">
+                        <div class="sidebar-agent-name"
+                             th:text="${#authentication.principal.username}">
+                            Usuario
+                        </div>
+
+                        <div class="sidebar-agent-role"
+                             sec:authorize="hasRole('ADMINISTRADOR')">
+                            Administrador
+                        </div>
+
+                        <div class="sidebar-agent-role"
+                             sec:authorize="hasRole('SUPERVISOR')">
+                            Supervisor
+                        </div>
+
+                        <div class="sidebar-agent-role"
+                             sec:authorize="hasRole('AGENTE')">
+                            Agente
+                        </div>
+                    </div>
+
+                </button>
+            </form>
+
+        </div>
+
     </div>
 
 </th:block>

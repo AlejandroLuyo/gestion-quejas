@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
 <head>
     <meta charset="UTF-8">
     <title>CSManager</title>
@@ -11,15 +12,14 @@
 
 <div th:replace="~{fragments/navegacion :: navegacion('quejas', ${vista})}"></div>
 
-<!-- MAIN WRAPPER -->
 <div class="main-wrapper" id="main-wrapper">
     <div class="topbar">
         <span class="topbar-title" th:text="${tituloVista}">Vista general de quejas</span>
         <div class="topbar-right">
             <i class="ti ti-bell" style="font-size:22px; color:#94a3b8;"></i>
-            <button onclick="toggleDark()" id="dark-btn" class="btn btn-sm"
-                    style="border:1px solid #e2e8f0; color:#64748b; font-size:13px;">
-                <i class="ti ti-moon" id="dark-icon-btn"></i> Modo oscuro
+            <button onclick="toggleDark()" id="dark-btn" class="theme-toggle-btn" type="button">
+                <i class="ti ti-moon" id="dark-icon-btn"></i>
+                <span id="dark-text-btn">Modo oscuro</span>
             </button>
         </div>
     </div>
@@ -42,6 +42,48 @@
                 <div class="stat-label">Resueltas</div>
                 <div class="stat-value" style="color:#16a34a;" th:text="${resueltas}">0</div>
             </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div class="filtros-vista">
+            <a th:href="@{/quejas}" class="filtro-chip"
+               th:classappend="${vista == null || vista == 'todas'} ? ' active' : ''">
+                <i class="ti ti-layout-dashboard"></i><span>Vista general</span>
+            </a>
+
+            <a th:href="@{/quejas(vista='asignadas')}" class="filtro-chip"
+               th:classappend="${vista == 'asignadas'} ? ' active' : ''">
+                <i class="ti ti-user-check"></i><span>Asignadas a mí</span>
+            </a>
+
+            <a th:href="@{/quejas(vista='sin-asignar')}" class="filtro-chip"
+               th:classappend="${vista == 'sin-asignar'} ? ' active' : ''">
+                <i class="ti ti-users"></i><span>Sin asignar</span>
+            </a>
+
+            <a th:href="@{/quejas(vista='pendientes')}" class="filtro-chip"
+               th:classappend="${vista == 'pendientes'} ? ' active' : ''"
+               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+                <i class="ti ti-clock"></i><span>Pendientes</span>
+            </a>
+
+            <a th:href="@{/quejas(vista='en-proceso')}" class="filtro-chip"
+               th:classappend="${vista == 'en-proceso'} ? ' active' : ''"
+               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+                <i class="ti ti-loader"></i><span>En proceso</span>
+            </a>
+
+            <a th:href="@{/quejas(vista='resueltas')}" class="filtro-chip"
+               th:classappend="${vista == 'resueltas'} ? ' active' : ''"
+               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+                <i class="ti ti-circle-check"></i><span>Resueltas</span>
+            </a>
+
+            <a th:href="@{/quejas(vista='resueltas-ia')}" class="filtro-chip"
+               th:classappend="${vista == 'resueltas-ia'} ? ' active' : ''"
+               sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+                <i class="ti ti-robot"></i><span>Resueltas IA</span>
+            </a>
         </div>
 
         <div class="quejas-table">
@@ -82,25 +124,24 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="conv : ${conversaciones}"
-                    th:onclick="|openPanel(${conv.conversacionId})|">
+                <tr th:each="conv : ${conversaciones}" th:onclick="|openPanel(${conv.conversacionId})|">
                     <td th:text="${conv.orderId != null ? conv.orderId : '-'}"></td>
                     <td th:text="${conv.contactReason != null ? conv.contactReason : '-'}"></td>
                     <td>
-                            <span class="source-badge"
-                                  th:classappend="${conv.channel == 'email'} ? 'source-email' :
-                                                 (${conv.channel == 'whatsapp'} ? 'source-whatsapp' : 'source-ticket')">
-                                <i th:classappend="${conv.channel == 'email'} ? 'ti ti-mail' :
-                                                  (${conv.channel == 'whatsapp'} ? 'ti ti-brand-whatsapp' : 'ti ti-ticket')"></i>
-                                <span th:text="${conv.channel != null ? conv.channel : 'ticket'}"></span>
-                            </span>
+                        <span class="source-badge"
+                              th:classappend="${conv.channel == 'email'} ? 'source-email' :
+                                             (${conv.channel == 'whatsapp'} ? 'source-whatsapp' : 'source-ticket')">
+                            <i th:classappend="${conv.channel == 'email'} ? 'ti ti-mail' :
+                                              (${conv.channel == 'whatsapp'} ? 'ti ti-brand-whatsapp' : 'ti ti-ticket')"></i>
+                            <span th:text="${conv.channel != null ? conv.channel : 'ticket'}"></span>
+                        </span>
                     </td>
                     <td>
-                            <span class="status-badge"
-                                  th:classappend="${conv.currentConversationState == 'open'} ? 'status-EN_PROCESO' :
-                                                 (${conv.currentConversationState == 'resolved'} ? 'status-RESUELTO' : 'status-PENDIENTE')"
-                                  th:text="${conv.currentConversationState != null ? conv.currentConversationState : '-'}">
-                            </span>
+                        <span class="status-badge"
+                              th:classappend="${conv.currentConversationState == 'open'} ? 'status-EN_PROCESO' :
+                                             (${conv.currentConversationState == 'resolved'} ? 'status-RESUELTO' : 'status-PENDIENTE')"
+                              th:text="${conv.currentConversationState != null ? conv.currentConversationState : '-'}">
+                        </span>
                     </td>
                     <td th:text="${conv.teammateCurrentlyAssigned != null ? conv.teammateCurrentlyAssigned : 'Sin asignar'}"></td>
                     <td th:text="${conv.conversationCreatedAt != null ? #temporals.format(conv.conversationCreatedAt, 'dd MMM') : '-'}"></td>
@@ -126,6 +167,7 @@
             <i class="ti ti-x"></i>
         </button>
     </div>
+
     <div class="slide-body">
         <div id="sp-banner-ia" class="banner-resuelta-ia" style="display:none;">
             <div class="banner-resuelta-ia-titulo">
@@ -134,32 +176,16 @@
             <p id="sp-csat-info" class="banner-resuelta-ia-csat"></p>
             <button class="btn-reabrir-derivar" onclick="reabrirYDerivar()">Reabrir y derivar a un agente</button>
         </div>
+
         <div class="slide-attrs">
-            <div>
-                <div class="attr-label">Contact reason</div>
-                <div class="attr-value" id="sp-reason"></div>
-            </div>
-            <div>
-                <div class="attr-label">Estado</div>
-                <div class="attr-value" id="sp-estado"></div>
-            </div>
-            <div>
-                <div class="attr-label">Canal</div>
-                <div class="attr-value" id="sp-origen"></div>
-            </div>
-            <div>
-                <div class="attr-label">Order ID</div>
-                <div class="attr-value" id="sp-fecha"></div>
-            </div>
-            <div>
-                <div class="attr-label">Agente asignado</div>
-                <div class="attr-value" id="sp-agente"></div>
-            </div>
-            <div>
-                <div class="attr-label">Fecha</div>
-                <div class="attr-value" id="sp-fechaCreacion"></div>
-            </div>
+            <div><div class="attr-label">Contact reason</div><div class="attr-value" id="sp-reason"></div></div>
+            <div><div class="attr-label">Estado</div><div class="attr-value" id="sp-estado"></div></div>
+            <div><div class="attr-label">Canal</div><div class="attr-value" id="sp-origen"></div></div>
+            <div><div class="attr-label">Order ID</div><div class="attr-value" id="sp-fecha"></div></div>
+            <div><div class="attr-label">Agente asignado</div><div class="attr-value" id="sp-agente"></div></div>
+            <div><div class="attr-label">Fecha</div><div class="attr-value" id="sp-fechaCreacion"></div></div>
         </div>
+
         <div class="conversation">
             <div class="conv-title">Conversación</div>
             <div id="mensajes-list" style="display:flex; flex-direction:column; gap:10px; padding:0 18px 16px;">
@@ -169,12 +195,14 @@
             </div>
         </div>
     </div>
+
     <div class="slide-reply" id="slide-reply">
         <div id="btn-reembolso-wrap" style="display:none; padding:0 0 8px;">
             <button class="btn-procesar-reembolso" onclick="abrirPanelReembolso()">
                 <i class="ti ti-receipt-refund"></i> Procesar reembolso
             </button>
         </div>
+
         <div class="slide-reply-actions" id="slide-reply-actions">
             <button class="btn-estado btn-estado-abrir" onclick="cambiarEstado('open')">
                 <i class="ti ti-loader"></i> Abrir
@@ -190,14 +218,18 @@
         <div id="form-transferencia" class="form-transferencia" style="display:none;">
             <label class="transferencia-label">Transferir a</label>
             <select id="transferencia-select" class="transferencia-select"></select>
+
             <label class="transferencia-label">Nota para el nuevo agente</label>
             <textarea id="transferencia-nota" class="transferencia-textarea" rows="3"
                       placeholder="Contexto del caso para quien lo recibe..."></textarea>
+
             <div class="transferencia-botones">
                 <button class="btn-cancelar-transferencia" onclick="cancelarTransferencia()">Cancelar</button>
-                <button class="btn-confirmar-transferencia" id="btn-confirmar-transferencia" onclick="confirmarTransferencia()">Confirmar transferencia</button>
+                <button class="btn-confirmar-transferencia" id="btn-confirmar-transferencia"
+                        onclick="confirmarTransferencia()">Confirmar transferencia</button>
             </div>
         </div>
+
         <div id="link-encuesta" class="link-encuesta-box" style="display:none;">
             <div class="link-encuesta-label">
                 <i class="ti ti-link"></i> Link de encuesta generado:
@@ -209,6 +241,7 @@
                 </button>
             </div>
         </div>
+
         <div class="reply-row">
             <input type="text" id="reply-input" class="reply-input"
                    placeholder="Escribe una respuesta..."
@@ -220,37 +253,41 @@
     </div>
 </div>
 
-<!-- PANEL DE REEMBOLSO (izquierda del slide panel) -->
+<!-- PANEL DE REEMBOLSO -->
 <div class="reembolso-panel" id="reembolso-panel" style="display:none;">
     <div class="reembolso-panel-header">
         <span><i class="ti ti-receipt-refund"></i> Reembolso</span>
         <button onclick="cerrarPanelReembolso()"><i class="ti ti-x"></i></button>
     </div>
-    <div class="reembolso-panel-body" id="reembolso-panel-body">
-        <!-- Se rellena dinámicamente -->
-    </div>
+    <div class="reembolso-panel-body" id="reembolso-panel-body"></div>
 </div>
 
 <!-- CHATBOT -->
-<div class="chat-window closed" id="chat-window">
-    <div class="chat-header">
-        <div class="chat-dot"></div>
-        <span class="chat-title">CSMate</span>
-    </div>
-    <div class="chat-messages" id="chat-messages">
-        <div class="msg msg-bot">Hola, soy CSMate. ¿En qué puedo ayudarte?</div>
-    </div>
-    <div class="chat-input-row">
-        <input type="text" id="chat-input" placeholder="Escribe aquí..."
-               onkeydown="if(event.key==='Enter') sendMsg()"/>
-        <button class="chat-send" onclick="sendMsg()">
-            <i class="ti ti-send"></i>
-        </button>
-    </div>
-</div>
+<div class="chat-container">
+    <div class="chat-window closed" id="chat-window">
+        <div class="chat-header">
+            <div class="chat-dot"></div>
+            <span class="chat-title">CSMate</span>
+        </div>
 
-<div class="fab">
-    <i class="ti ti-message-chatbot"></i>
+        <div class="chat-messages" id="chat-messages">
+            <div class="msg msg-bot">
+                Hola, soy CSMate. ¿En qué puedo ayudarte?
+            </div>
+        </div>
+
+        <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Escribe aquí..."
+                   onkeydown="if(event.key==='Enter') sendMsg()"/>
+            <button class="chat-send" onclick="sendMsg()">
+                <i class="ti ti-send"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="fab" id="fab">
+        <i class="ti ti-message-chatbot"></i>
+    </div>
 </div>
 
 <script th:src="@{/js/dashboard.js}"></script>

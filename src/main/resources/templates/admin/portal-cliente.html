@@ -38,8 +38,7 @@
         </div>
 
         <div class="form-card">
-            <form th:action="@{/admin/portal-cliente}" method="post" id="form-portal-cliente"
-                  onsubmit="activarCargaQueja()">
+            <form th:action="@{/admin/portal-cliente}" method="post" id="form-portal-cliente">
 
                 <div class="wizard-part active" data-part="1">
                     <h3>Datos del solicitante</h3>
@@ -75,18 +74,30 @@
                             <option value="spam">Spam</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Descripción</label>
-                        <textarea name="mensaje" rows="4" placeholder="Describe tu situación con detalle..." required></textarea>
+                    <div class="form-group descripcion-group">
+                        <label class="descripcion-label">
+                            <i class="ti ti-message-circle"></i>
+                            Descripción
+                        </label>
+
+                        <div class="descripcion-box">
+        <textarea
+                id="descripcion"
+                name="mensaje"
+                rows="5"
+                maxlength="1000"
+                placeholder="Cuéntanos qué ocurrió, cuándo pasó y cómo podemos ayudarte..."
+                required></textarea>
+
+                            <div class="descripcion-footer">
+                                <span>Incluye detalles importantes del caso</span>
+                                <span id="contador-descripcion">0/1000</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-cancelar" onclick="pasoAnterior(2)"><i class="ti ti-arrow-left"></i> Atrás</button>
-                        <button type="submit" class="btn-guardar" id="btn-registrar-queja">
-                            <span id="btn-registrar-texto"><i class="ti ti-send"></i> Registrar queja</span>
-                            <span id="btn-registrar-carga" style="display:none;">
-                                <i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> Procesando...
-                            </span>
-                        </button>
+                        <button type="submit" class="btn-guardar">Registrar queja <i class="ti ti-send"></i></button>
                     </div>
                 </div>
 

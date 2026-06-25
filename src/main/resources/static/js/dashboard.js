@@ -3,6 +3,7 @@ let conversacionActualId = null;
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const wrapper = document.getElementById('main-wrapper');
+
     sidebar.classList.toggle('open');
     wrapper.classList.toggle('sidebar-open');
 }
@@ -13,9 +14,27 @@ function toggleChat() {
 
 function toggleDark() {
     document.body.classList.toggle('dark');
+
     const isDark = document.body.classList.contains('dark');
-    const icon = document.getElementById('dark-icon');
-    icon.className = isDark ? 'ti ti-sun' : 'ti ti-moon';
+
+    // Icono del menú lateral
+    const sidebarIcon = document.getElementById('dark-icon');
+    if (sidebarIcon) {
+        sidebarIcon.className = isDark ? 'ti ti-sun' : 'ti ti-moon';
+    }
+
+    // Botón superior
+    const topIcon = document.getElementById('dark-icon-btn');
+    const topText = document.getElementById('dark-text-btn');
+
+    if (topIcon) {
+        topIcon.className = isDark ? 'ti ti-sun' : 'ti ti-moon';
+    }
+
+    if (topText) {
+        topText.textContent = isDark ? 'Modo claro' : 'Modo oscuro';
+    }
+
     localStorage.setItem('darkMode', isDark);
 }
 
@@ -258,11 +277,33 @@ function enviarRespuesta() {
         .catch(err => console.error('Error enviando respuesta:', err));
 }
 
-if (localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark');
-    const icon = document.getElementById('dark-icon');
-    if (icon) icon.className = 'ti ti-sun';
-}
+document.addEventListener("DOMContentLoaded", () => {
+
+    const isDark = localStorage.getItem("darkMode") === "true";
+
+    if (isDark) {
+        document.body.classList.add("dark");
+    }
+
+    // Icono del menú lateral
+    const sidebarIcon = document.getElementById("dark-icon");
+    if (sidebarIcon) {
+        sidebarIcon.className = isDark ? "ti ti-sun" : "ti ti-moon";
+    }
+
+    // Botón superior
+    const topIcon = document.getElementById("dark-icon-btn");
+    const topText = document.getElementById("dark-text-btn");
+
+    if (topIcon) {
+        topIcon.className = isDark ? "ti ti-sun" : "ti ti-moon";
+    }
+
+    if (topText) {
+        topText.textContent = isDark ? "Modo claro" : "Modo oscuro";
+    }
+
+});
 
 function resolverYEnviarEncuesta() {
     if (!conversacionActualId) return;
@@ -654,36 +695,39 @@ function cerrarDefinitivamente() {
 
 
 // FAB arrastrable
-const fab = document.querySelector('.fab');
-if (fab) {
+const chatContainer = document.querySelector('.chat-container');
+const fab = document.getElementById('fab');
+
+if (chatContainer && fab) {
     let isDragging = false;
-    let startX, startY, startLeft, startBottom;
+    let startX, startY, startRight, startBottom;
 
     fab.addEventListener('mousedown', (e) => {
         isDragging = false;
+
         startX = e.clientX;
         startY = e.clientY;
-        startLeft = fab.getBoundingClientRect().left;
-        startBottom = window.innerHeight - fab.getBoundingClientRect().bottom;
+
+        const rect = chatContainer.getBoundingClientRect();
+        startRight = window.innerWidth - rect.right;
+        startBottom = window.innerHeight - rect.bottom;
 
         const onMouseMove = (e) => {
-            const dx = Math.abs(e.clientX - startX);
-            const dy = Math.abs(e.clientY - startY);
-            if (dx > 5 || dy > 5) isDragging = true;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
 
-            const newLeft = startLeft + (e.clientX - startX);
-            const newBottom = startBottom - (e.clientY - startY);
-            const newFabLeft = Math.max(0, Math.min(window.innerWidth - 60, newLeft));
-            const newFabBottom = Math.max(0, Math.min(window.innerHeight - 60, newBottom));
-            fab.style.left = newFabLeft + 'px';
-            fab.style.bottom = newFabBottom + 'px';
-            fab.style.right = 'auto';
-            const chatWindow = document.getElementById('chat-window');
-            if (chatWindow) {
-                chatWindow.style.left = newFabLeft + 'px';
-                chatWindow.style.bottom = (newFabBottom + 60) + 'px';
-                chatWindow.style.right = 'auto';
+            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                isDragging = true;
             }
+
+            let newRight = startRight - dx;
+            let newBottom = startBottom - dy;
+
+            newRight = Math.max(12, Math.min(window.innerWidth - 380, newRight));
+            newBottom = Math.max(12, Math.min(window.innerHeight - 80, newBottom));
+
+            chatContainer.style.right = newRight + 'px';
+            chatContainer.style.bottom = newBottom + 'px';
         };
 
         const onMouseUp = () => {
@@ -700,6 +744,7 @@ if (fab) {
             e.stopPropagation();
             return;
         }
+
         toggleChat();
     });
 }

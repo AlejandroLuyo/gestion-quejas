@@ -46,10 +46,9 @@ public class PortalClienteController {
 
     @GetMapping("/verificar-orden")
     @ResponseBody
-    public Map<String, Object> verificarOrden(@RequestParam String orderId) {
+    public Map<String, Object> verificarOrden(@RequestParam Long orderId) {
         Map<String, Object> response = new HashMap<>();
         Orden orden = ordenRepository.findById(orderId).orElse(null);
-
         if (orden == null) {
             response.put("status", "error");
             return response;
@@ -62,7 +61,7 @@ public class PortalClienteController {
     }
 
     @PostMapping
-    public String registrarQueja(@RequestParam String orderId,
+    public String registrarQueja(@RequestParam Long orderId,
                                  @RequestParam String contactReason,
                                  @RequestParam String mensaje,
                                  Model model) {
@@ -73,7 +72,7 @@ public class PortalClienteController {
         }
 
         Conversacion conversacion = new Conversacion();
-        conversacion.setOrderId(orderId);
+        conversacion.setOrderId(orderId);  // ahora Long
         conversacion.setChannel("ticket");
         conversacion.setContactReason(contactReason);
         conversacion.setLanguage("es");

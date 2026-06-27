@@ -44,10 +44,9 @@ public class ComprarVisaController {
                           @RequestParam String processingSpeed) {
 
         Producto producto = productoRepository.findById(productoId).orElse(null);
-        String nuevoOrderId = String.format("ORD-%03d", ordenRepository.count() + 1);
 
         Orden orden = new Orden();
-        orden.setOrderId(nuevoOrderId);
+        // Ya NO se hace orden.setOrderId() — la BD lo genera sola
         orden.setProducto(producto);
         orden.setDestinationCountry(destinationCountry);
         orden.setUserNationality(userNationality);
@@ -61,6 +60,6 @@ public class ComprarVisaController {
         orden.setDateEnteredOrderStatus(LocalDate.now().toString());
         ordenRepository.save(orden);
 
-        return "redirect:/admin/comprar-visa?ordenGenerada=" + nuevoOrderId;
+        return "redirect:/admin/comprar-visa?ordenGenerada=" + orden.getOrderId();
     }
 }

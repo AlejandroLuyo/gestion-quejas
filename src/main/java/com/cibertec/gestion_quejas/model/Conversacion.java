@@ -15,7 +15,7 @@ public class Conversacion {
     private Long conversacionId;
 
     @Column(name = "order_id")
-    private String orderId;
+    private Long orderId;
 
     @ManyToOne
     @JoinColumn(name = "order_id", insertable = false, updatable = false)

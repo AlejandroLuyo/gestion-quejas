@@ -235,7 +235,7 @@ public class ReembolsoController {
         double precio = (orden != null && orden.getPrecio() != null) ? orden.getPrecio() : 0.0;
 
         Map<String, String> convData = new HashMap<>();
-        convData.put("orderId", conv.getOrderId() != null ? conv.getOrderId() : "-");
+        convData.put("orderId", conv.getOrderId() != null ? String.valueOf(conv.getOrderId()) : "-");
         convData.put("agente", conv.getTeammateCurrentlyAssigned() != null
                 ? conv.getTeammateCurrentlyAssigned() : "Sin asignar");
         convData.put("fecha", conv.getConversationCreatedAt() != null

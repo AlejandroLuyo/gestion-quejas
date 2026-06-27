@@ -117,7 +117,7 @@ public class ConversacionController {
         data.put("contactReason", c.getContactReason() != null ? c.getContactReason() : "-");
         data.put("estado", c.getCurrentConversationState() != null ? c.getCurrentConversationState() : "-");
         data.put("canal", c.getChannel() != null ? c.getChannel() : "-");
-        data.put("orderId", c.getOrderId() != null ? c.getOrderId() : "-");
+        data.put("orderId", c.getOrderId() != null ? String.valueOf(c.getOrderId()) : "-");
         data.put("agente", c.getTeammateCurrentlyAssigned() != null ? c.getTeammateCurrentlyAssigned() : "Sin asignar");
         data.put("fechaCreacion", c.getConversationCreatedAt() != null ?
                 c.getConversationCreatedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) : "-");

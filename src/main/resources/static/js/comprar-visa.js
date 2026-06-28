@@ -51,16 +51,24 @@ function actualizarResumen() {
 
 function verificarOrden() {
     const orderId = document.getElementById('order-id-input').value.trim();
+    const email = document.getElementById('email-input').value.trim();
     const errorDiv = document.getElementById('orden-error');
     errorDiv.style.display = 'none';
 
     if (!orderId) {
-        errorDiv.textContent = 'Ingresa un número de orden.';
+        errorDiv.textContent = 'Ingresa tu número de orden.';
+        errorDiv.style.display = 'block';
+        return;
+    }
+    if (!email) {
+        errorDiv.textContent = 'Ingresa tu correo electrónico.';
         errorDiv.style.display = 'block';
         return;
     }
 
-    fetch('/admin/portal-cliente/verificar-orden?orderId=' + encodeURIComponent(orderId))
+    fetch('/admin/portal-cliente/verificar-orden?orderId='
+        + encodeURIComponent(orderId)
+        + '&email=' + encodeURIComponent(email))
         .then(res => res.json())
         .then(data => {
             if (data.status === 'ok') {
@@ -68,12 +76,12 @@ function verificarOrden() {
                 document.getElementById('confirmacion-email').textContent = data.emailCliente;
                 mostrarPaso(2);
             } else {
-                errorDiv.textContent = 'No se encontró ninguna orden con ese número.';
+                errorDiv.textContent = data.mensaje || 'Datos incorrectos. Verifica tu número de orden y email.';
                 errorDiv.style.display = 'block';
             }
         })
         .catch(() => {
-            errorDiv.textContent = 'Error al verificar la orden. Intenta nuevamente.';
+            errorDiv.textContent = 'Error al verificar. Intenta nuevamente.';
             errorDiv.style.display = 'block';
         });
 }

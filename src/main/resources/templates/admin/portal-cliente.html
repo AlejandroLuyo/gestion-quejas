@@ -42,15 +42,25 @@
 
                 <div class="wizard-part active" data-part="1">
                     <h3>Datos del solicitante</h3>
-                    <p style="font-size:13px; color:#64748b; margin-bottom:16px;">Ingresa tu número de orden para continuar.</p>
+                    <p style="font-size:13px; color:#64748b; margin-bottom:16px;">
+                        Ingresa tu número de orden y email para continuar.
+                    </p>
                     <div class="form-group">
                         <label>Número de orden (Order ID)</label>
-                        <input type="number" id="order-id-input" name="orderId" placeholder="Ej: 1" required min="1"/>
+                        <input type="number" id="order-id-input" name="orderId"
+                               placeholder="Ej: 1" required min="1"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Correo electrónico</label>
+                        <input type="email" id="email-input" name="email"
+                               placeholder="Ej: cliente@email.com" required/>
                     </div>
                     <div id="orden-error" class="campo-error" style="display:none;"></div>
                     <div class="form-actions">
                         <span></span>
-                        <button type="button" class="btn-guardar" onclick="verificarOrden()">Continuar <i class="ti ti-arrow-right"></i></button>
+                        <button type="button" class="btn-guardar" onclick="verificarOrden()">
+                            Continuar <i class="ti ti-arrow-right"></i>
+                        </button>
                     </div>
                 </div>
 

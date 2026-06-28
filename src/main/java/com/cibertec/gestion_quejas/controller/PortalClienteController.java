@@ -46,11 +46,14 @@ public class PortalClienteController {
 
     @GetMapping("/verificar-orden")
     @ResponseBody
-    public Map<String, Object> verificarOrden(@RequestParam Long orderId) {
+    public Map<String, Object> verificarOrden(@RequestParam Long orderId,
+                                              @RequestParam String email) {
         Map<String, Object> response = new HashMap<>();
         Orden orden = ordenRepository.findById(orderId).orElse(null);
-        if (orden == null) {
+
+        if (orden == null || !orden.getEmailCliente().equalsIgnoreCase(email.trim())) {
             response.put("status", "error");
+            response.put("mensaje", "No se encontró ninguna orden con ese número y email.");
             return response;
         }
 

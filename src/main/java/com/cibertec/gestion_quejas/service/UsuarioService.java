@@ -47,4 +47,21 @@ public class UsuarioService {
         }
         usuarioRepository.save(usuario);
     }
+    public Usuario buscarPorNombre(String nombre) {
+        return usuarioRepository.findByNombre(nombre).orElse(null);
+    }
+
+    public void actualizarPerfil(String nombreActual, String email, String passwordPlano,
+                                 String idioma, String zonaHoraria) {
+        Usuario usuario = usuarioRepository.findByNombre(nombreActual).orElse(null);
+        if (usuario == null) return;
+        usuario.setEmail(email);
+        usuario.setIdioma(idioma);
+        usuario.setZonaHoraria(zonaHoraria);
+        if (passwordPlano != null && !passwordPlano.isBlank()) {
+            usuario.setPasswordHash(passwordEncoder.encode(passwordPlano));
+        }
+        usuarioRepository.save(usuario);
+    }
+
 }

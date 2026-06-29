@@ -32,6 +32,12 @@ public class Usuario {
     @Column(name = "fecha_creacion", nullable = false)
     private LocalDateTime fechaCreacion;
 
+    @Column(name = "idioma")
+    private String idioma = "es";
+
+    @Column(name = "zona_horaria")
+    private String zonaHoraria = "America/Lima";
+
     @PrePersist
     public void prePersist() {
         this.fechaCreacion = LocalDateTime.now();

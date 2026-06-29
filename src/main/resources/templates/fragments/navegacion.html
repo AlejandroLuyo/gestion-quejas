@@ -55,8 +55,9 @@
                 <span>Usuarios</span>
             </a>
 
-            <a href="#"
-               class="rail-btn menu-item-unificado">
+            <a href="/configuracion"
+               class="rail-btn menu-item-unificado"
+               th:classappend="${paginaActiva == 'configuracion'} ? 'active' : ''">
                 <i class="ti ti-settings"></i>
                 <span>Configuración</span>
             </a>

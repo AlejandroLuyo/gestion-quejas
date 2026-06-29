@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>CSManager - Configuración</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/dashboard.css}" rel="stylesheet">
+    <link th:href="@{/css/configuracion.css}" rel="stylesheet">
+</head>
+<body>
+
+<div th:replace="~{fragments/navegacion :: navegacion('configuracion', null)}"></div>
+
+<div class="main-wrapper" id="main-wrapper">
+    <div class="topbar">
+        <span class="topbar-title">Configuración</span>
+        <div class="topbar-right">
+            <button onclick="toggleDark()" id="dark-btn" class="theme-toggle-btn" type="button">
+                <i class="ti ti-moon" id="dark-icon-btn"></i>
+                <span id="dark-text-btn">Modo oscuro</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <div class="config-layout">
+
+            <!-- SECCIÓN: Cuenta -->
+            <div class="config-card">
+                <div class="config-card-header">
+                    <i class="ti ti-user-circle"></i>
+                    <span>Configuración de la cuenta</span>
+                </div>
+                <div class="config-card-body">
+
+                    <div class="config-field">
+                        <label class="config-label">Nombre</label>
+                        <input class="config-input config-input-disabled"
+                               th:value="${usuario.nombre}" disabled />
+                        <p class="config-hint">El nombre no puede modificarse.</p>
+                    </div>
+
+                    <div class="config-field">
+                        <label class="config-label">Email</label>
+                        <input class="config-input" id="cfgEmail" type="email"
+                               th:value="${usuario.email}" />
+                    </div>
+
+                    <div class="config-field">
+                        <label class="config-label">Idioma</label>
+                        <select class="config-select" id="cfgIdioma">
+                            <option value="es" th:selected="${usuario.idioma == 'es'}">Español</option>
+                            <option value="en" th:selected="${usuario.idioma == 'en'}">English</option>
+                        </select>
+                    </div>
+
+                    <div class="config-field">
+                        <label class="config-label">Zona horaria</label>
+                        <select class="config-select" id="cfgZona">
+                            <option value="America/Lima"       th:selected="${usuario.zonaHoraria == 'America/Lima'}">GMT-5 (Bogotá, Lima, Quito)</option>
+                            <option value="America/Bogota"     th:selected="${usuario.zonaHoraria == 'America/Bogota'}">GMT-5 (Colombia)</option>
+                            <option value="America/Mexico_City"th:selected="${usuario.zonaHoraria == 'America/Mexico_City'}">GMT-6 (Ciudad de México)</option>
+                            <option value="America/Santiago"   th:selected="${usuario.zonaHoraria == 'America/Santiago'}">GMT-4 (Santiago)</option>
+                            <option value="America/Argentina/Buenos_Aires" th:selected="${usuario.zonaHoraria == 'America/Argentina/Buenos_Aires'}">GMT-3 (Buenos Aires)</option>
+                            <option value="Europe/Madrid"      th:selected="${usuario.zonaHoraria == 'Europe/Madrid'}">GMT+2 (Madrid)</option>
+                            <option value="UTC"                th:selected="${usuario.zonaHoraria == 'UTC'}">UTC</option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECCIÓN: Seguridad -->
+            <div class="config-card">
+                <div class="config-card-header">
+                    <i class="ti ti-lock"></i>
+                    <span>Seguridad</span>
+                </div>
+                <div class="config-card-body">
+
+                    <div class="config-field">
+                        <label class="config-label">Nueva contraseña</label>
+                        <input class="config-input" id="cfgPassword" type="password"
+                               placeholder="Dejar en blanco para no cambiar" />
+                        <p class="config-hint">Mínimo 6 caracteres.</p>
+                    </div>
+
+                    <div class="config-field">
+                        <label class="config-label">Confirmar contraseña</label>
+                        <input class="config-input" id="cfgPasswordConfirm" type="password"
+                               placeholder="Repetir nueva contraseña" />
+                    </div>
+
+                    <div class="config-field config-toggle-row">
+                        <div>
+                            <p class="config-toggle-label">Autenticación de dos factores</p>
+                            <p class="config-hint">Próximamente disponible.</p>
+                        </div>
+                        <label class="config-toggle">
+                            <input type="checkbox" disabled />
+                            <span class="config-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECCIÓN: Notificaciones -->
+            <div class="config-card">
+                <div class="config-card-header">
+                    <i class="ti ti-bell"></i>
+                    <span>Notificaciones</span>
+                </div>
+                <div class="config-card-body">
+
+                    <div class="config-field config-toggle-row">
+                        <div>
+                            <p class="config-toggle-label">Notificaciones por email</p>
+                            <p class="config-hint">Recibir alertas de nuevas quejas asignadas.</p>
+                        </div>
+                        <label class="config-toggle">
+                            <input type="checkbox" disabled />
+                            <span class="config-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="config-field config-toggle-row">
+                        <div>
+                            <p class="config-toggle-label">Alertas en la aplicación</p>
+                            <p class="config-hint">Notificaciones dentro del sistema.</p>
+                        </div>
+                        <label class="config-toggle">
+                            <input type="checkbox" disabled />
+                            <span class="config-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ERROR / ÉXITO -->
+            <div id="cfgError" class="config-alert config-alert-error" style="display:none;"></div>
+            <div id="cfgExito" class="config-alert config-alert-exito" style="display:none;"></div>
+
+            <!-- ACCIONES -->
+            <div class="config-actions">
+                <button class="config-btn-guardar" id="btnGuardarConfig" onclick="guardarConfiguracion()">
+                    <i class="ti ti-device-floppy"></i> Guardar cambios
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/configuracion.js}"></script>
+</body>
+</html>

@@ -37,4 +37,14 @@ public class UsuarioService {
             usuarioRepository.save(usuario);
         }
     }
+    public void actualizar(Long id, String email, String passwordPlano, String rol) {
+        Usuario usuario = buscarPorId(id);
+        if (usuario == null) return;
+        usuario.setEmail(email);
+        usuario.setRol(rol);
+        if (passwordPlano != null && !passwordPlano.isBlank()) {
+            usuario.setPasswordHash(passwordEncoder.encode(passwordPlano));
+        }
+        usuarioRepository.save(usuario);
+    }
 }

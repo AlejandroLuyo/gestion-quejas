@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 @Controller
 @RequestMapping("/admin/usuarios")
@@ -37,5 +38,15 @@ public class UsuarioController {
     public String toggleActivo(@PathVariable Long id) {
         usuarioService.toggleActivo(id);
         return "redirect:/admin/usuarios";
+    }
+
+    @PostMapping("/{id}/editar")
+    @ResponseBody
+    public ResponseEntity<String> editar(@PathVariable Long id,
+                                         @RequestParam String email,
+                                         @RequestParam(required = false) String password,
+                                         @RequestParam String rol) {
+        usuarioService.actualizar(id, email, password, rol);
+        return ResponseEntity.ok("ok");
     }
 }

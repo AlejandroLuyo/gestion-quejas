@@ -6,11 +6,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
     <link th:href="@{/css/dashboard.css}" rel="stylesheet">
+    <link th:href="@{/css/usuarios.css}" rel="stylesheet">
 </head>
 <body>
 
 <div th:replace="~{fragments/navegacion :: navegacion('usuarios', null)}"></div>
-<!-- MAIN WRAPPER -->
+
 <div class="main-wrapper" id="main-wrapper">
     <div class="topbar">
         <span class="topbar-title">Gestión de usuarios</span>
@@ -27,6 +28,24 @@
     </div>
 
     <div class="content-area">
+        <div class="usuarios-filtros">
+            <div class="usuarios-search-wrap">
+                <i class="ti ti-search usuarios-search-icon"></i>
+                <input type="text" id="usuariosBusqueda" class="usuarios-search"
+                       placeholder="Buscar por nombre o email..." />
+            </div>
+            <select id="filtroRol" class="usuarios-filtro-select">
+                <option value="">Todos los roles</option>
+                <option value="ADMINISTRADOR">Administrador</option>
+                <option value="SUPERVISOR">Supervisor</option>
+                <option value="AGENTE">Agente</option>
+            </select>
+            <select id="filtroEstado" class="usuarios-filtro-select">
+                <option value="">Todos los estados</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+            </select>
+        </div>
         <div class="quejas-table">
             <table class="table mb-0">
                 <thead>
@@ -44,23 +63,30 @@
                     <td th:text="${usuario.nombre}"></td>
                     <td th:text="${usuario.email}"></td>
                     <td>
-                            <span class="status-badge"
-                                  th:classappend="${usuario.rol == 'ADMINISTRADOR'} ? 'status-RESUELTO' :
-                                                 (${usuario.rol == 'SUPERVISOR'} ? 'status-EN_PROCESO' : 'status-PENDIENTE')"
-                                  th:text="${usuario.rol}"></span>
+                        <span class="status-badge"
+                              th:classappend="${usuario.rol == 'ADMINISTRADOR'} ? 'status-RESUELTO' :
+                                             (${usuario.rol == 'SUPERVISOR'} ? 'status-EN_PROCESO' : 'status-PENDIENTE')"
+                              th:text="${usuario.rol}"></span>
                     </td>
                     <td>
-                            <span class="status-badge"
-                                  th:classappend="${usuario.activo} ? 'status-RESUELTO' : 'status-PENDIENTE'"
-                                  th:text="${usuario.activo} ? 'Activo' : 'Inactivo'"></span>
+                        <span class="status-badge"
+                              th:classappend="${usuario.activo} ? 'status-RESUELTO' : 'status-PENDIENTE'"
+                              th:text="${usuario.activo} ? 'Activo' : 'Inactivo'"></span>
                     </td>
                     <td th:text="${#temporals.format(usuario.fechaCreacion, 'dd MMM yyyy')}"></td>
-                    <td>
+                    <td style="display:flex; gap:8px; align-items:center;">
+                        <button type="button" class="btn-editar-usuario"
+                                th:data-id="${usuario.usuarioId}"
+                                th:data-nombre="${usuario.nombre}"
+                                th:data-email="${usuario.email}"
+                                th:data-rol="${usuario.rol}">
+                            <i class="ti ti-pencil"></i> Editar
+                        </button>
                         <form th:action="@{/admin/usuarios/{id}/toggle(id=${usuario.usuarioId})}"
                               method="post" style="display:inline;">
                             <button type="submit" class="btn btn-sm"
                                     th:style="${usuario.activo} ? 'background:#fef3c7; color:#92400e; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;' :
-                                                                      'background:#dcfce7; color:#166634; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;'"
+                                                                  'background:#dcfce7; color:#166634; border:none; border-radius:6px; padding:4px 10px; font-size:12px; cursor:pointer;'"
                                     th:text="${usuario.activo} ? 'Desactivar' : 'Activar'">
                             </button>
                         </form>
@@ -72,6 +98,58 @@
     </div>
 </div>
 
+<!-- OVERLAY -->
+<div class="usuario-overlay" id="usuarioOverlay" onclick="cerrarPanelUsuario()"></div>
+
+<!-- PANEL EDITAR USUARIO -->
+<div class="usuario-panel" id="usuarioPanel">
+    <div class="usuario-panel-header">
+        <div>
+            <p class="usuario-panel-title">Editar usuario</p>
+            <p class="usuario-panel-sub" id="panelSub"></p>
+        </div>
+        <button class="usuario-panel-close" onclick="cerrarPanelUsuario()">
+            <i class="ti ti-x"></i>
+        </button>
+    </div>
+
+    <div class="usuario-field">
+        <label class="usuario-label">Nombre</label>
+        <input class="usuario-input usuario-input-disabled" id="panelNombre" type="text" disabled />
+        <p class="usuario-hint">El nombre no puede modificarse.</p>
+    </div>
+
+    <div class="usuario-field">
+        <label class="usuario-label">Email</label>
+        <input class="usuario-input" id="panelEmail" type="email" />
+    </div>
+
+    <div class="usuario-field">
+        <label class="usuario-label">Nueva contraseña</label>
+        <input class="usuario-input" id="panelPassword" type="password" placeholder="Dejar en blanco para no cambiar" />
+        <p class="usuario-hint">Mínimo 6 caracteres.</p>
+    </div>
+
+    <div class="usuario-field">
+        <label class="usuario-label">Rol</label>
+        <select class="usuario-select" id="panelRol">
+            <option value="AGENTE">AGENTE</option>
+            <option value="SUPERVISOR">SUPERVISOR</option>
+            <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+        </select>
+    </div>
+
+    <div id="panelError" class="usuario-error" style="display:none;"></div>
+
+    <div class="usuario-panel-actions">
+        <button class="usuario-btn-cancelar" onclick="cerrarPanelUsuario()">Cancelar</button>
+        <button class="usuario-btn-guardar" id="btnGuardarUsuario" onclick="guardarUsuario()">
+            Guardar cambios
+        </button>
+    </div>
+</div>
+
 <script th:src="@{/js/dashboard.js}"></script>
+<script th:src="@{/js/usuarios.js}"></script>
 </body>
 </html>

@@ -40,7 +40,18 @@ new Chart(document.getElementById('chart2'), {
 new Chart(document.getElementById('chart3'), {
     type: 'bar',
     data: {
-        labels: contactReasons,
+        labels: contactReasons.map(function(r) {
+            const mapa = {
+                'payment_issues':          'Problemas de pago',
+                'refund_request':          'Solicitud de reembolso',
+                'status_information':      'Información de estado',
+                'cx_modify':               'Modificación de orden',
+                'deliverable_information': 'Información de entrega',
+                'requirements_assistance': 'Asistencia de requisitos',
+                'upload_support':          'Soporte de carga'
+            };
+            return mapa[r] || r;
+        }),
         datasets: [{
             data: contactReasonData,
             backgroundColor: ['#378ADD', '#993C1D', '#1D9E75', '#BA7517', '#534AB7', '#D85A30', '#185FA5', '#639922'],

@@ -126,7 +126,15 @@
                 <tbody>
                 <tr th:each="conv : ${conversaciones}" th:onclick="|openPanel(${conv.conversacionId})|">
                     <td th:text="${conv.orderId != null ? conv.orderId : '-'}"></td>
-                    <td th:text="${conv.contactReason != null ? conv.contactReason : '-'}"></td>
+                        <td th:text="${conv.contactReason == 'payment_issues' ? 'Problemas de pago' :
+                                      conv.contactReason == 'refund_request' ? 'Solicitud de reembolso' :
+                                      conv.contactReason == 'status_information' ? 'Información de estado' :
+                                      conv.contactReason == 'cx_modify' ? 'Modificación de orden' :
+                                      conv.contactReason == 'deliverable_information' ? 'Información de entrega' :
+                                      conv.contactReason == 'requirements_assistance' ? 'Asistencia de requisitos' :
+                                      conv.contactReason == 'upload_support' ? 'Soporte de carga' :
+                                      conv.contactReason != null ? conv.contactReason : '-'}">
+                        </td>
                     <td>
                         <span class="source-badge"
                               th:classappend="${conv.channel == 'email'} ? 'source-email' :
@@ -140,7 +148,9 @@
                         <span class="status-badge"
                               th:classappend="${conv.currentConversationState == 'open'} ? 'status-EN_PROCESO' :
                                              (${conv.currentConversationState == 'resolved'} ? 'status-RESUELTO' : 'status-PENDIENTE')"
-                              th:text="${conv.currentConversationState != null ? conv.currentConversationState : '-'}">
+                              th:text="${conv.currentConversationState == 'open' ? 'En proceso' :
+                                       conv.currentConversationState == 'pending' ? 'Pendiente' :
+                                       conv.currentConversationState == 'resolved' ? 'Resuelto' : '-'}">
                         </span>
                     </td>
                     <td th:text="${conv.teammateCurrentlyAssigned != null ? conv.teammateCurrentlyAssigned : 'Sin asignar'}"></td>

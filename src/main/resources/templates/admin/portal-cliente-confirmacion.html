@@ -52,7 +52,11 @@
                 </div>
                 <div class="resumen-total" style="margin-bottom:8px; background:#fef3c7; color:#92400e;">
                     <span>Estado</span>
-                    <span th:text="${conversacion.currentConversationState}"></span>
+                    <span th:text="${conversacion.currentConversationState == 'open'} ? 'En proceso' :
+                                  (${conversacion.currentConversationState == 'pending'} ? 'Pendiente' :
+                                  (${conversacion.currentConversationState == 'resolved'} ? 'Resuelto' :
+                                  ${conversacion.currentConversationState}))">
+                    </span>
                 </div>
                 <div class="resumen-total" style="margin-bottom:8px; background:#dbeafe; color:#1d4ed8;">
                     <span>Agente asignado</span>

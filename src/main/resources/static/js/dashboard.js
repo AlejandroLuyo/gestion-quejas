@@ -38,15 +38,37 @@ function toggleDark() {
     localStorage.setItem('darkMode', isDark);
 }
 
+function traducirContactReason(valor) {
+    const mapa = {
+        'payment_issues':          'Problemas de pago',
+        'refund_request':          'Solicitud de reembolso',
+        'status_information':      'Información de estado',
+        'cx_modify':               'Modificación de orden',
+        'deliverable_information': 'Información de entrega',
+        'requirements_assistance': 'Asistencia de requisitos',
+        'upload_support':          'Soporte de carga'
+    };
+    return mapa[valor] || valor || '-';
+}
+
+function traducirEstado(valor) {
+    const mapa = {
+        'open':     'En proceso',
+        'pending':  'Pendiente',
+        'resolved': 'Resuelto'
+    };
+    return mapa[valor] || valor || '-';
+}
+
 function openPanel(id) {
     conversacionActualId = id;
     fetch('/quejas/' + id + '/json')
         .then(res => res.json())
         .then(c => {
             document.getElementById('sp-name').textContent = c.orderId || '-';
-            document.getElementById('sp-sub').textContent = c.contactReason || '-';
-            document.getElementById('sp-reason').textContent = c.contactReason || '-';
-            document.getElementById('sp-estado').textContent = c.estado || '-';
+            document.getElementById('sp-sub').textContent = traducirContactReason(c.contactReason);
+            document.getElementById('sp-reason').textContent = traducirContactReason(c.contactReason);
+            document.getElementById('sp-estado').textContent = traducirEstado(c.estado);
             document.getElementById('sp-origen').textContent = c.canal || '-';
             document.getElementById('sp-fecha').textContent = c.orderId || '-';
             document.getElementById('sp-agente').textContent = c.agente || 'Sin asignar';

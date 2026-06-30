@@ -1,7 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/springsecurity6"
+      lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CSManager - Estadísticas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" rel="stylesheet">
@@ -12,7 +15,6 @@
 
 <div th:replace="~{fragments/navegacion :: navegacion('estadisticas', null)}"></div>
 
-<!-- MAIN WRAPPER -->
 <div class="main-wrapper" id="main-wrapper">
     <div class="topbar">
         <span class="topbar-title">Estadísticas</span>
@@ -26,12 +28,42 @@
     </div>
 
     <div class="content-area">
+
+        <!-- FILTRO DE FECHA -->
+        <div class="filtro-estadisticas mb-4">
+            <div class="filtro-quick">
+                <span class="filtro-label">Período</span>
+                <div class="quick-btns">
+                    <button class="qbtn" data-periodo="hoy" onclick="aplicarPeriodoRapido('hoy', this)">Hoy</button>
+                    <button class="qbtn" data-periodo="semana" onclick="aplicarPeriodoRapido('semana', this)">Esta semana</button>
+                    <button class="qbtn" data-periodo="mes" onclick="aplicarPeriodoRapido('mes', this)">Este mes</button>
+                    <button class="qbtn" data-periodo="todo" onclick="aplicarPeriodoRapido('todo', this)">Todo</button>
+                </div>
+            </div>
+            <div class="filtro-separador"></div>
+            <div class="filtro-fechas">
+                <span class="filtro-label">Desde</span>
+                <input type="date" id="est-desde" class="filtro-input"
+                       th:value="${desde != null ? desde : ''}">
+                <span class="filtro-label">Hasta</span>
+                <input type="date" id="est-hasta" class="filtro-input"
+                       th:value="${hasta != null ? hasta : ''}">
+                <button class="btn-buscar-est" onclick="ejecutarBusquedaEst()">
+                    <i class="ti ti-search"></i> Buscar
+                </button>
+                <button class="btn-limpiar-est" onclick="limpiarFiltroEst()"
+                        th:if="${desde != null or hasta != null}">
+                    <i class="ti ti-x"></i>
+                </button>
+            </div>
+        </div>
+
         <!-- MÉTRICAS -->
         <div class="stats-row mb-4">
             <div class="stat-card">
                 <div class="stat-label">Total conversaciones</div>
                 <div class="stat-value" th:text="${total}">0</div>
-                <div class="stat-sub">este mes</div>
+                <div class="stat-sub">este período</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Contact Rate</div>
@@ -48,10 +80,20 @@
                 <div class="stat-value" style="color:#16a34a;" th:text="${resueltas}">0</div>
                 <div class="stat-sub">conversaciones cerradas</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-label">CSAT promedio</div>
+                <div class="stat-value stat-value--amber"
+                     th:text="${csatPromedio > 0 ? csatPromedio : '-'}">-</div>
+                <div class="stat-sub">escala 1–5</div>
+                <div th:if="${csatPromedio > 0}"
+                     class="csat-estrellas"
+                     th:data-valor="${csatPromedio}"></div>
+                <div th:if="${csatPromedio <= 0}" class="stat-sub">sin encuestas</div>
+            </div>
         </div>
 
         <!-- GRÁFICOS -->
-        <div class="charts-grid">
+        <div class="charts-grid mb-4">
             <div class="chart-card">
                 <div class="chart-title">Conversaciones por estado</div>
                 <div class="legend">
@@ -60,8 +102,7 @@
                     <span><span class="legend-dot" style="background:#1D9E75;"></span>Resueltas <span th:text="${resueltas}">0</span></span>
                 </div>
                 <div style="position:relative; width:100%; height:200px;">
-                    <canvas id="chart1" role="img" aria-label="Conversaciones por estado">
-                    </canvas>
+                    <canvas id="chart1" role="img" aria-label="Conversaciones por estado"></canvas>
                 </div>
             </div>
             <div class="chart-card">
@@ -72,19 +113,125 @@
                     <span><span class="legend-dot" style="background:#BA7517;"></span>Ticket <span th:text="${porTicket}">0</span></span>
                 </div>
                 <div style="position:relative; width:100%; height:200px;">
-                    <canvas id="chart2" role="img" aria-label="Conversaciones por canal">
-                    </canvas>
+                    <canvas id="chart2" role="img" aria-label="Conversaciones por canal"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="chart-card mt-4">
+        <div class="chart-card mb-4">
             <div class="chart-title">Conversaciones por contact reason</div>
             <div style="position:relative; width:100%; height:220px;">
-                <canvas id="chart3" role="img" aria-label="Conversaciones por contact reason">
-                </canvas>
+                <canvas id="chart3" role="img" aria-label="Conversaciones por contact reason"></canvas>
             </div>
         </div>
+
+        <!-- SOLO SUPERVISOR Y ADMINISTRADOR -->
+        <div sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
+
+            <!-- RESOLUCIONES POR AGENTE + TARJETA IA -->
+            <div class="agentes-ia-grid mb-4">
+
+                <div class="chart-card">
+                    <div class="chart-title">Resoluciones por agente</div>
+                    <div th:if="${agentesStats != null and !agentesStats.isEmpty()}">
+                        <table class="tabla-agentes">
+                            <thead>
+                            <tr>
+                                <th>Agente</th>
+                                <th>Resueltas</th>
+                                <th>% del total</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="a : ${agentesStats}">
+                                <td class="td-nombre">
+                                    <span class="avatar-iniciales" th:text="${a.iniciales}">--</span>
+                                    <span th:text="${a.nombre}">Agente</span>
+                                </td>
+                                <td th:text="${a.resueltas}">0</td>
+                                <td>
+                                    <span th:text="${a.porcentaje + '%'}">0%</span>
+                                    <span class="pct-bar-wrap">
+                                            <span class="pct-bar"
+                                                  th:style="'width:' + ${a.porcentaje} + '%'"></span>
+                                        </span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div th:if="${agentesStats == null or agentesStats.isEmpty()}" class="sin-datos">
+                        <i class="ti ti-mood-empty"></i>
+                        <span>Sin resoluciones en este período</span>
+                    </div>
+                </div>
+
+                <div class="chart-card ia-card">
+                    <div class="chart-title">
+                        Resueltas por IA
+                        <span class="badge-ia">CSMate</span>
+                    </div>
+                    <div class="ia-numero" th:text="${totalResueltasIa}">0</div>
+                    <div class="ia-descripcion">conversaciones resueltas sin intervención humana</div>
+                    <div class="ia-metricas">
+                        <div class="ia-metrica">
+                            <span class="ia-metrica-label">Del total resueltas</span>
+                            <span class="ia-metrica-valor" th:text="${pctIa + '%'}">0%</span>
+                        </div>
+                        <div class="ia-metrica">
+                            <span class="ia-metrica-label">CSAT IA</span>
+                            <span class="ia-metrica-valor"
+                                  th:text="${csatIa > 0 ? csatIa + ' ★' : '-'}">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CSAT POR AGENTE -->
+            <div class="chart-card mb-4">
+                <div class="chart-title">Evaluación CSAT por agente</div>
+                <div th:if="${csatPorAgente != null and !csatPorAgente.isEmpty()}">
+                    <table class="tabla-agentes">
+                        <thead>
+                        <tr>
+                            <th>Agente</th>
+                            <th>Encuestas</th>
+                            <th>Promedio</th>
+                            <th>Calificación</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="a : ${csatPorAgente}">
+                            <td class="td-nombre">
+                                <span class="avatar-iniciales" th:text="${a.iniciales}">--</span>
+                                <span th:text="${a.nombre}">Agente</span>
+                            </td>
+                            <td th:text="${a.encuestas}">0</td>
+                            <td>
+                                    <span th:if="${a.promedio != null}"
+                                          class="csat-num" th:text="${a.promedio}">-</span>
+                                <span th:if="${a.promedio == null}"
+                                      class="sin-datos-inline">—</span>
+                            </td>
+                            <td>
+                                    <span th:if="${a.promedio != null}"
+                                          class="csat-estrellas-agente"
+                                          th:data-valor="${a.promedio}"></span>
+                                <span th:if="${a.promedio == null}"
+                                      class="sin-datos-inline">Sin datos</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div th:if="${csatPorAgente == null or csatPorAgente.isEmpty()}" class="sin-datos">
+                    <i class="ti ti-mood-empty"></i>
+                    <span>Sin datos de CSAT en este período</span>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 </div>
 
@@ -98,6 +245,8 @@
     const porTicket = [[${porTicket}]];
     const contactReasons = [[${contactReasonLabels}]];
     const contactReasonData = [[${contactReasonData}]];
+    const desdeParam = [[${desde != null ? desde.toString() : ''}]];
+    const hastaParam = [[${hasta != null ? hasta.toString() : ''}]];
 </script>
 <script th:src="@{/js/estadisticas.js}"></script>
 <script th:src="@{/js/dashboard.js}"></script>

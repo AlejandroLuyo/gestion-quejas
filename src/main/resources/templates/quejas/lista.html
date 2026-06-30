@@ -84,6 +84,46 @@
                sec:authorize="hasAnyRole('SUPERVISOR','ADMINISTRADOR')">
                 <i class="ti ti-robot"></i><span>Resueltas IA</span>
             </a>
+            <!-- BUSCADOR + FILTRO FECHA -->
+            <div class="buscador-wrap ms-auto">
+                <div class="buscador-quejas">
+                    <i class="ti ti-search buscador-icono"></i>
+                    <input type="text"
+                           id="buscador-input"
+                           class="buscador-input"
+                           placeholder="Buscar por Order ID, motivo o agente..."
+                           th:value="${q}"
+                           onkeydown="if(event.key==='Enter') ejecutarBusqueda()"/>
+                </div>
+
+                <button class="btn-filtro-fecha" onclick="toggleCalendario()" type="button">
+                    <i class="ti ti-calendar"></i>
+                    <span id="btn-fecha-texto">Fecha</span>
+                </button>
+
+                <button class="btn-buscar" onclick="ejecutarBusqueda()" type="button">
+                    <i class="ti ti-search"></i> Buscar
+                </button>
+
+                <!-- DROPDOWN CALENDARIO -->
+                <div class="calendario-dropdown" id="calendario-dropdown" style="display:none;">
+                    <div class="calendario-titulo">Filtrar por fecha</div>
+                    <div class="calendario-campos">
+                        <div class="calendario-campo">
+                            <label>Desde</label>
+                            <input type="date" id="fecha-desde" th:value="${desde}"/>
+                        </div>
+                        <div class="calendario-campo">
+                            <label>Hasta</label>
+                            <input type="date" id="fecha-hasta" th:value="${hasta}"/>
+                        </div>
+                    </div>
+                    <div class="calendario-botones">
+                        <button class="btn-cal-limpiar" onclick="limpiarFechas()" type="button">Limpiar</button>
+                        <button class="btn-cal-aplicar" onclick="ejecutarBusqueda()" type="button">Aplicar</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="quejas-table">

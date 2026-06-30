@@ -770,3 +770,71 @@ if (chatContainer && fab) {
         toggleChat();
     });
 }
+
+// ==============================
+// BUSCADOR + FILTRO FECHA
+// ==============================
+
+function toggleCalendario() {
+    const dropdown = document.getElementById('calendario-dropdown');
+    const btn = document.querySelector('.btn-filtro-fecha');
+    const visible = dropdown.style.display !== 'none';
+    dropdown.style.display = visible ? 'none' : 'block';
+    btn.classList.toggle('activo', !visible);
+}
+
+function limpiarFechas() {
+    document.getElementById('fecha-desde').value = '';
+    document.getElementById('fecha-hasta').value = '';
+    document.querySelector('.btn-filtro-fecha').classList.remove('activo');
+    actualizarTextoBtnFecha();
+}
+
+function actualizarTextoBtnFecha() {
+    const desde = document.getElementById('fecha-desde').value;
+    const hasta = document.getElementById('fecha-hasta').value;
+    const texto = document.getElementById('btn-fecha-texto');
+    if (desde || hasta) {
+        const d = desde ? new Date(desde + 'T00:00:00').toLocaleDateString('es-PE', {day:'2-digit', month:'short'}) : '...';
+        const h = hasta ? new Date(hasta + 'T00:00:00').toLocaleDateString('es-PE', {day:'2-digit', month:'short'}) : '...';
+        texto.textContent = d + ' → ' + h;
+        document.querySelector('.btn-filtro-fecha').classList.add('activo');
+    } else {
+        texto.textContent = 'Fecha';
+        document.querySelector('.btn-filtro-fecha').classList.remove('activo');
+    }
+}
+
+function ejecutarBusqueda() {
+    const q = document.getElementById('buscador-input').value.trim();
+    const desde = document.getElementById('fecha-desde').value;
+    const hasta = document.getElementById('fecha-hasta').value;
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (q) params.set('q', q); else params.delete('q');
+    if (desde) params.set('desde', desde); else params.delete('desde');
+    if (hasta) params.set('hasta', hasta); else params.delete('hasta');
+
+    // Cerrar dropdown
+    document.getElementById('calendario-dropdown').style.display = 'none';
+
+    window.location.href = '/quejas?' + params.toString();
+}
+
+// Cerrar calendario al hacer clic fuera
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('calendario-dropdown');
+    const btn = document.querySelector('.btn-filtro-fecha');
+    if (dropdown && !dropdown.contains(e.target) && btn && !btn.contains(e.target)) {
+        dropdown.style.display = 'none';
+        btn.classList.remove('activo');
+    }
+});
+
+// Al cargar, reflejar fechas activas en el botón
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarTextoBtnFecha();
+    document.getElementById('fecha-desde').addEventListener('change', actualizarTextoBtnFecha);
+    document.getElementById('fecha-hasta').addEventListener('change', actualizarTextoBtnFecha);
+});

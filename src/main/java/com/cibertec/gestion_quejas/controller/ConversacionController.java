@@ -15,6 +15,8 @@ import com.cibertec.gestion_quejas.repository.MensajeRepository;
 import java.util.ArrayList;
 import java.util.Optional;
 import org.springframework.data.domain.Sort;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -41,6 +43,9 @@ public class ConversacionController {
     public String listar(@RequestParam(required = false, defaultValue = "todas") String vista,
                          @RequestParam(required = false, defaultValue = "fecha") String orden,
                          @RequestParam(required = false, defaultValue = "desc") String dir,
+                         @RequestParam(required = false) String q,
+                         @RequestParam(required = false) String desde,
+                         @RequestParam(required = false) String hasta,
                          Model model,
                          java.security.Principal principal) {
 
@@ -55,38 +60,50 @@ public class ConversacionController {
                 : Sort.by(campoOrden).descending();
 
         List<Conversacion> todas = conversacionService.listarTodas(sort);
+        LocalDateTime desdeDate = (desde != null && !desde.isBlank())
+                ? LocalDate.parse(desde).atStartOfDay() : null;
+        LocalDateTime hastaDate = (hasta != null && !hasta.isBlank())
+                ? LocalDate.parse(hasta).atTime(23, 59, 59) : null;
+
+        boolean hayFiltros = (q != null && !q.isBlank()) || desdeDate != null || hastaDate != null;
+
         List<Conversacion> conversaciones;
         String tituloVista;
 
-        switch (vista) {
-            case "asignadas":
-                conversaciones = conversacionService.listarAsignadasA(principal.getName(), sort);
-                tituloVista = "Asignadas a mí";
-                break;
-            case "sin-asignar":
-                conversaciones = conversacionService.listarSinAsignar(sort);
-                tituloVista = "Sin asignar";
-                break;
-            case "pendientes":
-                conversaciones = conversacionService.listarPorEstado("pending", sort);
-                tituloVista = "Pendientes";
-                break;
-            case "en-proceso":
-                conversaciones = conversacionService.listarPorEstado("open", sort);
-                tituloVista = "En proceso";
-                break;
-            case "resueltas":
-                conversaciones = conversacionService.listarPorEstado("resolved", sort);
-                tituloVista = "Resueltas";
-                break;
-            case "resueltas-ia":
-                conversaciones = conversacionService.listarResueltasPorIA(sort);
-                tituloVista = "Resueltas por IA";
-                break;
-            default:
-                conversaciones = todas;
-                tituloVista = "Vista general de quejas";
-                vista = "todas";
+        if (hayFiltros) {
+            conversaciones = conversacionService.buscarConFiltros(q, desdeDate, hastaDate, sort);
+            tituloVista = "Resultados de búsqueda";
+        } else {
+            switch (vista) {
+                case "asignadas":
+                    conversaciones = conversacionService.listarAsignadasA(principal.getName(), sort);
+                    tituloVista = "Asignadas a mí";
+                    break;
+                case "sin-asignar":
+                    conversaciones = conversacionService.listarSinAsignar(sort);
+                    tituloVista = "Sin asignar";
+                    break;
+                case "pendientes":
+                    conversaciones = conversacionService.listarPorEstado("pending", sort);
+                    tituloVista = "Pendientes";
+                    break;
+                case "en-proceso":
+                    conversaciones = conversacionService.listarPorEstado("open", sort);
+                    tituloVista = "En proceso";
+                    break;
+                case "resueltas":
+                    conversaciones = conversacionService.listarPorEstado("resolved", sort);
+                    tituloVista = "Resueltas";
+                    break;
+                case "resueltas-ia":
+                    conversaciones = conversacionService.listarResueltasPorIA(sort);
+                    tituloVista = "Resueltas por IA";
+                    break;
+                default:
+                    conversaciones = todas;
+                    tituloVista = "Vista general de quejas";
+                    vista = "todas";
+            }
         }
 
         long abiertas = todas.stream()
@@ -105,6 +122,9 @@ public class ConversacionController {
         model.addAttribute("vista", vista);
         model.addAttribute("orden", orden);
         model.addAttribute("dir", dir);
+        model.addAttribute("q", q);
+        model.addAttribute("desde", desde);
+        model.addAttribute("hasta", hasta);
 
         return "quejas/lista";
     }

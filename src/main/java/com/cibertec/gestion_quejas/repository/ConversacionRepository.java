@@ -4,6 +4,9 @@ import com.cibertec.gestion_quejas.model.Conversacion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.List;
 
@@ -16,4 +19,16 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, Long
     Optional<Conversacion> findByCsatToken(String csatToken);
     long countByTeammateCurrentlyAssignedAndCurrentConversationStateIn(String teammateCurrentlyAssigned, List<String> estados);
     List<Conversacion> findByTeammateCurrentlyAssignedAndCurrentConversationState(String teammateCurrentlyAssigned, String estado, Sort sort);
+
+    @Query("SELECT c FROM Conversacion c WHERE " +
+            "(:texto IS NULL OR CAST(c.orderId AS string) LIKE %:texto% OR " +
+            " LOWER(c.contactReason) LIKE LOWER(CONCAT('%', :texto, '%')) OR " +
+            " LOWER(c.teammateCurrentlyAssigned) LIKE LOWER(CONCAT('%', :texto, '%'))) AND " +
+            "(:desde IS NULL OR c.conversationCreatedAt >= :desde) AND " +
+            "(:hasta IS NULL OR c.conversationCreatedAt <= :hasta)")
+    List<Conversacion> buscarConFiltros(
+            @Param("texto") String texto,
+            @Param("desde") java.time.LocalDateTime desde,
+            @Param("hasta") java.time.LocalDateTime hasta,
+            Sort sort);
 }

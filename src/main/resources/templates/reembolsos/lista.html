@@ -49,22 +49,65 @@
 
         <!-- Filtros -->
         <div class="reembolsos-filtros">
-            <form th:action="@{/reembolso/lista}" method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-                <select name="estado" class="reembolso-select" onchange="this.form.submit()">
-                    <option value="todos" th:selected="${estadoFiltro == 'todos'}">Todos los estados</option>
-                    <option value="pendiente_supervisor" th:selected="${estadoFiltro == 'pendiente_supervisor'}">Pendiente supervisor</option>
-                    <option value="aprobado" th:selected="${estadoFiltro == 'aprobado'}">Aprobado</option>
-                    <option value="denegado" th:selected="${estadoFiltro == 'denegado'}">Denegado</option>
-                    <option value="rechazado_supervisor" th:selected="${estadoFiltro == 'rechazado_supervisor'}">Rechazado por supervisor</option>
-                </select>
-                <select name="agente" class="reembolso-select" onchange="this.form.submit()">
-                    <option value="todos" th:selected="${agenteFiltro == 'todos'}">Todos los agentes</option>
-                    <option th:each="a : ${agentes}"
-                            th:value="${a}"
-                            th:text="${a}"
-                            th:selected="${agenteFiltro == a}"></option>
-                </select>
-            </form>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:space-between;">
+                <form th:action="@{/reembolso/lista}" method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <select name="estado" class="reembolso-select" onchange="this.form.submit()">
+                        <option value="todos" th:selected="${estadoFiltro == 'todos'}">Todos los estados</option>
+                        <option value="pendiente_supervisor" th:selected="${estadoFiltro == 'pendiente_supervisor'}">Pendiente supervisor</option>
+                        <option value="aprobado" th:selected="${estadoFiltro == 'aprobado'}">Aprobado</option>
+                        <option value="denegado" th:selected="${estadoFiltro == 'denegado'}">Denegado</option>
+                        <option value="rechazado_supervisor" th:selected="${estadoFiltro == 'rechazado_supervisor'}">Rechazado por supervisor</option>
+                    </select>
+                    <select name="agente" class="reembolso-select" onchange="this.form.submit()">
+                        <option value="todos" th:selected="${agenteFiltro == 'todos'}">Todos los agentes</option>
+                        <option th:each="a : ${agentes}"
+                                th:value="${a}"
+                                th:text="${a}"
+                                th:selected="${agenteFiltro == a}"></option>
+                    </select>
+                </form>
+
+                <!-- BUSCADOR + FILTRO FECHA -->
+                <div class="buscador-wrap">
+                    <div class="buscador-quejas">
+                        <i class="ti ti-search buscador-icono"></i>
+                        <input type="text"
+                               id="buscador-input"
+                               class="buscador-input"
+                               placeholder="Buscar por Order ID, motivo o agente..."
+                               th:value="${q}"
+                               onkeydown="if(event.key==='Enter') ejecutarBusquedaReembolso()"/>
+                    </div>
+
+                    <button class="btn-filtro-fecha" onclick="toggleCalendarioReembolso()" type="button">
+                        <i class="ti ti-calendar"></i>
+                        <span id="btn-fecha-texto">Fecha</span>
+                    </button>
+
+                    <button class="btn-buscar" onclick="ejecutarBusquedaReembolso()" type="button">
+                        <i class="ti ti-search"></i> Buscar
+                    </button>
+
+                    <!-- DROPDOWN CALENDARIO -->
+                    <div class="calendario-dropdown" id="calendario-dropdown" style="display:none;">
+                        <div class="calendario-titulo">Filtrar por fecha</div>
+                        <div class="calendario-campos">
+                            <div class="calendario-campo">
+                                <label>Desde</label>
+                                <input type="date" id="fecha-desde" th:value="${desde}"/>
+                            </div>
+                            <div class="calendario-campo">
+                                <label>Hasta</label>
+                                <input type="date" id="fecha-hasta" th:value="${hasta}"/>
+                            </div>
+                        </div>
+                        <div class="calendario-botones">
+                            <button class="btn-cal-limpiar" onclick="limpiarFechasReembolso()" type="button">Limpiar</button>
+                            <button class="btn-cal-aplicar" onclick="ejecutarBusquedaReembolso()" type="button">Aplicar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Tabla -->

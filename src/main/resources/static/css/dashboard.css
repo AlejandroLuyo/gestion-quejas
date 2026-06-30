@@ -1640,6 +1640,7 @@ body.dark .sidebar-agent-role {
     gap: 10px;
     flex-wrap: wrap;
     margin: -4px 0 22px;
+    overflow: visible;
 }
 
 .filtro-chip {
@@ -1689,4 +1690,263 @@ body.dark .filtro-chip:hover {
 body.dark .filtro-chip.active {
     background: linear-gradient(135deg, #16a34a, #14b8a6);
     color: #ffffff;
+}
+
+/* ==============================
+   BUSCADOR + FILTRO FECHA
+   ============================== */
+
+.buscador-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.buscador-quejas {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid rgba(226,232,240,.95);
+    border-radius: 999px;
+    padding: 8px 16px;
+    box-shadow: 0 8px 18px rgba(15,23,42,.05);
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.buscador-quejas:focus-within {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 4px rgba(34,197,94,.12);
+}
+
+.buscador-icono {
+    font-size: 16px;
+    color: #94a3b8;
+    flex-shrink: 0;
+}
+
+.buscador-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0f172a;
+    width: 220px;
+}
+
+.buscador-input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.btn-filtro-fecha {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 14px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(226,232,240,.95) !important;
+    background: #ffffff !important;
+    color: #64748b !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(15,23,42,.05);
+    transition: border-color .15s ease, color .15s ease;
+    white-space: nowrap;
+    -webkit-appearance: none !important;
+}
+
+.btn-filtro-fecha:hover {
+    border-color: #22c55e !important;
+    color: #15803d !important;
+}
+
+.btn-filtro-fecha.activo {
+    background: linear-gradient(135deg, #16a34a, #14b8a6) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+
+.btn-buscar {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px !important;
+    border-radius: 999px !important;
+    border: none !important;
+    background: linear-gradient(135deg, #16a34a, #14b8a6) !important;
+    color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(22,163,74,.25);
+    transition: opacity .15s ease, transform .15s ease;
+    white-space: nowrap;
+    -webkit-appearance: none !important;
+}
+
+.btn-buscar:hover {
+    opacity: .9;
+    transform: translateY(-1px);
+}
+
+/* Dropdown calendario */
+
+.calendario-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: #ffffff;
+    border: 1px solid rgba(226,232,240,.95);
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 20px 48px rgba(15,23,42,.14);
+    z-index: 100;
+    min-width: 280px;
+}
+
+.calendario-titulo {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-bottom: 16px;
+}
+
+.calendario-campos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.calendario-campo label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+
+.calendario-campo input[type="date"] {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid rgba(226,232,240,.95);
+    border-radius: 10px;
+    font-size: 13px;
+    color: #0f172a;
+    background: #f8fafc;
+    outline: none;
+    transition: border-color .15s ease;
+}
+
+.calendario-campo input[type="date"]:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 4px rgba(34,197,94,.12);
+}
+
+.calendario-botones {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.btn-cal-limpiar {
+    padding: 8px 16px !important;
+    border-radius: 10px !important;
+    border: 1px solid rgba(226,232,240,.95) !important;
+    background: #f8fafc !important;
+    color: #64748b !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    transition: background .15s ease;
+    -webkit-appearance: none !important;
+}
+
+.btn-cal-limpiar:hover {
+    background: #e2e8f0 !important;
+}
+
+.btn-cal-aplicar {
+    padding: 8px 16px !important;
+    border-radius: 10px !important;
+    border: none !important;
+    background: linear-gradient(135deg, #16a34a, #14b8a6) !important;
+    color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    cursor: pointer;
+    transition: opacity .15s ease;
+    -webkit-appearance: none !important;
+}
+
+.btn-cal-aplicar:hover {
+    opacity: .9;
+}
+
+body.dark .buscador-quejas {
+    background: #1e293b;
+    border-color: rgba(255,255,255,.08);
+}
+
+body.dark .buscador-quejas:focus-within {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 4px rgba(34,197,94,.14);
+}
+
+body.dark .buscador-input {
+    color: #e2e8f0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+body.dark .btn-filtro-fecha {
+    background: #1e293b !important;
+    border-color: rgba(255,255,255,.08) !important;
+    color: #94a3b8 !important;
+}
+
+body.dark .btn-filtro-fecha:hover {
+    color: #bbf7d0 !important;
+    border-color: rgba(34,197,94,.35) !important;
+}
+
+body.dark .btn-filtro-fecha.activo {
+    background: linear-gradient(135deg, #16a34a, #14b8a6) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+
+body.dark .calendario-dropdown {
+    background: #1e293b;
+    border-color: rgba(255,255,255,.08);
+}
+
+body.dark .calendario-titulo {
+    color: #f8fafc;
+}
+
+body.dark .calendario-campo input[type="date"] {
+    background: #0f172a;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark .btn-cal-limpiar {
+    background: #273449;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark .btn-cal-limpiar:hover {
+    background: #334155;
+}
+body.dark .calendario-campo input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
 }

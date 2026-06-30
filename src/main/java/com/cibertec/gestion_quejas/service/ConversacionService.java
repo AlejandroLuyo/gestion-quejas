@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
+import java.time.LocalDateTime;
 
 import java.util.Comparator;
 import java.util.List;
@@ -80,6 +81,11 @@ public class ConversacionService {
         conversacion.setCsatToken(token);
         guardar(conversacion);
         return token;
+    }
+
+    public List<Conversacion> buscarConFiltros(String texto, LocalDateTime desde, LocalDateTime hasta, Sort sort) {
+        String textoBusqueda = (texto != null && !texto.isBlank()) ? texto.trim() : null;
+        return conversacionRepository.buscarConFiltros(textoBusqueda, desde, hasta, sort);
     }
 
 }

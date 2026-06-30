@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
@@ -33,18 +35,35 @@ public class ReembolsoController {
     public String vistaLista(
             @RequestParam(required = false, defaultValue = "todos") String estado,
             @RequestParam(required = false, defaultValue = "todos") String agente,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String desde,
+            @RequestParam(required = false) String hasta,
             Model model) {
 
         List<Reembolso> todos = reembolsoRepository.findAll();
 
-        List<Reembolso> filtrados = todos.stream()
-                .filter(r -> estado.equals("todos") || estado.equals(r.getBotRefundStatus())
-                        || (estado.equals("aprobado") && "aprobado".equals(r.getRefundResult()))
-                        || (estado.equals("denegado") && "denegado".equals(r.getRefundResult()))
-                        || (estado.equals("rechazado_supervisor") && "rechazado_supervisor".equals(r.getRefundResult())))
-                .filter(r -> agente.equals("todos") ||
-                        agente.equals(r.getConversacion().getTeammateCurrentlyAssigned()))
-                .toList();
+        LocalDateTime desdeDate = (desde != null && !desde.isBlank())
+                ? LocalDate.parse(desde).atStartOfDay() : null;
+        LocalDateTime hastaDate = (hasta != null && !hasta.isBlank())
+                ? LocalDate.parse(hasta).atTime(23, 59, 59) : null;
+
+        boolean hayFiltros = (q != null && !q.isBlank()) || desdeDate != null || hastaDate != null;
+
+        List<Reembolso> filtrados;
+
+        if (hayFiltros) {
+            String textoBusqueda = (q != null && !q.isBlank()) ? q.trim() : null;
+            filtrados = reembolsoRepository.buscarConFiltros(textoBusqueda, desdeDate, hastaDate);
+        } else {
+            filtrados = todos.stream()
+                    .filter(r -> estado.equals("todos") || estado.equals(r.getBotRefundStatus())
+                            || (estado.equals("aprobado") && "aprobado".equals(r.getRefundResult()))
+                            || (estado.equals("denegado") && "denegado".equals(r.getRefundResult()))
+                            || (estado.equals("rechazado_supervisor") && "rechazado_supervisor".equals(r.getRefundResult())))
+                    .filter(r -> agente.equals("todos") ||
+                            agente.equals(r.getConversacion().getTeammateCurrentlyAssigned()))
+                    .toList();
+        }
 
         long pendientes = todos.stream()
                 .filter(r -> "pendiente_supervisor".equals(r.getBotRefundStatus())).count();
@@ -69,6 +88,9 @@ public class ReembolsoController {
         model.addAttribute("agentes", agentes);
         model.addAttribute("estadoFiltro", estado);
         model.addAttribute("agenteFiltro", agente);
+        model.addAttribute("q", q);
+        model.addAttribute("desde", desde);
+        model.addAttribute("hasta", hasta);
 
         return "reembolsos/lista";
     }

@@ -12,6 +12,10 @@ import java.util.Optional;
 @Repository
 public interface ReembolsoRepository extends JpaRepository<Reembolso, Long> {
     Optional<Reembolso> findByConversacionConversacionId(Long conversacionId);
+    long countByBotRefundStatus(String botRefundStatus);
+
+    long countByBotRefundStatusAndConversacionTeammateCurrentlyAssigned(
+            String botRefundStatus, String teammateCurrentlyAssigned);
 
     @Query("SELECT r FROM Reembolso r WHERE " +
             "(:texto IS NULL OR CAST(r.conversacion.orderId AS string) LIKE %:texto% OR " +

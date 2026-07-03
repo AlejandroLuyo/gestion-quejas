@@ -1,4 +1,5 @@
 let conversacionActualId = null;
+let chatIniciado = false;
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -9,7 +10,23 @@ function toggleSidebar() {
 }
 
 function toggleChat() {
-    document.getElementById('chat-window').classList.toggle('closed');
+    const chatWindow = document.getElementById('chat-window');
+    chatWindow.classList.toggle('closed');
+
+    if (!chatWindow.classList.contains('closed') && !chatIniciado) {
+        chatIniciado = true;
+        cargarSaludoAsistente();
+    }
+}
+
+function cargarSaludoAsistente() {
+    fetch('/api/asistente/saludo')
+        .then(res => res.json())
+        .then(data => {
+            const msgs = document.getElementById('chat-messages');
+            msgs.innerHTML = `<div class="msg msg-bot">${data.saludo}</div>`;
+        })
+        .catch(err => console.error('Error cargando saludo del asistente:', err));
 }
 
 function toggleDark() {
@@ -272,10 +289,35 @@ function sendMsg() {
     const input = document.getElementById('chat-input');
     const text = input.value.trim();
     if (!text) return;
+
     const msgs = document.getElementById('chat-messages');
     msgs.innerHTML += `<div class="msg msg-user">${text}</div>`;
     input.value = '';
     msgs.scrollTop = msgs.scrollHeight;
+
+    const idPensando = 'pensando-' + Date.now();
+    msgs.innerHTML += `<div class="msg msg-bot" id="${idPensando}">Escribiendo...</div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+
+    fetch('/api/asistente/consultar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'mensaje=' + encodeURIComponent(text)
+    })
+        .then(res => res.json())
+        .then(data => {
+            const pensando = document.getElementById(idPensando);
+            if (pensando) pensando.remove();
+            msgs.innerHTML += `<div class="msg msg-bot">${data.respuesta}</div>`;
+            msgs.scrollTop = msgs.scrollHeight;
+        })
+        .catch(err => {
+            const pensando = document.getElementById(idPensando);
+            if (pensando) pensando.remove();
+            msgs.innerHTML += `<div class="msg msg-bot">Ocurrió un error, intenta de nuevo.</div>`;
+            msgs.scrollTop = msgs.scrollHeight;
+            console.error('Error en el asistente:', err);
+        });
 }
 
 function enviarRespuesta() {

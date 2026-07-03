@@ -19,6 +19,8 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, Long
     Optional<Conversacion> findByCsatToken(String csatToken);
     long countByTeammateCurrentlyAssignedAndCurrentConversationStateIn(String teammateCurrentlyAssigned, List<String> estados);
     List<Conversacion> findByTeammateCurrentlyAssignedAndCurrentConversationState(String teammateCurrentlyAssigned, String estado, Sort sort);
+    long countByTeammateCurrentlyAssignedAndCurrentConversationStateAndConversationLastClosedAtBetween(
+            String teammateCurrentlyAssigned, String estado, LocalDateTime desde, LocalDateTime hasta);
 
     @Query("SELECT c FROM Conversacion c WHERE " +
             "(:texto IS NULL OR CAST(c.orderId AS string) LIKE %:texto% OR " +

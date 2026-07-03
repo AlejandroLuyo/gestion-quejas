@@ -94,6 +94,14 @@ public class IaService {
         }
     }
 
+    public String responderConsultaAgente(String prompt) {
+        try {
+            return llamarGroq(prompt, "text");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @Async
     public void evaluarConsultaAsincrono(Long conversacionId, String contactReason,
                                          String descripcionCliente, String producto,

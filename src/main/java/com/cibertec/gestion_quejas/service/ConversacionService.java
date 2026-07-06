@@ -93,7 +93,7 @@ public class ConversacionService {
         return conversacionRepository.buscarConFiltros(textoBusqueda, desde, hasta, sort);
     }
 
-    public Optional<Conversacion> buscarActivaPorOrdenYCanal(Long orderId, String channel, List<String> estados) {
+    public Optional<Conversacion> buscarActivaPorOrdenYCanal(String orderId, String channel, List<String> estados) {
         return conversacionRepository.findFirstByOrderIdAndChannelAndCurrentConversationStateIn(orderId, channel, estados);
     }
 

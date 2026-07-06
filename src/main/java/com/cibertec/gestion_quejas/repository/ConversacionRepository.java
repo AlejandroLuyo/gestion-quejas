@@ -23,10 +23,10 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, Long
     long countByTeammateCurrentlyAssignedAndCurrentConversationStateAndConversationLastClosedAtBetween(
             String teammateCurrentlyAssigned, String estado, LocalDateTime desde, LocalDateTime hasta);
     Optional<Conversacion> findFirstByOrderIdAndChannelAndCurrentConversationStateIn(
-            Long orderId, String channel, List<String> estados);
+            String orderId, String channel, List<String> estados);
 
     @Query("SELECT c FROM Conversacion c WHERE " +
-            "(:texto IS NULL OR CAST(c.orderId AS string) LIKE %:texto% OR " +
+            "(:texto IS NULL OR LOWER(c.orderId) LIKE LOWER(CONCAT('%', :texto, '%')) OR " +
             " LOWER(c.contactReason) LIKE LOWER(CONCAT('%', :texto, '%')) OR " +
             " LOWER(c.teammateCurrentlyAssigned) LIKE LOWER(CONCAT('%', :texto, '%'))) AND " +
             "(:desde IS NULL OR c.conversationCreatedAt >= :desde) AND " +

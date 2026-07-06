@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.PageRequest;
+import java.util.List;
 
 import java.time.LocalDate;
 import java.util.Map;
@@ -46,7 +48,7 @@ public class ComprarVisaController {
         Producto producto = productoRepository.findById(productoId).orElse(null);
 
         Orden orden = new Orden();
-        // Ya NO se hace orden.setOrderId() — la BD lo genera sola
+        orden.setOrderId(generarSiguienteCodigoOrden());
         orden.setProducto(producto);
         orden.setDestinationCountry(destinationCountry);
         orden.setUserNationality(userNationality);
@@ -61,5 +63,14 @@ public class ComprarVisaController {
         ordenRepository.save(orden);
 
         return "redirect:/admin/comprar-visa?ordenGenerada=" + orden.getOrderId();
+    }
+    private String generarSiguienteCodigoOrden() {
+        List<Orden> ultimas = ordenRepository.listarTodasOrdenadasPorIdDesc(PageRequest.of(0, 1));
+        int siguienteNumero = 1;
+        if (!ultimas.isEmpty()) {
+            String soloNumero = ultimas.get(0).getOrderId().replaceAll("\\D+", "");
+            siguienteNumero = Integer.parseInt(soloNumero) + 1;
+        }
+        return "ORD-" + String.format("%05d", siguienteNumero);
     }
 }

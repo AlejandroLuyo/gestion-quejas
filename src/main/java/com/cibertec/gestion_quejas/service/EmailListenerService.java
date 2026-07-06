@@ -54,7 +54,7 @@ public class EmailListenerService {
     private EmailService emailService;
 
     private static final Pattern PATRON_ORDEN =
-            Pattern.compile("(?i)(?:orden|pedido|order)\\s*#?\\s*(\\d+)");
+            Pattern.compile("(?i)(?:orden|pedido|order)\\s*#?\\s*(?:ord-?)?(\\d+)");
 
     private static final List<String> ESTADOS_ACTIVOS = List.of("open", "pending");
 
@@ -250,8 +250,9 @@ public class EmailListenerService {
     private Orden buscarOrden(String textoCompleto, String remitente) {
         Matcher matcher = PATRON_ORDEN.matcher(textoCompleto);
         if (matcher.find()) {
-            Long numeroOrden = Long.parseLong(matcher.group(1));
-            Orden orden = ordenRepository.findById(numeroOrden).orElse(null);
+            String soloNumero = matcher.group(1);
+            String codigoOrden = "ORD-" + String.format("%05d", Integer.parseInt(soloNumero));
+            Orden orden = ordenRepository.findById(codigoOrden).orElse(null);
             if (orden != null && orden.getEmailCliente() != null
                     && orden.getEmailCliente().equalsIgnoreCase(remitente)) {
                 return orden;

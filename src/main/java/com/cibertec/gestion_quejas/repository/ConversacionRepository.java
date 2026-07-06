@@ -17,10 +17,13 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, Long
     List<Conversacion> findByTeammateCurrentlyAssignedIsNull(Sort sort);
     List<Conversacion> findByContactReason(String contactReason);
     Optional<Conversacion> findByCsatToken(String csatToken);
+    boolean existsByEmailMessageId(String emailMessageId);
     long countByTeammateCurrentlyAssignedAndCurrentConversationStateIn(String teammateCurrentlyAssigned, List<String> estados);
     List<Conversacion> findByTeammateCurrentlyAssignedAndCurrentConversationState(String teammateCurrentlyAssigned, String estado, Sort sort);
     long countByTeammateCurrentlyAssignedAndCurrentConversationStateAndConversationLastClosedAtBetween(
             String teammateCurrentlyAssigned, String estado, LocalDateTime desde, LocalDateTime hasta);
+    Optional<Conversacion> findFirstByOrderIdAndChannelAndCurrentConversationStateIn(
+            Long orderId, String channel, List<String> estados);
 
     @Query("SELECT c FROM Conversacion c WHERE " +
             "(:texto IS NULL OR CAST(c.orderId AS string) LIKE %:texto% OR " +

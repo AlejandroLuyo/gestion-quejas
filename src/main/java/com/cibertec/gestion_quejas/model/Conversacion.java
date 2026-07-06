@@ -78,6 +78,12 @@ public class Conversacion {
     @Column(name = "csat_token")
     private String csatToken;
 
+    @Column(name = "requiere_revision_manual")
+    private Boolean requiereRevisionManual = false;
+
+    @Column(name = "email_message_id", unique = true)
+    private String emailMessageId;
+
     @PrePersist
     public void prePersist() {
         this.conversationCreatedAt = LocalDateTime.now();

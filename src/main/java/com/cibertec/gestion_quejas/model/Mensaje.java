@@ -27,8 +27,12 @@ public class Mensaje {
     @Column(name = "canal")
     private String canal; // WHATSAPP, EMAIL, TICKET, INTERNO
 
+    @Column(name = "email_message_id", unique = true)
+    private String emailMessageId;
+
     @Column(name = "fecha_envio", nullable = false)
     private LocalDateTime fechaEnvio;
+
 
     @PrePersist
     public void prePersist() {

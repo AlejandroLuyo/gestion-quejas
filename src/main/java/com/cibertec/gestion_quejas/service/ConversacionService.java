@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -56,6 +57,10 @@ public class ConversacionService {
         return conversacionRepository.findByCsatToken(token).orElse(null);
     }
 
+    public boolean existePorEmailMessageId(String emailMessageId) {
+        return conversacionRepository.existsByEmailMessageId(emailMessageId);
+    }
+
     public void eliminar(Long id) {
         conversacionRepository.deleteById(id);
     }
@@ -86,6 +91,10 @@ public class ConversacionService {
     public List<Conversacion> buscarConFiltros(String texto, LocalDateTime desde, LocalDateTime hasta, Sort sort) {
         String textoBusqueda = (texto != null && !texto.isBlank()) ? texto.trim() : null;
         return conversacionRepository.buscarConFiltros(textoBusqueda, desde, hasta, sort);
+    }
+
+    public Optional<Conversacion> buscarActivaPorOrdenYCanal(Long orderId, String channel, List<String> estados) {
+        return conversacionRepository.findFirstByOrderIdAndChannelAndCurrentConversationStateIn(orderId, channel, estados);
     }
 
 }

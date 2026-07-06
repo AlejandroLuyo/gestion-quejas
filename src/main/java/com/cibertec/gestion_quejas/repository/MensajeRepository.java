@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface MensajeRepository extends JpaRepository<Mensaje, Long> {
     List<Mensaje> findByConversacionConversacionIdOrderByFechaEnvioAsc(Long conversacionId);
+    boolean existsByEmailMessageId(String emailMessageId);
+
 }

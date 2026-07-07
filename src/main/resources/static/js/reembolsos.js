@@ -28,6 +28,7 @@ function traducirMotivo(key) {
 }
 
 function traducirEstado(r) {
+    if (r.botRefundStatus === 'pendiente_agente') return 'Pendiente de revisión (agente)';
     if (r.botRefundStatus === 'pendiente_supervisor') return 'Pendiente de aprobación';
     if (r.refundResult === 'aprobado') return 'Aprobado';
     if (r.refundResult === 'denegado') return 'Denegado por agente';
@@ -39,7 +40,7 @@ function renderDetalle(data) {
     reembolsoPrecio = data.precio || 0;
     const conv = data.conversacion;
 
-    document.getElementById('dp-titulo').textContent = 'ORD-' + (conv?.orderId || '?') + ' — Reembolso';
+    document.getElementById('dp-titulo').textContent = (conv?.orderId || '?') + ' — Reembolso';
     document.getElementById('dp-sub').textContent = (conv?.agente || '-') + ' · ' + (conv?.fecha || '-');
 
     const esPendiente = data.botRefundStatus === 'pendiente_supervisor';

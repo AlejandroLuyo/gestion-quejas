@@ -130,7 +130,7 @@ function reabrirYDerivar() {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'ok') {
-                document.getElementById('sp-estado').textContent = 'open';
+                document.getElementById('sp-estado').textContent = traducirEstado('open');
                 document.getElementById('sp-agente').textContent = data.agente;
                 document.getElementById('sp-banner-ia').style.display = 'none';
             }
@@ -220,7 +220,7 @@ function confirmarTransferencia() {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'ok') {
-                document.getElementById('sp-estado').textContent = 'pending';
+                document.getElementById('sp-estado').textContent = traducirEstado('pending');
                 document.getElementById('sp-agente').textContent = data.agente;
                 cancelarTransferencia();
                 cargarMensajes(conversacionActualId);
@@ -230,7 +230,7 @@ function confirmarTransferencia() {
                     if (row.getAttribute('onclick').includes(conversacionActualId)) {
                         const badge = row.querySelector('.status-badge');
                         if (badge) {
-                            badge.textContent = 'pending';
+                            badge.textContent = traducirEstado('pending');
                             badge.className = 'status-badge status-PENDIENTE';
                         }
                         const celdas = row.querySelectorAll('td');
@@ -260,7 +260,7 @@ function cambiarEstado(nuevoEstado) {
         .then(res => res.json())
         .then(data => {
             if (data.status === 'ok') {
-                document.getElementById('sp-estado').textContent = nuevoEstado;
+                document.getElementById('sp-estado').textContent = traducirEstado(nuevoEstado);
                 if (data.agente) {
                     document.getElementById('sp-agente').textContent = data.agente;
                 }
@@ -269,7 +269,7 @@ function cambiarEstado(nuevoEstado) {
                     if (row.getAttribute('onclick').includes(conversacionActualId)) {
                         const badge = row.querySelector('.status-badge');
                         if (badge) {
-                            badge.textContent = nuevoEstado;
+                            badge.textContent = traducirEstado(nuevoEstado);
                             badge.className = 'status-badge';
                             if (nuevoEstado === 'open') badge.classList.add('status-EN_PROCESO');
                             else if (nuevoEstado === 'resolved') badge.classList.add('status-RESUELTO');

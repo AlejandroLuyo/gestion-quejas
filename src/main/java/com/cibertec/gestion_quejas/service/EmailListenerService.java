@@ -38,6 +38,9 @@ public class EmailListenerService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    @Value("${email.polling.enabled}")
+    private boolean pollingEnabled;
+
     @Autowired
     private OrdenRepository ordenRepository;
 
@@ -60,6 +63,9 @@ public class EmailListenerService {
 
     @Scheduled(fixedDelay = 60000)
     public void revisarBandejaEntrada() {
+        if (!pollingEnabled) {
+            return; // Polling desactivado manualmente (ahorro de recursos en la nube)
+        }
         Properties props = new Properties();
         props.put("mail.store.protocol", "imaps");
         props.put("mail.imaps.host", imapHost);

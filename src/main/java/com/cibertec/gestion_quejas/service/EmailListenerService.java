@@ -238,6 +238,10 @@ public class EmailListenerService {
                     conversacionService.seleccionarAgenteConMenosCarga());
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
             conversacion.setCurrentConversationState("open");
+            // Mensaje por defecto si la IA no generó respuesta (ej. error de conexión con Groq)
+            if (contenidoBot == null || contenidoBot.isBlank()) {
+                contenidoBot = "Gracias por tu mensaje. Uno de nuestros agentes revisará tu caso y te responderá a la brevedad.";
+            }
         } else {
             conversacion.setCurrentConversationState("pending");
         }

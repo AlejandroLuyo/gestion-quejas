@@ -7,6 +7,7 @@ function guardarConfiguracion() {
     const errorDiv        = document.getElementById('cfgError');
     const exitoDiv        = document.getElementById('cfgExito');
     const btnGuardar      = document.getElementById('btnGuardarConfig');
+    const firma = document.getElementById('cfgFirma').value.trim();
 
     errorDiv.style.display = 'none';
     exitoDiv.style.display = 'none';
@@ -36,6 +37,7 @@ function guardarConfiguracion() {
     params.append('email', email);
     params.append('idioma', idioma);
     params.append('zonaHoraria', zonaHoraria);
+    params.append('firma', firma);
     if (password) params.append('password', password);
 
     fetch('/configuracion/guardar', {

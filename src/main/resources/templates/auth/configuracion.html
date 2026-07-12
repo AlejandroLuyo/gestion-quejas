@@ -48,6 +48,14 @@
                     </div>
 
                     <div class="config-field">
+                        <label class="config-label">Firma de correo (opcional)</label>
+                        <textarea class="config-input" id="cfgFirma" rows="4"
+                                  placeholder="Nombre / Cargo / Contacto / Empresa"
+                                  th:text="${usuario.firma}"></textarea>
+                        <p class="config-hint">Se agregará automáticamente al final de tus respuestas por correo.</p>
+                    </div>
+
+                    <div class="config-field">
                         <label class="config-label">Idioma</label>
                         <select class="config-select" id="cfgIdioma">
                             <option value="es" th:selected="${usuario.idioma == 'es'}">Español</option>

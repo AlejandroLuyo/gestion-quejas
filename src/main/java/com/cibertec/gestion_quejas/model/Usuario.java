@@ -38,6 +38,9 @@ public class Usuario {
     @Column(name = "zona_horaria")
     private String zonaHoraria = "America/Lima";
 
+    @Column(name = "firma", columnDefinition = "TEXT")
+    private String firma;
+
     @PrePersist
     public void prePersist() {
         this.fechaCreacion = LocalDateTime.now();

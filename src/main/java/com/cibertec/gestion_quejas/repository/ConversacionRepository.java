@@ -16,6 +16,7 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, Long
     List<Conversacion> findByTeammateCurrentlyAssigned(String teammateCurrentlyAssigned, Sort sort);
     List<Conversacion> findByTeammateCurrentlyAssignedIsNull(Sort sort);
     List<Conversacion> findByContactReason(String contactReason);
+    List<Conversacion> findByRequiereRevisionManualTrue(Sort sort);
     Optional<Conversacion> findByCsatToken(String csatToken);
     boolean existsByEmailMessageId(String emailMessageId);
     long countByTeammateCurrentlyAssignedAndCurrentConversationStateIn(String teammateCurrentlyAssigned, List<String> estados);

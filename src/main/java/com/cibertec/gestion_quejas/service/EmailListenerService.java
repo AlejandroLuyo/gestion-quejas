@@ -136,6 +136,8 @@ public class EmailListenerService {
         conversacion.setChannel("email");
         conversacion.setContactReason("consulta_general");
         conversacion.setRequiereRevisionManual(true);
+        conversacion.setAsunto(asunto);
+        conversacion.setRemitenteEmail(remitente);
         conversacionService.guardar(conversacion);
 
         Mensaje primerMensaje = new Mensaje();
@@ -158,6 +160,8 @@ public class EmailListenerService {
         conversacion.setChannel("email");
         conversacion.setOrderId(orden.getOrderId());
         conversacion.setRequiereRevisionManual(false);
+        conversacion.setAsunto(asunto);
+        conversacion.setRemitenteEmail(remitente);
 
         boolean esReembolso = textoCompleto.toLowerCase().contains("reembolso");
         conversacion.setContactReason(esReembolso ? "refund_request" : "consulta_general");
@@ -254,7 +258,11 @@ public class EmailListenerService {
         mensajeRepository.save(msgBot);
 
         conversacionService.guardar(conversacion);
-        emailService.enviarCorreo(remitente, "Re: tu consulta en CSManager", contenidoBot);
+
+        String asuntoRespuesta = conversacion.getAsunto() != null
+                ? "Re: " + conversacion.getAsunto()
+                : "Re: tu consulta en CSManager";
+        emailService.enviarCorreo(remitente, asuntoRespuesta, contenidoBot);
     }
 
     private Orden buscarOrden(String textoCompleto, String remitente) {

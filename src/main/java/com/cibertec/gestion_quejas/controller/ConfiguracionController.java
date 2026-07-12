@@ -32,8 +32,9 @@ public class ConfiguracionController {
             @RequestParam(required = false) String password,
             @RequestParam String idioma,
             @RequestParam String zonaHoraria,
+            @RequestParam(required = false) String firma,
             Principal principal) {
-        usuarioService.actualizarPerfil(principal.getName(), email, password, idioma, zonaHoraria);
+        usuarioService.actualizarPerfil(principal.getName(), email, password, idioma, zonaHoraria, firma);
         return ResponseEntity.ok(Map.of("status", "ok"));
     }
 }

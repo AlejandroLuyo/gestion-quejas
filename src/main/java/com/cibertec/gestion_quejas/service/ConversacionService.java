@@ -40,6 +40,10 @@ public class ConversacionService {
         return conversacionRepository.findByTeammateCurrentlyAssignedIsNull(sort);
     }
 
+    public List<Conversacion> listarRequierenRevision(Sort sort) {
+        return conversacionRepository.findByRequiereRevisionManualTrue(sort);
+    }
+
     public List<Conversacion> listarResueltasPorIA(Sort sort) {
         return conversacionRepository.findByTeammateCurrentlyAssignedAndCurrentConversationState("CSMate", "resolved", sort);
     }

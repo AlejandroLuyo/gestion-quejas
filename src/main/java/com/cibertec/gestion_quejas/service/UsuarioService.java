@@ -52,12 +52,13 @@ public class UsuarioService {
     }
 
     public void actualizarPerfil(String nombreActual, String email, String passwordPlano,
-                                 String idioma, String zonaHoraria) {
+                                 String idioma, String zonaHoraria, String firma) {
         Usuario usuario = usuarioRepository.findByNombre(nombreActual).orElse(null);
         if (usuario == null) return;
         usuario.setEmail(email);
         usuario.setIdioma(idioma);
         usuario.setZonaHoraria(zonaHoraria);
+        usuario.setFirma(firma);
         if (passwordPlano != null && !passwordPlano.isBlank()) {
             usuario.setPasswordHash(passwordEncoder.encode(passwordPlano));
         }

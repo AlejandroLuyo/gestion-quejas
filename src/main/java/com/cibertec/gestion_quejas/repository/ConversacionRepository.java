@@ -25,15 +25,4 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, Long
     Optional<Conversacion> findFirstByOrderIdAndChannelAndCurrentConversationStateIn(
             String orderId, String channel, List<String> estados);
 
-    @Query("SELECT c FROM Conversacion c WHERE " +
-            "(:texto IS NULL OR LOWER(c.orderId) LIKE LOWER(CONCAT('%', :texto, '%')) OR " +
-            " LOWER(c.contactReason) LIKE LOWER(CONCAT('%', :texto, '%')) OR " +
-            " LOWER(c.teammateCurrentlyAssigned) LIKE LOWER(CONCAT('%', :texto, '%'))) AND " +
-            "(:desde IS NULL OR c.conversationCreatedAt >= :desde) AND " +
-            "(:hasta IS NULL OR c.conversationCreatedAt <= :hasta)")
-    List<Conversacion> buscarConFiltros(
-            @Param("texto") String texto,
-            @Param("desde") java.time.LocalDateTime desde,
-            @Param("hasta") java.time.LocalDateTime hasta,
-            Sort sort);
 }

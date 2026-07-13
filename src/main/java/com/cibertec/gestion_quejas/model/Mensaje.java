@@ -18,7 +18,7 @@ public class Mensaje {
     @JoinColumn(name = "conversacion_id", nullable = false)
     private Conversacion conversacion;
 
-    @Column(name = "contenido", nullable = false, length = 2000)
+    @Column(name = "contenido", columnDefinition = "TEXT")
     private String contenido;
 
     @Column(name = "remitente", nullable = false)

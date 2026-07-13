@@ -97,7 +97,7 @@ public class ConversacionService {
                                                LocalDateTime hasta,
                                                Sort sort) {
 
-        List<Conversacion> lista = conversacionRepository.findAll(sort);
+        List<Conversacion> lista = conversacionRepository.findAllConOrden(sort);
 
         return lista.stream()
                 .filter(c -> {

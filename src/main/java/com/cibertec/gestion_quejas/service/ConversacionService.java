@@ -25,7 +25,7 @@ public class ConversacionService {
     private UsuarioRepository usuarioRepository;
 
     public List<Conversacion> listarTodas(Sort sort) {
-        return conversacionRepository.findAll(sort);
+        return conversacionRepository.findAllConOrden(sort);
     }
 
     public List<Conversacion> listarPorEstado(String estado, Sort sort) {

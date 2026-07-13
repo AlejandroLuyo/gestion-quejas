@@ -61,6 +61,9 @@ public class EmailListenerService {
 
     private static final List<String> ESTADOS_ACTIVOS = List.of("open", "pending");
 
+    private static final List<String> DOMINIOS_SISTEMA_BLOQUEADOS = List.of(
+            "brevo.com", "t.brevo.com", "sendinblue.com"
+    );
     @Scheduled(fixedDelay = 60000)
     public void revisarBandejaEntrada() {
         if (!pollingEnabled) {
@@ -106,6 +109,13 @@ public class EmailListenerService {
             }
 
             String remitente = ((InternetAddress) msg.getFrom()[0]).getAddress();
+
+            if (esRemitenteDeSistema(remitente)) {
+                System.out.println("Correo de sistema ignorado (no se crea conversación): " + remitente);
+                return;
+            }
+
+
             String asunto = msg.getSubject() != null ? msg.getSubject() : "(sin asunto)";
             String cuerpo = extraerCuerpo(msg);
             String textoCompleto = asunto + " " + cuerpo;
@@ -129,6 +139,13 @@ public class EmailListenerService {
         } catch (Exception e) {
             System.err.println("Error procesando correo individual: " + e.getMessage());
         }
+    }
+
+    private boolean esRemitenteDeSistema(String remitente) {
+        if (remitente == null) return false;
+        String dominio = remitente.substring(remitente.indexOf('@') + 1).toLowerCase();
+        return DOMINIOS_SISTEMA_BLOQUEADOS.stream()
+                .anyMatch(bloqueado -> dominio.equals(bloqueado) || dominio.endsWith("." + bloqueado));
     }
 
     private void procesarSinOrden(String asunto, String cuerpo, String remitente, String messageId) {

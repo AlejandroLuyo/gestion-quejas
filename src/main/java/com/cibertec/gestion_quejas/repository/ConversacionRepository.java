@@ -26,4 +26,7 @@ public interface ConversacionRepository extends JpaRepository<Conversacion, Long
     Optional<Conversacion> findFirstByOrderIdAndChannelAndCurrentConversationStateIn(
             String orderId, String channel, List<String> estados);
 
+    @Query("SELECT c FROM Conversacion c LEFT JOIN FETCH c.orden o LEFT JOIN FETCH o.producto")
+    List<Conversacion> findAllConOrden(Sort sort);
+
 }

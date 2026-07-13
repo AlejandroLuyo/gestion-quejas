@@ -269,6 +269,11 @@ function openEmailPanel(id) {
             document.getElementById('em-reason').textContent = traducirContactReason(c.contactReason);
 
             emReembolsoContactReason = c.contactReason;
+            document.getElementById('em-reclasificar-aviso').style.display = 'none';
+            document.getElementById('em-form-reembolso').style.display = 'none';
+            document.getElementById('em-form-reembolso').innerHTML = formularioReembolsoHTML();
+            cargarEstadoReembolso(id);
+            emReembolsoContactReason = c.contactReason;
             document.getElementById('em-reembolso-wrap').style.display = 'block';
             document.getElementById('em-btn-reembolso').style.display = 'block';
             document.getElementById('em-reclasificar-aviso').style.display = 'none';
@@ -290,6 +295,62 @@ function openEmailPanel(id) {
 
     document.getElementById('email-modal-overlay').style.display = 'block';
     document.getElementById('email-modal').style.display = 'flex';
+}
+
+function cargarEstadoReembolso(id) {
+    fetch('/reembolso/' + id)
+        .then(res => res.json())
+        .then(data => {
+            const btn = document.getElementById('em-btn-reembolso');
+            const wrap = document.getElementById('em-reembolso-wrap');
+
+            if (!data.botRefundStatus) {
+                btn.style.display = 'block';
+                let extra = wrap.querySelector('.email-reembolso-estado');
+                if (extra) extra.remove();
+                return;
+            }
+
+            btn.style.display = 'none';
+            let mensaje = '';
+            if (data.botRefundStatus === 'pendiente_supervisor') {
+                mensaje = 'Solicitud enviada al supervisor, pendiente de aprobación.';
+            } else if (data.refundResult === 'aprobado') {
+                mensaje = 'Reembolso aprobado por el supervisor.';
+            } else if (data.refundResult === 'denegado') {
+                mensaje = 'Reembolso denegado.';
+            } else if (data.refundResult === 'rechazado_supervisor') {
+                mensaje = 'Solicitud rechazada por el supervisor.';
+            }
+
+            let extra = wrap.querySelector('.email-reembolso-estado');
+            if (!extra) {
+                extra = document.createElement('p');
+                extra.className = 'email-reembolso-estado';
+                wrap.insertBefore(extra, document.getElementById('em-reclasificar-aviso'));
+            }
+            extra.textContent = mensaje;
+        })
+        .catch(err => console.error('Error consultando estado de reembolso:', err));
+}
+
+function formularioReembolsoHTML() {
+    return `
+        <label class="email-form-label">Categoría del motivo</label>
+        <select id="em-reembolso-categoria" class="email-form-input">
+            <option value="amenaza_legal">Amenaza de acción legal</option>
+            <option value="redes_sociales">Publicación en redes sociales</option>
+            <option value="error_empresa">Error comprobado de la empresa</option>
+        </select>
+
+        <label class="email-form-label">Monto (S/)</label>
+        <input type="number" id="em-reembolso-monto" class="email-form-input" step="0.01" placeholder="0.00" />
+
+        <label class="email-form-label">Notas (opcional)</label>
+        <textarea id="em-reembolso-notas" class="email-form-input" rows="2" placeholder="Notas para el supervisor..."></textarea>
+
+        <button id="em-btn-enviar-reembolso" onclick="enviarReembolsoInline()">Enviar a supervisor</button>
+    `;
 }
 
 function closeEmailPanel() {

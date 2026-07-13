@@ -667,6 +667,153 @@ body {
 }
 
 /* ============================================================
+   MODAL REEMBOLSO EMAIL
+   ============================================================ */
+.email-action-reembolso {
+    background: #fef3c7;
+    color: #92400e;
+    width: 100%;
+    justify-content: center;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+}
+
+body.dark .email-action-reembolso {
+    background: #3f2d10;
+    color: #fde68a;
+}
+
+#em-reclasificar-aviso {
+    background: #fef3c7;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+#em-reclasificar-aviso p {
+    font-size: 13px;
+    color: #92400e;
+    margin: 0 0 10px;
+    line-height: 1.5;
+}
+
+.email-reclasificar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.email-reclasificar-actions button {
+    flex: 1;
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+.email-reclasificar-actions button:first-child {
+    background: #16a34a;
+    color: #fff;
+}
+
+.email-reclasificar-actions button:last-child {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+body.dark #em-reclasificar-aviso {
+    background: #3f2d10;
+}
+
+body.dark #em-reclasificar-aviso p {
+    color: #fde68a;
+}
+
+body.dark .email-reclasificar-actions button:last-child {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+#em-form-reembolso {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.email-form-label {
+    font-size: 11px;
+    color: #6b7280;
+    display: block;
+    margin: 8px 0 4px;
+}
+
+.email-form-label:first-child {
+    margin-top: 0;
+}
+
+.email-form-input {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 13px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-family: inherit;
+}
+
+#em-btn-enviar-reembolso {
+    width: 100%;
+    margin-top: 10px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    padding: 9px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.email-reembolso-confirmado {
+    text-align: center;
+    font-size: 13px;
+    color: #16a34a;
+    font-weight: 500;
+    margin: 0;
+    padding: 8px 0;
+}
+
+body.dark #em-form-reembolso {
+    background: #151b27;
+}
+
+body.dark .email-form-label {
+    color: #94a3b8;
+}
+
+body.dark .email-form-input {
+    background: #0f1521;
+    border-color: #2d3748;
+    color: #f1f5f9;
+}
+
+.email-reembolso-estado {
+    background: #f0fdf4;
+    color: #166534;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin: 0 0 10px;
+}
+
+body.dark .email-reembolso-estado {
+    background: #14532d;
+    color: #bbf7d0;
+}
+
+/* ============================================================
    MODAL DETALLE EMAIL
    ============================================================ */
 .email-modal-overlay {

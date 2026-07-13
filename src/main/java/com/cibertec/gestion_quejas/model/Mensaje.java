@@ -33,7 +33,6 @@ public class Mensaje {
     @Column(name = "fecha_envio", nullable = false)
     private LocalDateTime fechaEnvio;
 
-
     @PrePersist
     public void prePersist() {
         this.fechaEnvio = LocalDateTime.now();

@@ -19,7 +19,6 @@
     <div class="topbar">
         <span class="topbar-title">Estadísticas</span>
         <div class="topbar-right">
-            <i class="ti ti-bell" style="font-size:22px; color:#94a3b8;"></i>
             <button onclick="toggleDark()" id="dark-btn" class="theme-toggle-btn" type="button">
                 <i class="ti ti-moon" id="dark-icon-btn"></i>
                 <span id="dark-text-btn">Modo oscuro</span>
@@ -109,7 +108,6 @@
                 <div class="chart-title">Conversaciones por canal</div>
                 <div class="legend">
                     <span><span class="legend-dot" style="background:#185FA5;"></span>Email <span th:text="${porEmail}">0</span></span>
-                    <span><span class="legend-dot" style="background:#1D9E75;"></span>WhatsApp <span th:text="${porWhatsapp}">0</span></span>
                     <span><span class="legend-dot" style="background:#BA7517;"></span>Ticket <span th:text="${porTicket}">0</span></span>
                 </div>
                 <div style="position:relative; width:100%; height:200px;">
@@ -241,7 +239,6 @@
     const pendientes = [[${pendientes}]];
     const resueltas = [[${resueltas}]];
     const porEmail = [[${porEmail}]];
-    const porWhatsapp = [[${porWhatsapp}]];
     const porTicket = [[${porTicket}]];
     const contactReasons = [[${contactReasonLabels}]];
     const contactReasonData = [[${contactReasonData}]];

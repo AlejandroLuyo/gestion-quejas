@@ -25,7 +25,7 @@ public class Mensaje {
     private String remitente; // AGENTE, CLIENTE, BOT
 
     @Column(name = "canal")
-    private String canal; // WHATSAPP, EMAIL, TICKET, INTERNO
+    private String canal; // EMAIL, TICKET, INTERNO
 
     @Column(name = "email_message_id", unique = true)
     private String emailMessageId;

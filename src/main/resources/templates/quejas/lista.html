@@ -16,7 +16,6 @@
     <div class="topbar">
         <span class="topbar-title" th:text="${tituloVista}">Vista general de quejas</span>
         <div class="topbar-right">
-            <i class="ti ti-bell" style="font-size:22px; color:#94a3b8;"></i>
             <button onclick="toggleDark()" id="dark-btn" class="theme-toggle-btn" type="button">
                 <i class="ti ti-moon" id="dark-icon-btn"></i>
                 <span id="dark-text-btn">Modo oscuro</span>
@@ -187,12 +186,10 @@
                         </td>
                     <td>
                         <span class="source-badge"
-                              th:classappend="${conv.channel == 'email'} ? 'source-email' :
-                                             (${conv.channel == 'whatsapp'} ? 'source-whatsapp' : 'source-ticket')">
-                            <i th:classappend="${conv.channel == 'email'} ? 'ti ti-mail' :
-                                              (${conv.channel == 'whatsapp'} ? 'ti ti-brand-whatsapp' : 'ti ti-ticket')"></i>
-                            <span th:text="${conv.channel != null ? conv.channel : 'ticket'}"></span>
-                        </span>
+                              th:classappend="${conv.channel == 'email'} ? 'source-email' : 'source-ticket'">
+    <i th:classappend="${conv.channel == 'email'} ? 'ti ti-mail' : 'ti ti-ticket'"></i>
+    <span th:text="${conv.channel != null ? conv.channel : 'ticket'}"></span>
+</span>
                     </td>
                     <td>
                         <span class="status-badge"

@@ -48,9 +48,13 @@ public class EstadisticaService {
         long pendientes= todas.stream().filter(c -> "pending".equals(c.getCurrentConversationState())).count();
         long resueltas = todas.stream().filter(c -> "resolved".equals(c.getCurrentConversationState())).count();
 
-        long porEmail    = todas.stream().filter(c -> "email".equals(c.getChannel())).count();
-        long porWhatsapp = todas.stream().filter(c -> "whatsapp".equals(c.getChannel())).count();
-        long porTicket   = todas.stream().filter(c -> "ticket".equals(c.getChannel())).count();
+        long porEmail  = todas.stream()
+                .filter(c -> "email".equalsIgnoreCase(c.getChannel()))
+                .count();
+
+        long porTicket = todas.stream()
+                .filter(c -> "ticket".equalsIgnoreCase(c.getChannel()))
+                .count();
 
         double frtPromedio = todas.stream()
                 .filter(c -> c.getFirstResponseTimeSeconds() != null)
@@ -173,7 +177,6 @@ public class EstadisticaService {
         stats.put("pendientes", pendientes);
         stats.put("resueltas", resueltas);
         stats.put("porEmail", porEmail);
-        stats.put("porWhatsapp", porWhatsapp);
         stats.put("porTicket", porTicket);
         stats.put("frtPromedio", Math.round(frtPromedio));
         stats.put("contactRate", contactRate);

@@ -16,7 +16,6 @@
     <div class="topbar">
         <span class="topbar-title" th:text="${tituloVista}">Vista general de quejas</span>
         <div class="topbar-right">
-            <i class="ti ti-bell" style="font-size:22px; color:#94a3b8;"></i>
             <button onclick="toggleDark()" id="dark-btn" class="theme-toggle-btn" type="button">
                 <i class="ti ti-moon" id="dark-icon-btn"></i>
                 <span id="dark-text-btn">Modo oscuro</span>
@@ -59,6 +58,11 @@
             <a th:href="@{/quejas(vista='sin-asignar')}" class="filtro-chip"
                th:classappend="${vista == 'sin-asignar'} ? ' active' : ''">
                 <i class="ti ti-users"></i><span>Sin asignar</span>
+            </a>
+
+            <a th:href="@{/quejas(vista='requiere-revision')}" class="filtro-chip"
+               th:classappend="${vista == 'requiere-revision'} ? ' active' : ''">
+                <i class="ti ti-alert-triangle"></i><span>Requiere revisión</span>
             </a>
 
             <a th:href="@{/quejas(vista='pendientes')}" class="filtro-chip"
@@ -130,7 +134,8 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th>Order ID</th>
+                    <th>#</th>
+                    <th>Orden / Remitente</th>
                     <th>Contact reason</th>
                     <th>Canal</th>
                     <th>
@@ -164,8 +169,11 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="conv : ${conversaciones}" th:onclick="|openPanel(${conv.conversacionId})|">
-                    <td th:text="${conv.orderId != null ? conv.orderId : '-'}"></td>
+                <tr th:each="conv, iterStat : ${conversaciones}"
+                    th:attr="data-conv-id=${conv.conversacionId}, data-conv-canal=${conv.channel}"
+                    onclick="openPanelSegunCanal(this.dataset.convId, this.dataset.convCanal)">
+                    <td th:text="${iterStat.count}"></td>
+                    <td th:text="${conv.orderId != null ? conv.orderId : (conv.remitenteEmail != null ? conv.remitenteEmail : '-')}"></td>
                         <td th:text="${conv.contactReason == 'payment_issues' ? 'Problemas de pago' :
                                       conv.contactReason == 'refund_request' ? 'Solicitud de reembolso' :
                                       conv.contactReason == 'status_information' ? 'Información de estado' :
@@ -173,16 +181,15 @@
                                       conv.contactReason == 'deliverable_information' ? 'Información de entrega' :
                                       conv.contactReason == 'requirements_assistance' ? 'Asistencia de requisitos' :
                                       conv.contactReason == 'upload_support' ? 'Soporte de carga' :
+                                      conv.contactReason == 'consulta_general' ? 'Consulta general' :
                                       conv.contactReason != null ? conv.contactReason : '-'}">
                         </td>
                     <td>
                         <span class="source-badge"
-                              th:classappend="${conv.channel == 'email'} ? 'source-email' :
-                                             (${conv.channel == 'whatsapp'} ? 'source-whatsapp' : 'source-ticket')">
-                            <i th:classappend="${conv.channel == 'email'} ? 'ti ti-mail' :
-                                              (${conv.channel == 'whatsapp'} ? 'ti ti-brand-whatsapp' : 'ti ti-ticket')"></i>
-                            <span th:text="${conv.channel != null ? conv.channel : 'ticket'}"></span>
-                        </span>
+                              th:classappend="${conv.channel == 'email'} ? 'source-email' : 'source-ticket'">
+    <i th:classappend="${conv.channel == 'email'} ? 'ti ti-mail' : 'ti ti-ticket'"></i>
+    <span th:text="${conv.channel != null ? conv.channel : 'ticket'}"></span>
+</span>
                     </td>
                     <td>
                         <span class="status-badge"
@@ -291,7 +298,7 @@
                 </button>
             </div>
         </div>
-
+        <div id="reply-aviso" class="reply-aviso"></div>
         <div class="reply-row">
             <input type="text" id="reply-input" class="reply-input"
                    placeholder="Escribe una respuesta..."
@@ -310,6 +317,94 @@
         <button onclick="cerrarPanelReembolso()"><i class="ti ti-x"></i></button>
     </div>
     <div class="reembolso-panel-body" id="reembolso-panel-body"></div>
+</div>
+
+<!-- MODAL DETALLE EMAIL -->
+<div class="email-modal-overlay" id="email-modal-overlay" onclick="closeEmailPanel()"></div>
+<div class="email-modal" id="email-modal">
+    <div class="email-modal-header">
+        <div class="email-modal-titlebar">
+            <div>
+                <div class="email-modal-orderid" id="em-orderid"></div>
+                <div class="email-modal-reason" id="em-reason"></div>
+            </div>
+            <button class="close-btn" onclick="closeEmailPanel()">
+                <i class="ti ti-x"></i>
+            </button>
+        </div>
+        <div class="email-modal-actionbar">
+            <span class="status-badge" id="em-estado-badge"></span>
+            <div class="email-action-group">
+                <button class="email-action-btn email-action-abrir" onclick="cambiarEstadoEmail('open')">
+                    <i class="ti ti-loader"></i> Abrir
+                </button>
+                <button class="email-action-btn email-action-reasignar" onclick="mostrarFormularioTransferencia()">
+                    <i class="ti ti-clock"></i> Re-asignar
+                </button>
+                <button class="email-action-btn email-action-resolver" onclick="resolverYEnviarEncuesta()">
+                    <i class="ti ti-circle-check"></i> Resolver
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="email-modal-attrs">
+        <table>
+            <tr><td class="email-attr-label">De</td><td id="em-de"></td></tr>
+            <tr><td class="email-attr-label">Para</td><td id="em-para">csmanager.pruebas@gmail.com</td></tr>
+            <tr><td class="email-attr-label">Fecha</td><td id="em-fecha"></td></tr>
+            <tr><td class="email-attr-label">Asunto</td><td id="em-asunto"></td></tr>
+        </table>
+    </div>
+
+    <div class="email-modal-body" id="em-mensajes-list"></div>
+
+    <div class="email-modal-footer">
+        <div id="em-reembolso-wrap" style="display:none;">
+
+            <!-- Botón inicial -->
+            <button id="em-btn-reembolso" class="email-action-btn email-action-reembolso" onclick="clicProcesarReembolso()">
+                <i class="ti ti-receipt-refund"></i> Procesar reembolso
+            </button>
+
+            <!-- Aviso de reclasificación -->
+            <div id="em-reclasificar-aviso" style="display:none;">
+                <p>Este caso no está marcado como reembolso. ¿Deseas reclasificarlo?</p>
+                <div class="email-reclasificar-actions">
+                    <button onclick="confirmarReclasificacion()">Sí, reclasificar</button>
+                    <button onclick="cancelarReclasificacion()">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- Formulario de reembolso -->
+            <div id="em-form-reembolso" style="display:none;">
+                <label class="email-form-label">Categoría del motivo</label>
+                <select id="em-reembolso-categoria" class="email-form-input">
+                    <option value="amenaza_legal">Amenaza de acción legal</option>
+                    <option value="redes_sociales">Publicación en redes sociales</option>
+                    <option value="error_empresa">Error comprobado de la empresa</option>
+                </select>
+
+                <label class="email-form-label">Monto (S/)</label>
+                <input type="number" id="em-reembolso-monto" class="email-form-input" step="0.01" placeholder="0.00" />
+
+                <label class="email-form-label">Notas (opcional)</label>
+                <textarea id="em-reembolso-notas" class="email-form-input" rows="2" placeholder="Notas para el supervisor..."></textarea>
+
+                <button id="em-btn-enviar-reembolso" onclick="enviarReembolsoInline()">Enviar a supervisor</button>
+            </div>
+
+        </div>
+
+        <div id="em-reply-aviso" class="reply-aviso"></div>
+        <div class="reply-row">
+        <textarea id="em-reply-input" class="reply-input email-reply-textarea"
+                  rows="3" placeholder="Escribe una respuesta..."></textarea>
+            <button class="reply-send" onclick="enviarRespuestaEmail()">
+                <i class="ti ti-send"></i> Enviar
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- CHATBOT -->

@@ -6,7 +6,6 @@ import com.cibertec.gestion_quejas.model.Orden;
 import com.cibertec.gestion_quejas.repository.MensajeRepository;
 import com.cibertec.gestion_quejas.repository.OrdenRepository;
 import com.cibertec.gestion_quejas.service.ConversacionService;
-import com.cibertec.gestion_quejas.service.FeatureFlagService;
 import com.cibertec.gestion_quejas.service.IaService;
 import com.cibertec.gestion_quejas.service.ResultadoCsmate;
 import com.cibertec.gestion_quejas.service.ResultadoTurno;
@@ -37,17 +36,11 @@ public class PortalClienteController {
     @Autowired
     private IaService iaService;
 
-    @Autowired
-    private FeatureFlagService featureFlagService;
-
     @Value("${app.base-url}")
     private String baseUrl;
 
     @GetMapping
     public String mostrarFormulario() {
-        if (!featureFlagService.isEnabled("modulo_pruebas")) {
-            return "redirect:/configuracion?error=funcionalidadDeshabilitada";
-        }
         return "admin/portal-cliente";
     }
 
@@ -56,13 +49,6 @@ public class PortalClienteController {
     public Map<String, Object> verificarOrden(@RequestParam String orderId,
                                               @RequestParam String email) {
         Map<String, Object> response = new HashMap<>();
-
-        if (!featureFlagService.isEnabled("modulo_pruebas")) {
-            response.put("status", "error");
-            response.put("mensaje", "Esta funcionalidad no está disponible.");
-            return response;
-        }
-
         Orden orden = ordenRepository.findById(orderId).orElse(null);
 
         if (orden == null || !orden.getEmailCliente().equalsIgnoreCase(email.trim())) {
@@ -82,10 +68,6 @@ public class PortalClienteController {
                                  @RequestParam String contactReason,
                                  @RequestParam String mensaje,
                                  Model model) {
-
-        if (!featureFlagService.isEnabled("modulo_pruebas")) {
-            return "redirect:/configuracion?error=funcionalidadDeshabilitada";
-        }
 
         Orden orden = ordenRepository.findById(orderId).orElse(null);
         if (orden == null) {
@@ -141,12 +123,6 @@ public class PortalClienteController {
     @ResponseBody
     public Map<String, Object> continuarConversacion(@PathVariable Long id, @RequestParam String mensaje) {
         Map<String, Object> response = new HashMap<>();
-
-        if (!featureFlagService.isEnabled("modulo_pruebas")) {
-            response.put("status", "error");
-            return response;
-        }
-
         Conversacion conversacion = conversacionService.buscarPorId(id);
 
         if (conversacion == null) {
@@ -212,10 +188,6 @@ public class PortalClienteController {
     @GetMapping("/probar-ia")
     @ResponseBody
     public String probarIa() {
-        if (!featureFlagService.isEnabled("modulo_pruebas")) {
-            return "Funcionalidad deshabilitada";
-        }
-
         try {
             ResultadoCsmate r = iaService.evaluarConsulta(
                     "status_information",

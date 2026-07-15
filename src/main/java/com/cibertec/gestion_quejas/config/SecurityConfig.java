@@ -30,7 +30,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/csat/**", "/css/**", "/js/**").permitAll()
                         .requestMatchers("/configuracion/**").authenticated()
-                        .requestMatchers("/config/features/**").hasRole("ADMINISTRADOR") // <-- nueva línea
                         .requestMatchers("/admin/**").hasRole("ADMINISTRADOR")
                         .requestMatchers("/estadisticas/**").hasAnyRole("SUPERVISOR", "ADMINISTRADOR")
                         .anyRequest().authenticated()
@@ -56,6 +55,4 @@ public class SecurityConfig {
                 .passwordEncoder(passwordEncoder());
         return builder.build();
     }
-
-
 }

@@ -4,7 +4,6 @@ import com.cibertec.gestion_quejas.model.Orden;
 import com.cibertec.gestion_quejas.model.Producto;
 import com.cibertec.gestion_quejas.repository.OrdenRepository;
 import com.cibertec.gestion_quejas.repository.ProductoRepository;
-import com.cibertec.gestion_quejas.service.FeatureFlagService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,15 +30,8 @@ public class ComprarVisaController {
     @Autowired
     private OrdenRepository ordenRepository;
 
-    @Autowired
-    private FeatureFlagService featureFlagService;
-
     @GetMapping
     public String mostrarFormulario(@RequestParam(required = false) String ordenGenerada, Model model) {
-        if (!featureFlagService.isEnabled("modulo_pruebas")) {
-            return "redirect:/configuracion?error=funcionalidadDeshabilitada";
-        }
-
         model.addAttribute("productos", productoRepository.findByActivoTrue());
         model.addAttribute("ordenGenerada", ordenGenerada);
         return "admin/comprar-visa";
@@ -52,10 +44,6 @@ public class ComprarVisaController {
                           @RequestParam String nombreCliente,
                           @RequestParam String emailCliente,
                           @RequestParam String processingSpeed) {
-
-        if (!featureFlagService.isEnabled("modulo_pruebas")) {
-            return "redirect:/configuracion?error=funcionalidadDeshabilitada";
-        }
 
         Producto producto = productoRepository.findById(productoId).orElse(null);
 

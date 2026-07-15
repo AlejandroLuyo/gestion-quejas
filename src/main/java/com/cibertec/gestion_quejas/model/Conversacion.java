@@ -84,6 +84,12 @@ public class Conversacion {
     @Column(name = "email_message_id", unique = true)
     private String emailMessageId;
 
+    @Column(name = "asunto")
+    private String asunto;
+
+    @Column(name = "remitente_email")
+    private String remitenteEmail;
+
     @PrePersist
     public void prePersist() {
         this.conversationCreatedAt = LocalDateTime.now();

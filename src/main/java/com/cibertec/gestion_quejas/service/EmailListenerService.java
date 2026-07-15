@@ -61,6 +61,9 @@ public class EmailListenerService {
 
     private static final List<String> ESTADOS_ACTIVOS = List.of("open", "pending");
 
+    private static final List<String> DOMINIOS_SISTEMA_BLOQUEADOS = List.of(
+            "brevo.com", "t.brevo.com", "sendinblue.com"
+    );
     @Scheduled(fixedDelay = 60000)
     public void revisarBandejaEntrada() {
         if (!pollingEnabled) {
@@ -106,6 +109,13 @@ public class EmailListenerService {
             }
 
             String remitente = ((InternetAddress) msg.getFrom()[0]).getAddress();
+
+            if (esRemitenteDeSistema(remitente)) {
+                System.out.println("Correo de sistema ignorado (no se crea conversación): " + remitente);
+                return;
+            }
+
+
             String asunto = msg.getSubject() != null ? msg.getSubject() : "(sin asunto)";
             String cuerpo = extraerCuerpo(msg);
             String textoCompleto = asunto + " " + cuerpo;
@@ -131,11 +141,20 @@ public class EmailListenerService {
         }
     }
 
+    private boolean esRemitenteDeSistema(String remitente) {
+        if (remitente == null) return false;
+        String dominio = remitente.substring(remitente.indexOf('@') + 1).toLowerCase();
+        return DOMINIOS_SISTEMA_BLOQUEADOS.stream()
+                .anyMatch(bloqueado -> dominio.equals(bloqueado) || dominio.endsWith("." + bloqueado));
+    }
+
     private void procesarSinOrden(String asunto, String cuerpo, String remitente, String messageId) {
         Conversacion conversacion = new Conversacion();
         conversacion.setChannel("email");
         conversacion.setContactReason("consulta_general");
         conversacion.setRequiereRevisionManual(true);
+        conversacion.setAsunto(asunto);
+        conversacion.setRemitenteEmail(remitente);
         conversacionService.guardar(conversacion);
 
         Mensaje primerMensaje = new Mensaje();
@@ -158,6 +177,8 @@ public class EmailListenerService {
         conversacion.setChannel("email");
         conversacion.setOrderId(orden.getOrderId());
         conversacion.setRequiereRevisionManual(false);
+        conversacion.setAsunto(asunto);
+        conversacion.setRemitenteEmail(remitente);
 
         boolean esReembolso = textoCompleto.toLowerCase().contains("reembolso");
         conversacion.setContactReason(esReembolso ? "refund_request" : "consulta_general");
@@ -238,6 +259,10 @@ public class EmailListenerService {
                     conversacionService.seleccionarAgenteConMenosCarga());
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
             conversacion.setCurrentConversationState("open");
+            // Mensaje por defecto si la IA no generó respuesta (ej. error de conexión con Groq)
+            if (contenidoBot == null || contenidoBot.isBlank()) {
+                contenidoBot = "Gracias por tu mensaje. Uno de nuestros agentes revisará tu caso y te responderá a la brevedad.";
+            }
         } else {
             conversacion.setCurrentConversationState("pending");
         }
@@ -250,7 +275,11 @@ public class EmailListenerService {
         mensajeRepository.save(msgBot);
 
         conversacionService.guardar(conversacion);
-        emailService.enviarCorreo(remitente, "Re: tu consulta en CSManager", contenidoBot);
+
+        String asuntoRespuesta = conversacion.getAsunto() != null
+                ? "Re: " + conversacion.getAsunto()
+                : "Re: tu consulta en CSManager";
+        emailService.enviarCorreo(remitente, asuntoRespuesta, contenidoBot);
     }
 
     private Orden buscarOrden(String textoCompleto, String remitente) {

@@ -6,7 +6,6 @@ import com.cibertec.gestion_quejas.model.Usuario;
 import com.cibertec.gestion_quejas.repository.CsatRepository;
 import com.cibertec.gestion_quejas.repository.UsuarioRepository;
 import com.cibertec.gestion_quejas.service.ConversacionService;
-import com.cibertec.gestion_quejas.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -36,9 +35,6 @@ public class ConversacionController {
 
     @Autowired
     private CsatRepository csatRepository;
-
-    @Autowired
-    private EmailService emailService;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
@@ -86,10 +82,6 @@ public class ConversacionController {
                 case "sin-asignar":
                     conversaciones = conversacionService.listarSinAsignar(sort);
                     tituloVista = "Sin asignar";
-                    break;
-                case "requiere-revision":
-                    conversaciones = conversacionService.listarRequierenRevision(sort);
-                    tituloVista = "Requiere revisión";
                     break;
                 case "pendientes":
                     conversaciones = conversacionService.listarPorEstado("pending", sort);
@@ -149,29 +141,11 @@ public class ConversacionController {
         data.put("agente", c.getTeammateCurrentlyAssigned() != null ? c.getTeammateCurrentlyAssigned() : "Sin asignar");
         data.put("fechaCreacion", c.getConversationCreatedAt() != null ?
                 c.getConversationCreatedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")) : "-");
-        data.put("asunto", c.getAsunto() != null ? c.getAsunto() : "-");
-        data.put("remitenteEmail", c.getRemitenteEmail() != null ? c.getRemitenteEmail() :
-                (c.getOrden() != null && c.getOrden().getEmailCliente() != null ? c.getOrden().getEmailCliente() : "-"));
 
         Optional<Csat> csat = csatRepository.findByConversacionConversacionId(id);
         data.put("csatPuntuacion", csat.map(x -> String.valueOf(x.getPuntuacion())).orElse(null));
 
         return data;
-    }
-
-    @PostMapping("/{id}/reclasificar-reembolso")
-    @ResponseBody
-    public Map<String, String> reclasificarReembolso(@PathVariable Long id) {
-        Map<String, String> response = new HashMap<>();
-        Conversacion c = conversacionService.buscarPorId(id);
-        if (c == null) {
-            response.put("status", "error");
-            return response;
-        }
-        c.setContactReason("refund_request");
-        conversacionService.guardar(c);
-        response.put("status", "ok");
-        return response;
     }
 
     @PostMapping("/{id}/estado")
@@ -272,31 +246,7 @@ public class ConversacionController {
             conversacion.setTeammateCurrentlyAssigned(principal.getName());
             conversacionService.guardar(conversacion);
 
-            if ("email".equalsIgnoreCase(conversacion.getChannel())) {
-                if (conversacion.getOrden() != null && conversacion.getOrden().getEmailCliente() != null) {
-                    String asunto = conversacion.getAsunto() != null
-                            ? "Re: " + conversacion.getAsunto()
-                            : "Re: tu consulta en CSManager";
-
-                    Usuario agente = usuarioRepository.findByNombre(principal.getName()).orElse(null);
-                    String cuerpoConFirma = contenido;
-                    if (agente != null && agente.getFirma() != null && !agente.getFirma().isBlank()) {
-                        cuerpoConFirma = contenido + "\n\n" + agente.getFirma();
-                    }
-
-                    emailService.enviarCorreo(
-                            conversacion.getOrden().getEmailCliente(),
-                            asunto,
-                            cuerpoConFirma
-                    );
-                    response.put("status", "ok");
-                } else {
-                    response.put("status", "sin_destinatario");
-                    response.put("mensaje", "Esta conversación no tiene un correo de cliente vinculado. Verifica manualmente antes de contactar.");
-                }
-            } else {
-                response.put("status", "ok");
-            }
+            response.put("status", "ok");
         } else {
             response.put("status", "error");
         }

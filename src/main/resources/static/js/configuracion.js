@@ -7,7 +7,6 @@ function guardarConfiguracion() {
     const errorDiv        = document.getElementById('cfgError');
     const exitoDiv        = document.getElementById('cfgExito');
     const btnGuardar      = document.getElementById('btnGuardarConfig');
-    const firma = document.getElementById('cfgFirma').value.trim();
 
     errorDiv.style.display = 'none';
     exitoDiv.style.display = 'none';
@@ -37,8 +36,14 @@ function guardarConfiguracion() {
     params.append('email', email);
     params.append('idioma', idioma);
     params.append('zonaHoraria', zonaHoraria);
-    params.append('firma', firma);
     if (password) params.append('password', password);
+
+    // Recolecta el estado de los feature flags (solo existen en el DOM si el usuario es ADMINISTRADOR)
+    const flagInputs = document.querySelectorAll('.flag-toggle-input');
+    const estadosFlags = {};
+    flagInputs.forEach(input => {
+        estadosFlags[input.dataset.flagKey] = input.checked;
+    });
 
     fetch('/configuracion/guardar', {
         method: 'POST',
@@ -46,18 +51,30 @@ function guardarConfiguracion() {
         body: params.toString()
     })
         .then(res => {
-            if (res.ok) {
-                exitoDiv.textContent = 'Cambios guardados correctamente.';
-                exitoDiv.style.display = 'block';
-                document.getElementById('cfgPassword').value = '';
-                document.getElementById('cfgPasswordConfirm').value = '';
-            } else {
-                errorDiv.textContent = 'Ocurrió un error al guardar. Intenta nuevamente.';
-                errorDiv.style.display = 'block';
+            if (!res.ok) {
+                throw new Error('Error al guardar el perfil');
+            }
+            // Si hay flags en la página, los guardamos en un segundo paso
+            if (flagInputs.length > 0) {
+                return fetch('/config/features/guardar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(estadosFlags)
+                }).then(res2 => {
+                    if (!res2.ok) {
+                        throw new Error('Error al guardar las funcionalidades');
+                    }
+                });
             }
         })
+        .then(() => {
+            exitoDiv.textContent = 'Cambios guardados correctamente.';
+            exitoDiv.style.display = 'block';
+            document.getElementById('cfgPassword').value = '';
+            document.getElementById('cfgPasswordConfirm').value = '';
+        })
         .catch(() => {
-            errorDiv.textContent = 'Error de conexión. Intenta nuevamente.';
+            errorDiv.textContent = 'Ocurrió un error al guardar. Intenta nuevamente.';
             errorDiv.style.display = 'block';
         })
         .finally(() => {

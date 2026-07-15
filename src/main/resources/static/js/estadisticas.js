@@ -19,10 +19,10 @@ new Chart(document.getElementById('chart1'), {
 new Chart(document.getElementById('chart2'), {
     type: 'bar',
     data: {
-        labels: ['Email', 'Ticket'],
+        labels: ['Email', 'WhatsApp', 'Ticket'],
         datasets: [{
-            data: [porEmail, porTicket],
-            backgroundColor: ['#185FA5', '#BA7517'],
+            data: [porEmail, porWhatsapp, porTicket],
+            backgroundColor: ['#185FA5', '#1D9E75', '#BA7517'],
             borderWidth: 0,
             borderRadius: 4
         }]
@@ -30,20 +30,10 @@ new Chart(document.getElementById('chart2'), {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false }
-        },
+        plugins: { legend: { display: false } },
         scales: {
-            y: {
-                beginAtZero: true,
-                ticks: { stepSize: 1 },
-                grid: {
-                    color: 'rgba(128,128,128,0.1)'
-                }
-            },
-            x: {
-                grid: { display: false }
-            }
+            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(128,128,128,0.1)' } },
+            x: { grid: { display: false } }
         }
     }
 });

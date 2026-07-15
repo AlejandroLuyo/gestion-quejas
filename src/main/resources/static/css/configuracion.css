@@ -75,14 +75,6 @@
     cursor: not-allowed;
 }
 
-textarea.config-input {
-    height: auto;
-    padding: 10px 12px;
-    resize: vertical;
-    font-family: inherit;
-    line-height: 1.5;
-}
-
 .config-hint {
     font-size: 11px;
     color: #9ca3af;
@@ -225,4 +217,3 @@ body.dark .config-toggle-label {
 body.dark .config-toggle-slider {
     background: #374151;
 }
-

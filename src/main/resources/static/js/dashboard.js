@@ -1,6 +1,5 @@
 let conversacionActualId = null;
 let chatIniciado = false;
-let emReembolsoContactReason = null;
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -17,14 +16,6 @@ function toggleChat() {
     if (!chatWindow.classList.contains('closed') && !chatIniciado) {
         chatIniciado = true;
         cargarSaludoAsistente();
-    }
-}
-
-function openPanelSegunCanal(id, canal) {
-    if (canal === 'email') {
-        openEmailPanel(id);
-    } else {
-        openPanel(id);
     }
 }
 
@@ -72,8 +63,7 @@ function traducirContactReason(valor) {
         'cx_modify':               'Modificación de orden',
         'deliverable_information': 'Información de entrega',
         'requirements_assistance': 'Asistencia de requisitos',
-        'upload_support':          'Soporte de carga',
-        'consulta_general':        'Consulta general'
+        'upload_support':          'Soporte de carga'
     };
     return mapa[valor] || valor || '-';
 }
@@ -259,258 +249,6 @@ function closePanel() {
     conversacionActualId = null;
 }
 
-function openEmailPanel(id) {
-    conversacionActualId = id;
-
-    fetch('/quejas/' + id + '/json')
-        .then(res => res.json())
-        .then(c => {
-            document.getElementById('em-orderid').textContent = c.orderId !== '-' ? c.orderId : (c.remitenteEmail || '-');
-            document.getElementById('em-reason').textContent = traducirContactReason(c.contactReason);
-
-            emReembolsoContactReason = c.contactReason;
-            document.getElementById('em-reclasificar-aviso').style.display = 'none';
-            document.getElementById('em-form-reembolso').style.display = 'none';
-            document.getElementById('em-form-reembolso').innerHTML = formularioReembolsoHTML();
-            cargarEstadoReembolso(id);
-            emReembolsoContactReason = c.contactReason;
-            document.getElementById('em-reembolso-wrap').style.display = 'block';
-            document.getElementById('em-btn-reembolso').style.display = 'block';
-            document.getElementById('em-reclasificar-aviso').style.display = 'none';
-            document.getElementById('em-form-reembolso').style.display = 'none';
-
-            const badge = document.getElementById('em-estado-badge');
-            const estadoTexto = c.estado === 'open' ? 'En proceso' : c.estado === 'pending' ? 'Pendiente' : c.estado === 'resolved' ? 'Resuelto' : '-';
-            badge.textContent = estadoTexto;
-            badge.className = 'status-badge ' + (c.estado === 'open' ? 'status-EN_PROCESO' : c.estado === 'resolved' ? 'status-RESUELTO' : 'status-PENDIENTE');
-
-            document.getElementById('em-de').textContent = c.remitenteEmail || '-';
-            document.getElementById('em-fecha').textContent = c.fechaCreacion || '-';
-            document.getElementById('em-asunto').textContent = c.asunto || '-';
-
-
-            cargarMensajesEmail(id);
-        })
-        .catch(err => console.error('Error cargando conversación de email:', err));
-
-    document.getElementById('email-modal-overlay').style.display = 'block';
-    document.getElementById('email-modal').style.display = 'flex';
-}
-
-function cargarEstadoReembolso(id) {
-    fetch('/reembolso/' + id)
-        .then(res => res.json())
-        .then(data => {
-            const btn = document.getElementById('em-btn-reembolso');
-            const wrap = document.getElementById('em-reembolso-wrap');
-
-            if (!data.botRefundStatus) {
-                btn.style.display = 'block';
-                let extra = wrap.querySelector('.email-reembolso-estado');
-                if (extra) extra.remove();
-                return;
-            }
-
-            btn.style.display = 'none';
-            let mensaje = '';
-            if (data.botRefundStatus === 'pendiente_supervisor') {
-                mensaje = 'Solicitud enviada al supervisor, pendiente de aprobación.';
-            } else if (data.refundResult === 'aprobado') {
-                mensaje = 'Reembolso aprobado por el supervisor.';
-            } else if (data.refundResult === 'denegado') {
-                mensaje = 'Reembolso denegado.';
-            } else if (data.refundResult === 'rechazado_supervisor') {
-                mensaje = 'Solicitud rechazada por el supervisor.';
-            }
-
-            let extra = wrap.querySelector('.email-reembolso-estado');
-            if (!extra) {
-                extra = document.createElement('p');
-                extra.className = 'email-reembolso-estado';
-                wrap.insertBefore(extra, document.getElementById('em-reclasificar-aviso'));
-            }
-            extra.textContent = mensaje;
-        })
-        .catch(err => console.error('Error consultando estado de reembolso:', err));
-}
-
-function formularioReembolsoHTML() {
-    return `
-        <label class="email-form-label">Categoría del motivo</label>
-        <select id="em-reembolso-categoria" class="email-form-input">
-            <option value="amenaza_legal">Amenaza de acción legal</option>
-            <option value="redes_sociales">Publicación en redes sociales</option>
-            <option value="error_empresa">Error comprobado de la empresa</option>
-        </select>
-
-        <label class="email-form-label">Monto (S/)</label>
-        <input type="number" id="em-reembolso-monto" class="email-form-input" step="0.01" placeholder="0.00" />
-
-        <label class="email-form-label">Notas (opcional)</label>
-        <textarea id="em-reembolso-notas" class="email-form-input" rows="2" placeholder="Notas para el supervisor..."></textarea>
-
-        <button id="em-btn-enviar-reembolso" onclick="enviarReembolsoInline()">Enviar a supervisor</button>
-    `;
-}
-
-function closeEmailPanel() {
-    document.getElementById('email-modal-overlay').style.display = 'none';
-    document.getElementById('email-modal').style.display = 'none';
-}
-
-function cargarMensajesEmail(id) {
-    const cont = document.getElementById('em-mensajes-list');
-    cont.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Cargando...</div>';
-
-    fetch('/quejas/' + id + '/mensajes')
-        .then(res => res.json())
-        .then(mensajes => {
-            if (mensajes.length === 0) {
-                cont.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Sin mensajes aún.</div>';
-                return;
-            }
-            cont.innerHTML = '';
-            mensajes.forEach(m => {
-                if (m.remitente === 'NOTA_INTERNA') {
-                    const div = document.createElement('div');
-                    div.className = 'nota-interna';
-                    div.innerHTML = `<i class="ti ti-note" style="font-size:14px; margin-top:1px;"></i><span>${m.contenido}</span>`;
-                    cont.appendChild(div);
-                    return;
-                }
-                const nombreRemitente = m.remitente === 'AGENTE' ? 'Agente' : m.remitente === 'BOT' ? 'CSMate' : 'Cliente';
-                const div = document.createElement('div');
-                div.className = 'email-msg email-msg-' + m.remitente.toLowerCase();
-                div.innerHTML = `
-                    <div class="email-msg-header">${nombreRemitente} &middot; ${m.fechaEnvio}</div>
-                    <div class="email-msg-body">${m.contenido}</div>
-                `;
-                cont.appendChild(div);
-            });
-        })
-        .catch(err => console.error('Error cargando mensajes:', err));
-}
-
-function cambiarEstadoEmail(estado) {
-    fetch('/quejas/' + conversacionActualId + '/estado', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'estado=' + estado
-    })
-        .then(res => res.json())
-        .then(() => openEmailPanel(conversacionActualId))
-        .catch(err => console.error('Error cambiando estado:', err));
-}
-
-function enviarRespuestaEmail() {
-    if (!conversacionActualId) return;
-    const input = document.getElementById('em-reply-input');
-    const contenido = input.value.trim();
-    if (!contenido) return;
-
-    fetch('/quejas/' + conversacionActualId + '/responder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'contenido=' + encodeURIComponent(contenido)
-    })
-        .then(res => res.json())
-        .then(data => {
-            const aviso = document.getElementById('em-reply-aviso');
-            if (data.status === 'ok') {
-                input.value = '';
-                cargarMensajesEmail(conversacionActualId);
-                mostrarAvisoEnvioEn(aviso, 'Correo enviado correctamente.', 'exito');
-            } else if (data.status === 'sin_destinatario') {
-                input.value = '';
-                cargarMensajesEmail(conversacionActualId);
-                mostrarAvisoEnvioEn(aviso, data.mensaje || 'Sin destinatario. Verifica manualmente.', 'advertencia');
-            } else {
-                mostrarAvisoEnvioEn(aviso, 'No se pudo enviar la respuesta. Intenta de nuevo.', 'error');
-            }
-        })
-        .catch(err => {
-            console.error('Error enviando respuesta:', err);
-            mostrarAvisoEnvioEn(document.getElementById('em-reply-aviso'), 'Error de conexión.', 'error');
-        });
-}
-
-function clicProcesarReembolso() {
-    if (emReembolsoContactReason === 'refund_request') {
-        document.getElementById('em-btn-reembolso').style.display = 'none';
-        document.getElementById('em-form-reembolso').style.display = 'block';
-    } else {
-        document.getElementById('em-btn-reembolso').style.display = 'none';
-        document.getElementById('em-reclasificar-aviso').style.display = 'block';
-    }
-}
-
-function cancelarReclasificacion() {
-    document.getElementById('em-reclasificar-aviso').style.display = 'none';
-    document.getElementById('em-btn-reembolso').style.display = 'block';
-}
-
-function confirmarReclasificacion() {
-    fetch('/quejas/' + conversacionActualId + '/reclasificar-reembolso', {
-        method: 'POST'
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'ok') {
-                emReembolsoContactReason = 'refund_request';
-                document.getElementById('em-reason').textContent = traducirContactReason('refund_request');
-                document.getElementById('em-reclasificar-aviso').style.display = 'none';
-                document.getElementById('em-form-reembolso').style.display = 'block';
-            }
-        })
-        .catch(err => console.error('Error reclasificando:', err));
-}
-
-function enviarReembolsoInline() {
-    const categoria = document.getElementById('em-reembolso-categoria').value;
-    const monto = parseFloat(document.getElementById('em-reembolso-monto').value);
-    const notas = document.getElementById('em-reembolso-notas').value;
-
-    if (!monto || monto <= 0) {
-        alert('Ingresa un monto válido.');
-        return;
-    }
-
-    fetch('/reembolso/' + conversacionActualId)
-        .then(res => res.json())
-        .then(datos => {
-            const precio = datos.precio || 0;
-            return fetch('/reembolso/' + conversacionActualId + '/enviar', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'reasonCategory=' + encodeURIComponent(categoria) +
-                    '&amount=' + monto +
-                    '&precio=' + precio +
-                    '&agentNotes=' + encodeURIComponent(notas)
-            });
-        })
-        .then(res => res.json())
-        .then(data => {
-            const form = document.getElementById('em-form-reembolso');
-            if (data.status === 'ok') {
-                form.innerHTML = '<p class="email-reembolso-confirmado">Solicitud enviada al supervisor.</p>';
-            } else {
-                alert('No se pudo enviar la solicitud. Intenta de nuevo.');
-            }
-        })
-        .catch(err => {
-            console.error('Error enviando reembolso:', err);
-            alert('Error de conexión al enviar la solicitud.');
-        });
-}
-
-function mostrarAvisoEnvioEn(contenedor, texto, tipo) {
-    if (!contenedor) return;
-    contenedor.textContent = texto;
-    contenedor.className = 'reply-aviso reply-aviso-' + tipo;
-    contenedor.style.display = 'block';
-    setTimeout(() => { contenedor.style.display = 'none'; }, 4000);
-}
-
 function cambiarEstado(nuevoEstado) {
     if (!conversacionActualId) return;
 
@@ -598,28 +336,9 @@ function enviarRespuesta() {
             if (data.status === 'ok') {
                 input.value = '';
                 cargarMensajes(conversacionActualId);
-                mostrarAvisoEnvio('Mensaje enviado correctamente.', 'exito');
-            } else if (data.status === 'sin_destinatario') {
-                input.value = '';
-                cargarMensajes(conversacionActualId);
-                mostrarAvisoEnvio(data.mensaje || 'Sin destinatario. Verifica manualmente.', 'advertencia');
-            } else {
-                mostrarAvisoEnvio('No se pudo enviar la respuesta. Intenta de nuevo.', 'error');
             }
         })
-        .catch(err => {
-            console.error('Error enviando respuesta:', err);
-            mostrarAvisoEnvio('Error de conexión al enviar la respuesta.', 'error');
-        });
-}
-
-function mostrarAvisoEnvio(texto, tipo) {
-    const contenedor = document.getElementById('reply-aviso');
-    if (!contenedor) return;
-    contenedor.textContent = texto;
-    contenedor.className = 'reply-aviso reply-aviso-' + tipo;
-    contenedor.style.display = 'block';
-    setTimeout(() => { contenedor.style.display = 'none'; }, 4000);
+        .catch(err => console.error('Error enviando respuesta:', err));
 }
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -25,7 +25,7 @@ public class ConversacionService {
     private UsuarioRepository usuarioRepository;
 
     public List<Conversacion> listarTodas(Sort sort) {
-        return conversacionRepository.findAllConOrden(sort);
+        return conversacionRepository.findAll(sort);
     }
 
     public List<Conversacion> listarPorEstado(String estado, Sort sort) {
@@ -38,10 +38,6 @@ public class ConversacionService {
 
     public List<Conversacion> listarSinAsignar(Sort sort) {
         return conversacionRepository.findByTeammateCurrentlyAssignedIsNull(sort);
-    }
-
-    public List<Conversacion> listarRequierenRevision(Sort sort) {
-        return conversacionRepository.findByRequiereRevisionManualTrue(sort);
     }
 
     public List<Conversacion> listarResueltasPorIA(Sort sort) {
@@ -92,30 +88,9 @@ public class ConversacionService {
         return token;
     }
 
-    public List<Conversacion> buscarConFiltros(String texto,
-                                               LocalDateTime desde,
-                                               LocalDateTime hasta,
-                                               Sort sort) {
-
-        List<Conversacion> lista = conversacionRepository.findAllConOrden(sort);
-
-        return lista.stream()
-                .filter(c -> {
-                    boolean coincideTexto = texto == null || texto.isBlank()
-                            || (c.getOrderId() != null && c.getOrderId().toLowerCase().contains(texto.toLowerCase()))
-                            || (c.getContactReason() != null && c.getContactReason().toLowerCase().contains(texto.toLowerCase()))
-                            || (c.getTeammateCurrentlyAssigned() != null &&
-                            c.getTeammateCurrentlyAssigned().toLowerCase().contains(texto.toLowerCase()));
-
-                    boolean coincideDesde = desde == null ||
-                            !c.getConversationCreatedAt().isBefore(desde);
-
-                    boolean coincideHasta = hasta == null ||
-                            !c.getConversationCreatedAt().isAfter(hasta);
-
-                    return coincideTexto && coincideDesde && coincideHasta;
-                })
-                .toList();
+    public List<Conversacion> buscarConFiltros(String texto, LocalDateTime desde, LocalDateTime hasta, Sort sort) {
+        String textoBusqueda = (texto != null && !texto.isBlank()) ? texto.trim() : null;
+        return conversacionRepository.buscarConFiltros(textoBusqueda, desde, hasta, sort);
     }
 
     public Optional<Conversacion> buscarActivaPorOrdenYCanal(String orderId, String channel, List<String> estados) {

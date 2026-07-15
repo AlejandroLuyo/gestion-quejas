@@ -64,8 +64,6 @@ public class IaService {
             return new ResultadoCsmate(puedeResolver, respuesta,
                     puedeResolver ? null : "ia_no_pudo_resolver");
         } catch (Exception e) {
-            System.err.println("ERROR AL LLAMAR A GROQ: " + e.getClass().getName() + " - " + e.getMessage());
-            e.printStackTrace();
             return new ResultadoCsmate(false, null, "error_ia");
         }
     }
@@ -92,8 +90,6 @@ public class IaService {
             return new ResultadoTurno(estado, respuesta,
                     estado == ResultadoTurno.Estado.ESCALAR ? "ia_no_pudo_resolver" : null);
         } catch (Exception e) {
-            System.err.println("ERROR AL LLAMAR A GROQ: " + e.getClass().getName() + " - " + e.getMessage());
-            e.printStackTrace();
             return new ResultadoTurno(ResultadoTurno.Estado.ESCALAR, null, "error_ia");
         }
     }
@@ -102,8 +98,6 @@ public class IaService {
         try {
             return llamarGroq(prompt, "text");
         } catch (Exception e) {
-            System.err.println("ERROR AL LLAMAR A GROQ: " + e.getClass().getName() + " - " + e.getMessage());
-            e.printStackTrace();
             return null;
         }
     }

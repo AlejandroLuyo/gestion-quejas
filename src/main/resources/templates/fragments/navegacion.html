@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
 
 <th:block th:fragment="navegacion(paginaActiva, vistaActiva)">
@@ -62,26 +62,28 @@
                 <span>Configuración</span>
             </a>
 
-            <div class="menu-section"
-                 sec:authorize="hasRole('ADMINISTRADOR')">
-                PRUEBAS
-            </div>
+            <th:block sec:authorize="hasRole('ADMINISTRADOR')">
+                <div class="menu-section"
+                     th:if="${@featureFlagService.isEnabled('modulo_pruebas')}">
+                    PRUEBAS
+                </div>
 
-            <a href="/admin/comprar-visa"
-               class="rail-btn menu-item-unificado"
-               sec:authorize="hasRole('ADMINISTRADOR')"
-               th:classappend="${paginaActiva == 'comprar-visa'} ? 'active' : ''">
-                <i class="ti ti-shopping-cart"></i>
-                <span>Comprar visa</span>
-            </a>
+                <a href="/admin/comprar-visa"
+                   class="rail-btn menu-item-unificado"
+                   th:if="${@featureFlagService.isEnabled('modulo_pruebas')}"
+                   th:classappend="${paginaActiva == 'comprar-visa'} ? 'active' : ''">
+                    <i class="ti ti-shopping-cart"></i>
+                    <span>Comprar visa</span>
+                </a>
 
-            <a href="/admin/portal-cliente"
-               class="rail-btn menu-item-unificado"
-               sec:authorize="hasRole('ADMINISTRADOR')"
-               th:classappend="${paginaActiva == 'portal-cliente'} ? 'active' : ''">
-                <i class="ti ti-message-2"></i>
-                <span>Portal cliente</span>
-            </a>
+                <a href="/admin/portal-cliente"
+                   class="rail-btn menu-item-unificado"
+                   th:if="${@featureFlagService.isEnabled('modulo_pruebas')}"
+                   th:classappend="${paginaActiva == 'portal-cliente'} ? 'active' : ''">
+                    <i class="ti ti-message-2"></i>
+                    <span>Portal cliente</span>
+                </a>
+            </th:block>
 
         </div>
 

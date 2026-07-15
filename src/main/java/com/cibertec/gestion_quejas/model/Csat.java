@@ -14,7 +14,7 @@ public class Csat {
     @Column(name = "csat_id")
     private Long csatId;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "conversacion_id", nullable = false)
     private Conversacion conversacion;
 

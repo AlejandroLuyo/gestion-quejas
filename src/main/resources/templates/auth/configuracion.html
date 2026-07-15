@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>CSManager - Configuración</title>
@@ -45,14 +46,6 @@
                         <label class="config-label">Email</label>
                         <input class="config-input" id="cfgEmail" type="email"
                                th:value="${usuario.email}" />
-                    </div>
-
-                    <div class="config-field">
-                        <label class="config-label">Firma de correo (opcional)</label>
-                        <textarea class="config-input" id="cfgFirma" rows="4"
-                                  placeholder="Nombre / Cargo / Contacto / Empresa"
-                                  th:text="${usuario.firma}"></textarea>
-                        <p class="config-hint">Se agregará automáticamente al final de tus respuestas por correo.</p>
                     </div>
 
                     <div class="config-field">
@@ -107,6 +100,66 @@
                         </div>
                         <label class="config-toggle">
                             <input type="checkbox" disabled />
+                            <span class="config-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECCIÓN: Notificaciones -->
+            <div class="config-card">
+                <div class="config-card-header">
+                    <i class="ti ti-bell"></i>
+                    <span>Notificaciones</span>
+                </div>
+                <div class="config-card-body">
+
+                    <div class="config-field config-toggle-row">
+                        <div>
+                            <p class="config-toggle-label">Notificaciones por email</p>
+                            <p class="config-hint">Recibir alertas de nuevas quejas asignadas.</p>
+                        </div>
+                        <label class="config-toggle">
+                            <input type="checkbox" disabled />
+                            <span class="config-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="config-field config-toggle-row">
+                        <div>
+                            <p class="config-toggle-label">Alertas en la aplicación</p>
+                            <p class="config-hint">Notificaciones dentro del sistema.</p>
+                        </div>
+                        <label class="config-toggle">
+                            <input type="checkbox" disabled />
+                            <span class="config-toggle-slider"></span>
+                        </label>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- SECCIÓN: Funcionalidades (solo ADMINISTRADOR) -->
+            <div class="config-card" sec:authorize="hasRole('ADMINISTRADOR')">
+                <div class="config-card-header">
+                    <i class="ti ti-toggle-right"></i>
+                    <span>Funcionalidades del sistema</span>
+                </div>
+                <div class="config-card-body">
+
+                    <div class="config-field config-toggle-row" th:each="flag : ${flags}">
+                        <div th:switch="${flag.keyName}">
+                            <p class="config-toggle-label" th:case="'modulo_pruebas'">Módulo de Pruebas</p>
+                            <p class="config-toggle-label" th:case="*" th:text="${flag.keyName}"></p>
+
+                            <p class="config-hint" th:text="${flag.description}"></p>
+                        </div>
+                        <label class="config-toggle">
+                            <input type="checkbox"
+                                   class="flag-toggle-input"
+                                   th:attr="data-flag-key=${flag.keyName}"
+                                   th:checked="${flag.enabled}" />
                             <span class="config-toggle-slider"></span>
                         </label>
                     </div>

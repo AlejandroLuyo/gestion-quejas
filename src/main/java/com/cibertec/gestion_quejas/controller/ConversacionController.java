@@ -5,6 +5,8 @@ import com.cibertec.gestion_quejas.model.Csat;
 import com.cibertec.gestion_quejas.model.Usuario;
 import com.cibertec.gestion_quejas.repository.CsatRepository;
 import com.cibertec.gestion_quejas.repository.UsuarioRepository;
+import com.cibertec.gestion_quejas.service.AsignacionService;
+import com.cibertec.gestion_quejas.service.AuditoriaService;
 import com.cibertec.gestion_quejas.service.ConversacionService;
 import com.cibertec.gestion_quejas.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,12 @@ public class ConversacionController {
 
     @Autowired
     private MensajeRepository mensajeRepository;
+
+    @Autowired
+    private AsignacionService asignacionService;
+
+    @Autowired
+    private AuditoriaService auditoriaService;
 
     @Autowired
     private CsatRepository csatRepository;
@@ -137,6 +145,22 @@ public class ConversacionController {
         return "quejas/lista";
     }
 
+    private boolean tienePermiso(Conversacion c, java.security.Principal principal) {
+        if (c == null || principal == null) {
+            return false;
+        }
+        Usuario usuario = usuarioRepository.findByNombre(principal.getName()).orElse(null);
+        if (usuario == null) {
+            return false;
+        }
+        boolean esSupervisorOAdmin = "SUPERVISOR".equals(usuario.getRol())
+                || "ADMINISTRADOR".equals(usuario.getRol());
+        if (esSupervisorOAdmin) {
+            return true;
+        }
+        return principal.getName().equals(c.getTeammateCurrentlyAssigned());
+    }
+
     @GetMapping("/{id}/json")
     @ResponseBody
     public Map<String, String> detalleJson(@PathVariable Long id) {
@@ -180,12 +204,30 @@ public class ConversacionController {
                                              java.security.Principal principal) {
         Conversacion c = conversacionService.buscarPorId(id);
         Map<String, String> response = new HashMap<>();
+
+        if (c != null && !tienePermiso(c, principal)) {
+            response.put("status", "sin_permiso");
+            response.put("mensaje", "No tienes permiso para modificar este caso.");
+            return response;
+        }
+
         if (c != null) {
+            String estadoAnterior = c.getCurrentConversationState();
             c.setCurrentConversationState(estado);
+
             if ("resolved".equals(estado) || "open".equals(estado)) {
+                boolean cambioDeAgente = !principal.getName().equals(c.getTeammateCurrentlyAssigned());
                 c.setTeammateCurrentlyAssigned(principal.getName());
+                if (cambioDeAgente) {
+                    asignacionService.registrarAsignacion(c, principal.getName());
+                }
             }
+
             conversacionService.guardar(c);
+
+            auditoriaService.registrarCambio(c, principal.getName(),
+                    "CAMBIO_ESTADO", estadoAnterior, estado);
+
             response.put("agente", c.getTeammateCurrentlyAssigned() != null ? c.getTeammateCurrentlyAssigned() : "Sin asignar");
         }
         response.put("status", "ok");
@@ -220,9 +262,24 @@ public class ConversacionController {
             return response;
         }
 
+        if (!tienePermiso(c, principal)) {
+            response.put("status", "sin_permiso");
+            response.put("mensaje", "No tienes permiso para transferir este caso.");
+            return response;
+        }
+
+        // ... resto del método igual, sin cambios ...
+
+        String agenteAnterior = c.getTeammateCurrentlyAssigned();
+
         c.setCurrentConversationState("pending");
         c.setTeammateCurrentlyAssigned(agenteDestino);
         conversacionService.guardar(c);
+
+        asignacionService.registrarAsignacion(c, agenteDestino);
+
+        auditoriaService.registrarCambio(c, principal.getName(),
+                "ASIGNACION", agenteAnterior, agenteDestino);
 
         if (nota != null && !nota.isBlank()) {
             Mensaje notaInterna = new Mensaje();
@@ -260,6 +317,12 @@ public class ConversacionController {
                                          java.security.Principal principal) {
         Conversacion conversacion = conversacionService.buscarPorId(id);
         Map<String, String> response = new HashMap<>();
+
+        if (conversacion != null && !tienePermiso(conversacion, principal)) {
+            response.put("status", "sin_permiso");
+            response.put("mensaje", "No tienes permiso para responder este caso.");
+            return response;
+        }
 
         if (conversacion != null && !contenido.isBlank()) {
             Mensaje mensaje = new Mensaje();

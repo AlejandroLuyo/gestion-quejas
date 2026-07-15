@@ -338,10 +338,10 @@
                 <button class="email-action-btn email-action-abrir" onclick="cambiarEstadoEmail('open')">
                     <i class="ti ti-loader"></i> Abrir
                 </button>
-                <button class="email-action-btn email-action-reasignar" onclick="mostrarFormularioTransferencia()">
+                <button class="email-action-btn email-action-reasignar" onclick="mostrarFormularioTransferenciaEmail()">
                     <i class="ti ti-clock"></i> Re-asignar
                 </button>
-                <button class="email-action-btn email-action-resolver" onclick="resolverYEnviarEncuesta()">
+                <button class="email-action-btn email-action-resolver" onclick="resolverYEnviarEncuestaEmail()">
                     <i class="ti ti-circle-check"></i> Resolver
                 </button>
             </div>
@@ -393,7 +393,28 @@
 
                 <button id="em-btn-enviar-reembolso" onclick="enviarReembolsoInline()">Enviar a supervisor</button>
             </div>
+        </div>
+        <!-- Transferencia inline (propia del modal de email) -->
+        <div id="em-transferencia-wrap" style="display:none;">
+            <label class="email-form-label">Transferir a</label>
+            <select id="em-transferencia-select" class="email-form-input"></select>
 
+            <label class="email-form-label">Nota para el nuevo agente (opcional)</label>
+            <textarea id="em-transferencia-nota" class="email-form-input" rows="2" placeholder="Contexto del caso para quien lo recibe..."></textarea>
+
+            <div class="email-reclasificar-actions">
+                <button id="em-btn-confirmar-transferencia" onclick="confirmarTransferenciaEmail()">Confirmar transferencia</button>
+                <button onclick="cancelarTransferenciaEmail()">Cancelar</button>
+            </div>
+        </div>
+
+        <!-- Link de encuesta CSAT (propio del modal de email) -->
+        <div id="em-link-encuesta" style="display:none;">
+            <label class="email-form-label">Link de encuesta generado</label>
+            <div class="email-reclasificar-actions">
+                <input type="text" id="em-encuesta-url" class="email-form-input" readonly />
+                <button onclick="copiarLinkEmail()"><i class="ti ti-copy"></i></button>
+            </div>
         </div>
 
         <div id="em-reply-aviso" class="reply-aviso"></div>

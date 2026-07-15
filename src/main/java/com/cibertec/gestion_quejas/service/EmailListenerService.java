@@ -45,6 +45,12 @@ public class EmailListenerService {
     private OrdenRepository ordenRepository;
 
     @Autowired
+    private AsignacionService asignacionService;
+
+    @Autowired
+    private AuditoriaService auditoriaService;
+
+    @Autowired
     private ConversacionService conversacionService;
 
     @Autowired
@@ -219,6 +225,12 @@ public class EmailListenerService {
             conversacion.setCurrentConversationState("open");
         }
         conversacionService.guardar(conversacion);
+
+        if (conversacion.getTeammateCurrentlyAssigned() != null) {
+            asignacionService.registrarAsignacion(conversacion, conversacion.getTeammateCurrentlyAssigned());
+            auditoriaService.registrarCambio(conversacion, conversacion.getTeammateCurrentlyAssigned(),
+                    "ASIGNACION", null, conversacion.getTeammateCurrentlyAssigned());
+        }
     }
 
     private void continuarConversacionEmail(Conversacion conversacion, Orden orden,
@@ -255,6 +267,7 @@ public class EmailListenerService {
             String linkAbsoluto = baseUrl + "/csat/responder?token=" + token;
             contenidoBot = contenidoBot + "\n\nPor favor califica tu experiencia aquí: " + linkAbsoluto;
         } else if (resultado.getEstado() == ResultadoTurno.Estado.ESCALAR) {
+            String agenteAnterior = conversacion.getTeammateCurrentlyAssigned();
             conversacion.setTeammateCurrentlyAssigned(
                     conversacionService.seleccionarAgenteConMenosCarga());
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
@@ -263,8 +276,12 @@ public class EmailListenerService {
             if (contenidoBot == null || contenidoBot.isBlank()) {
                 contenidoBot = "Gracias por tu mensaje. Uno de nuestros agentes revisará tu caso y te responderá a la brevedad.";
             }
-        } else {
-            conversacion.setCurrentConversationState("pending");
+
+            if (conversacion.getTeammateCurrentlyAssigned() != null) {
+                asignacionService.registrarAsignacion(conversacion, conversacion.getTeammateCurrentlyAssigned());
+                auditoriaService.registrarCambio(conversacion, conversacion.getTeammateCurrentlyAssigned(),
+                        "ASIGNACION", agenteAnterior, conversacion.getTeammateCurrentlyAssigned());
+            }
         }
 
         Mensaje msgBot = new Mensaje();

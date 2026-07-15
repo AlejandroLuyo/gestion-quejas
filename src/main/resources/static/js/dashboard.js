@@ -1,6 +1,8 @@
 let conversacionActualId = null;
 let chatIniciado = false;
 let emReembolsoContactReason = null;
+const usuarioActualEsSupervisorOAdmin =
+    !!document.getElementById('rol-admin-flag') || !!document.getElementById('rol-supervisor-flag');
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -87,6 +89,14 @@ function traducirEstado(valor) {
     return mapa[valor] || valor || '-';
 }
 
+function calcularBloqueosPorEstado(estado) {
+    return {
+        abrir: estado === 'open',
+        reasignar: estado === 'resolved',
+        resolver: estado === 'resolved'
+    };
+}
+
 function openPanel(id) {
     conversacionActualId = id;
     fetch('/quejas/' + id + '/json')
@@ -119,6 +129,9 @@ function openPanel(id) {
 
             document.getElementById('slide-panel').classList.add('open');
             document.getElementById('overlay').classList.add('show');
+
+            aplicarPermisosPanel(c.agente, c.estado);
+
             cargarMensajes(id);
             // Mostrar u ocultar el botón de reembolso según el contact reason
             const btnReembolsoWrap = document.getElementById('btn-reembolso-wrap');
@@ -287,7 +300,11 @@ function openEmailPanel(id) {
             document.getElementById('em-de').textContent = c.remitenteEmail || '-';
             document.getElementById('em-fecha').textContent = c.fechaCreacion || '-';
             document.getElementById('em-asunto').textContent = c.asunto || '-';
+            document.getElementById('em-de').textContent = c.remitenteEmail || '-';
+            document.getElementById('em-fecha').textContent = c.fechaCreacion || '-';
+            document.getElementById('em-asunto').textContent = c.asunto || '-';
 
+            aplicarPermisosEmail(c.agente, c.estado);
 
             cargarMensajesEmail(id);
         })
@@ -295,6 +312,155 @@ function openEmailPanel(id) {
 
     document.getElementById('email-modal-overlay').style.display = 'block';
     document.getElementById('email-modal').style.display = 'flex';
+}
+
+function aplicarPermisosPanel(agenteAsignado, estado) {
+    const tienePermiso = usuarioActualEsSupervisorOAdmin ||
+        (agenteAsignado && agenteAsignado === usuarioActualNombre) ||
+        agenteAsignado === 'CSMate' || !agenteAsignado;
+
+    const bloqueos = calcularBloqueosPorEstado(estado);
+
+    document.querySelector('.btn-estado-abrir').disabled = !tienePermiso || bloqueos.abrir;
+    document.querySelector('.btn-estado-pendiente').disabled = !tienePermiso || bloqueos.reasignar;
+    document.querySelector('.btn-estado-resolver').disabled = !tienePermiso || bloqueos.resolver;
+
+    const replyInput = document.getElementById('reply-input');
+    const replyBtn = document.querySelector('#slide-panel .reply-send');
+    if (replyInput) replyInput.disabled = !tienePermiso;
+    if (replyBtn) replyBtn.disabled = !tienePermiso;
+
+    let aviso = document.getElementById('sp-sin-permiso-aviso');
+    if (!tienePermiso) {
+        if (!aviso) {
+            aviso = document.createElement('div');
+            aviso.id = 'sp-sin-permiso-aviso';
+            aviso.className = 'reply-aviso reply-aviso-advertencia';
+            aviso.textContent = 'Este caso está asignado a otro agente. Solo puedes observarlo.';
+            document.getElementById('slide-reply').prepend(aviso);
+        }
+        aviso.style.display = 'block';
+    } else if (aviso) {
+        aviso.style.display = 'none';
+    }
+}
+
+function mostrarFormularioTransferenciaEmail() {
+    document.getElementById('em-reembolso-wrap').style.display = 'none';
+    document.getElementById('em-link-encuesta').style.display = 'none';
+    document.getElementById('em-transferencia-wrap').style.display = 'block';
+
+    const btnConfirmar = document.getElementById('em-btn-confirmar-transferencia');
+    fetch('/quejas/agentes-activos')
+        .then(res => res.json())
+        .then(agentes => {
+            const select = document.getElementById('em-transferencia-select');
+            select.innerHTML = '';
+            if (agentes.length === 0) {
+                select.innerHTML = '<option value="">No hay otros agentes disponibles</option>';
+                btnConfirmar.disabled = true;
+                return;
+            }
+            btnConfirmar.disabled = false;
+            agentes.forEach(a => {
+                const option = document.createElement('option');
+                option.value = a.nombre;
+                option.textContent = a.nombre;
+                select.appendChild(option);
+            });
+        })
+        .catch(err => console.error('Error cargando agentes:', err));
+}
+
+function cancelarTransferenciaEmail() {
+    document.getElementById('em-transferencia-wrap').style.display = 'none';
+    document.getElementById('em-transferencia-nota').value = '';
+}
+
+function confirmarTransferenciaEmail() {
+    if (!conversacionActualId) return;
+    const agenteDestino = document.getElementById('em-transferencia-select').value;
+    if (!agenteDestino) return;
+    const nota = document.getElementById('em-transferencia-nota').value.trim();
+
+    fetch('/quejas/' + conversacionActualId + '/transferir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'agenteDestino=' + encodeURIComponent(agenteDestino) + '&nota=' + encodeURIComponent(nota)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                cancelarTransferenciaEmail();
+                openEmailPanel(conversacionActualId);
+            }
+        })
+        .catch(err => console.error('Error al transferir:', err));
+}
+
+function resolverYEnviarEncuestaEmail() {
+    if (!conversacionActualId) return;
+
+    document.getElementById('em-reembolso-wrap').style.display = 'none';
+    document.getElementById('em-transferencia-wrap').style.display = 'none';
+
+    fetch('/quejas/' + conversacionActualId + '/estado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'estado=resolved'
+    })
+        .then(() => openEmailPanel(conversacionActualId))
+        .then(() => fetch('/csat/generar/' + conversacionActualId))
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                const baseUrl = window.location.origin;
+                const linkCompleto = baseUrl + data.link;
+                document.getElementById('em-encuesta-url').value = linkCompleto;
+                document.getElementById('em-link-encuesta').style.display = 'block';
+            }
+        })
+        .catch(err => console.error('Error generando encuesta:', err));
+}
+
+function aplicarPermisosEmail(agenteAsignado, estado) {
+    const tienePermiso = usuarioActualEsSupervisorOAdmin ||
+        (agenteAsignado && agenteAsignado === usuarioActualNombre);
+
+    const bloqueos = calcularBloqueosPorEstado(estado);
+
+    document.querySelector('.email-action-abrir').disabled = !tienePermiso || bloqueos.abrir;
+    document.querySelector('.email-action-reasignar').disabled = !tienePermiso || bloqueos.reasignar;
+    document.querySelector('.email-action-resolver').disabled = !tienePermiso || bloqueos.resolver;
+
+    const replyInput = document.getElementById('em-reply-input');
+    const replyBtn = document.querySelector('.reply-send');
+    if (replyInput) replyInput.disabled = !tienePermiso;
+    if (replyBtn) replyBtn.disabled = !tienePermiso;
+
+    let aviso = document.getElementById('em-sin-permiso-aviso');
+    if (!tienePermiso) {
+        if (!aviso) {
+            aviso = document.createElement('div');
+            aviso.id = 'em-sin-permiso-aviso';
+            aviso.className = 'reply-aviso reply-aviso-advertencia';
+            aviso.textContent = 'Este caso está asignado a otro agente. Solo puedes observarlo.';
+            document.querySelector('.email-modal-footer').prepend(aviso);
+        }
+        aviso.style.display = 'block';
+    } else if (aviso) {
+        aviso.style.display = 'none';
+    }
+}
+
+function copiarLinkEmail() {
+    const input = document.getElementById('em-encuesta-url');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = input.nextElementSibling;
+        btn.innerHTML = '<i class="ti ti-check"></i>';
+        setTimeout(() => btn.innerHTML = '<i class="ti ti-copy"></i>', 2000);
+    });
 }
 
 function cargarEstadoReembolso(id) {

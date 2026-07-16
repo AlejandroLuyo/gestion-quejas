@@ -107,7 +107,9 @@ public class ReembolsoController {
         }
 
         // Datos de la orden para validación y monto sugerido
-        var orden = ordenRepository.findById(conv.getOrderId()).orElse(null);
+        var orden = conv.getOrderId() != null
+                ? ordenRepository.findById(conv.getOrderId()).orElse(null)
+                : null;
         response.put("orderStatus", orden != null ? orden.getOrderStatus() : null);
         response.put("precio", orden != null ? orden.getPrecio() : null);
 
@@ -253,7 +255,9 @@ public class ReembolsoController {
         if (r == null) { response.put("status", "error"); return response; }
 
         Conversacion conv = r.getConversacion();
-        var orden = ordenRepository.findById(conv.getOrderId()).orElse(null);
+        var orden = conv.getOrderId() != null
+                ? ordenRepository.findById(conv.getOrderId()).orElse(null)
+                : null;
         double precio = (orden != null && orden.getPrecio() != null) ? orden.getPrecio() : 0.0;
 
         Map<String, String> convData = new HashMap<>();

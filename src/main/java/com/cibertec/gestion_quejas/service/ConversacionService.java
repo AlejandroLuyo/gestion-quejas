@@ -18,6 +18,17 @@ import java.util.UUID;
 @Service
 public class ConversacionService {
 
+    private static final java.util.Map<String, String> CONTACT_REASON_LABELS = java.util.Map.ofEntries(
+            java.util.Map.entry("payment_issues", "problemas de pago"),
+            java.util.Map.entry("refund_request", "solicitud de reembolso"),
+            java.util.Map.entry("status_information", "información de estado"),
+            java.util.Map.entry("cx_modify", "modificación de orden"),
+            java.util.Map.entry("deliverable_information", "información de entrega"),
+            java.util.Map.entry("requirements_assistance", "asistencia de requisitos"),
+            java.util.Map.entry("upload_support", "soporte de carga"),
+            java.util.Map.entry("consulta_general", "consulta general")
+    );
+
     @Autowired
     private ConversacionRepository conversacionRepository;
 
@@ -104,6 +115,8 @@ public class ConversacionService {
                     boolean coincideTexto = texto == null || texto.isBlank()
                             || (c.getOrderId() != null && c.getOrderId().toLowerCase().contains(texto.toLowerCase()))
                             || (c.getContactReason() != null && c.getContactReason().toLowerCase().contains(texto.toLowerCase()))
+                            || (c.getContactReason() != null && CONTACT_REASON_LABELS
+                            .getOrDefault(c.getContactReason(), "").contains(texto.toLowerCase()))
                             || (c.getTeammateCurrentlyAssigned() != null &&
                             c.getTeammateCurrentlyAssigned().toLowerCase().contains(texto.toLowerCase()));
 

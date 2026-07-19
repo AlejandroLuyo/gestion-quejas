@@ -247,22 +247,33 @@ function confirmarTransferencia() {
                 document.getElementById('sp-agente').textContent = data.agente;
                 cancelarTransferencia();
                 cargarMensajes(conversacionActualId);
-
-                const rows = document.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    if (row.getAttribute('onclick').includes(conversacionActualId)) {
-                        const badge = row.querySelector('.status-badge');
-                        if (badge) {
-                            badge.textContent = traducirEstado('pending');
-                            badge.className = 'status-badge status-PENDIENTE';
-                        }
-                        const celdas = row.querySelectorAll('td');
-                        if (celdas[4]) celdas[4].textContent = data.agente;
-                    }
-                });
+                actualizarFilaConversacion(conversacionActualId, 'pending', data.agente);
+                aplicarPermisosPanel(data.agente, 'pending');
             }
         })
         .catch(err => console.error('Error al transferir:', err));
+}
+
+function actualizarFilaConversacion(id, estadoNuevo, agenteNuevo) {
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        if (row.dataset.convId == id) {
+            if (estadoNuevo) {
+                const badge = row.querySelector('.status-badge');
+                if (badge) {
+                    badge.textContent = traducirEstado(estadoNuevo);
+                    badge.className = 'status-badge';
+                    if (estadoNuevo === 'open') badge.classList.add('status-EN_PROCESO');
+                    else if (estadoNuevo === 'resolved') badge.classList.add('status-RESUELTO');
+                    else badge.classList.add('status-PENDIENTE');
+                }
+            }
+            if (agenteNuevo) {
+                const celdas = row.querySelectorAll('td');
+                if (celdas[5]) celdas[5].textContent = agenteNuevo;
+            }
+        }
+    });
 }
 
 function closePanel() {
@@ -392,6 +403,7 @@ function confirmarTransferenciaEmail() {
         .then(data => {
             if (data.status === 'ok') {
                 cancelarTransferenciaEmail();
+                actualizarFilaConversacion(conversacionActualId, 'pending', data.agente);
                 openEmailPanel(conversacionActualId);
             }
         })
@@ -564,7 +576,10 @@ function cambiarEstadoEmail(estado) {
         body: 'estado=' + estado
     })
         .then(res => res.json())
-        .then(() => openEmailPanel(conversacionActualId))
+        .then(data => {
+            actualizarFilaConversacion(conversacionActualId, estado, data.agente);
+            openEmailPanel(conversacionActualId);
+        })
         .catch(err => console.error('Error cambiando estado:', err));
 }
 
@@ -689,26 +704,12 @@ function cambiarEstado(nuevoEstado) {
         .then(data => {
             if (data.status === 'ok') {
                 document.getElementById('sp-estado').textContent = traducirEstado(nuevoEstado);
+                const agenteActual = data.agente || document.getElementById('sp-agente').textContent;
                 if (data.agente) {
                     document.getElementById('sp-agente').textContent = data.agente;
                 }
-                const rows = document.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    if (row.getAttribute('onclick').includes(conversacionActualId)) {
-                        const badge = row.querySelector('.status-badge');
-                        if (badge) {
-                            badge.textContent = traducirEstado(nuevoEstado);
-                            badge.className = 'status-badge';
-                            if (nuevoEstado === 'open') badge.classList.add('status-EN_PROCESO');
-                            else if (nuevoEstado === 'resolved') badge.classList.add('status-RESUELTO');
-                            else badge.classList.add('status-PENDIENTE');
-                        }
-                        if (data.agente) {
-                            const celdas = row.querySelectorAll('td');
-                            if (celdas[4]) celdas[4].textContent = data.agente;
-                        }
-                    }
-                });
+                actualizarFilaConversacion(conversacionActualId, nuevoEstado, data.agente);
+                aplicarPermisosPanel(agenteActual, nuevoEstado);
             }
         });
 }

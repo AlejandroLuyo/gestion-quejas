@@ -161,6 +161,17 @@ public class PortalClienteController {
         msgCliente.setCanal("TICKET");
         mensajeRepository.save(msgCliente);
 
+        // Si ya fue asignada a un agente humano, solo se guarda el mensaje
+        // (el agente lo verá desde su panel). No se vuelve a invocar a la IA.
+        boolean yaEscaladoAHumano = conversacion.getTeammateCurrentlyAssigned() != null
+                && !"CSMate".equals(conversacion.getTeammateCurrentlyAssigned());
+
+        if (yaEscaladoAHumano) {
+            response.put("status", "ok");
+            response.put("estadoConversacion", "MENSAJE_GUARDADO");
+            return response;
+        }
+
         Orden orden = ordenRepository.findById(conversacion.getOrderId()).orElse(null);
 
         List<Mensaje> historial = mensajeRepository
@@ -194,6 +205,7 @@ public class PortalClienteController {
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
             conversacion.setCurrentConversationState("open");
             conversacionService.guardar(conversacion);
+            response.put("agenteAsignado", agente);
         }
 
         Mensaje msgBot = new Mensaje();

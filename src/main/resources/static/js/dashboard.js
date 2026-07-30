@@ -901,10 +901,16 @@ function enviarMensajePortal() {
                 document.getElementById('portal-encuesta-url').value = baseUrl + data.link;
                 document.getElementById('portal-link-encuesta').style.display = 'block';
             } else if (data.estadoConversacion === 'ESCALAR') {
-                document.getElementById('portal-reply-row').style.display = 'none';
+                // Ya no se oculta portal-reply-row: el cliente puede seguir escribiendo
                 document.getElementById('portal-btn-no-mas').style.display = 'none';
                 document.getElementById('portal-escalado-msg').style.display = 'block';
+                if (data.agenteAsignado) {
+                    document.getElementById('portal-agente-valor').textContent = data.agenteAsignado;
+                }
             }
+            // Si estadoConversacion === 'MENSAJE_GUARDADO' (ya escalado a humano):
+            // no hay nada más que hacer, el mensaje del cliente ya se recargó en la lista
+            // y no se genera respuesta de bot.
         })
         .catch(err => {
             ocultarEscribiendoPortal();

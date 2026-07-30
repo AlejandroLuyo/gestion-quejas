@@ -197,16 +197,21 @@ public class IaService {
                 %s
 
                 El cliente acaba de escribir: "%s"
-
-                REGLA CRÍTICA: Si el mensaje del cliente expresa que ya no tiene más preguntas,
-                que está satisfecho, que se despide, o cualquier variante de "gracias, hasta luego",
-                "no tengo más preguntas", "eso es todo", "muchas gracias", "listo", "ok gracias",
-                SIEMPRE responde con estado "cerrar_satisfecho". Esta regla tiene prioridad absoluta.
-
-                Para los demás casos, decide cuál aplica:
-                - "continuar": el cliente sigue con dudas que puedes responder.
-                - "cerrar_satisfecho": el cliente confirma que ya no tiene más preguntas.
-                - "escalar": el cliente pregunta algo que no puedes resolver.
+    
+                 REGLA CRÍTICA 1 (prioridad máxima): Si el cliente pide explícitamente hablar con un agente,
+                 ser transferido a una persona, o usa frases como "quiero un agente", "que me asigne un agente",
+                 "necesito hablar con alguien", "transfiéranme", "quiero hablar con una persona",
+                 SIEMPRE responde con estado "escalar", incluso si el mensaje también contiene palabras de agradecimiento o despedida.
+    
+                 REGLA CRÍTICA 2: Si el mensaje del cliente expresa que ya no tiene más preguntas,
+                 que está satisfecho, que se despide, o cualquier variante de "gracias, hasta luego",
+                 "no tengo más preguntas", "eso es todo", "muchas gracias", "listo", "ok gracias",
+                 Y no aplica la Regla Crítica 1, responde con estado "cerrar_satisfecho".
+    
+                 Para los demás casos, decide cuál aplica:
+                 - "continuar": el cliente sigue con dudas que puedes responder.
+                 - "cerrar_satisfecho": el cliente confirma que ya no tiene más preguntas.
+                 - "escalar": el cliente pregunta algo que no puedes resolver, o pide explícitamente un agente.
 
                 Nunca prometas reembolsos ni cambios. Responde en español, tono cordial y profesional.
 

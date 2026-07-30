@@ -60,10 +60,10 @@
                 </div>
                 <div class="resumen-total" style="margin-bottom:8px; background:#dbeafe; color:#1d4ed8;">
                     <span>Agente asignado</span>
-                    <span th:if="${conversacion.teammateCurrentlyAssigned == 'CSMate'}">CSMate (Bot IA)</span>
-                    <span th:if="${conversacion.teammateCurrentlyAssigned != null and conversacion.teammateCurrentlyAssigned != 'CSMate'}"
-                          th:text="${conversacion.teammateCurrentlyAssigned}"></span>
-                    <span th:if="${conversacion.teammateCurrentlyAssigned == null}">Pendiente de asignar</span>
+                    <span id="portal-agente-valor"
+                            th:text="${conversacion.teammateCurrentlyAssigned == 'CSMate'} ? 'CSMate (Bot IA)' :
+                                    (${conversacion.teammateCurrentlyAssigned != null} ? ${conversacion.teammateCurrentlyAssigned} : 'Pendiente de asignar')">
+                    </span>
                 </div>
             </div>
 

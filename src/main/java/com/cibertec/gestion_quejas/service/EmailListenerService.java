@@ -68,8 +68,14 @@ public class EmailListenerService {
     private static final List<String> ESTADOS_ACTIVOS = List.of("open", "pending");
 
     private static final List<String> DOMINIOS_SISTEMA_BLOQUEADOS = List.of(
-            "brevo.com", "t.brevo.com", "sendinblue.com"
+            "brevo.com", "t.brevo.com", "sendinblue.com",
+            "accounts.google.com", "google.com", "microsoft.com", "outlook.com"
     );
+
+    private static final List<String> PATRONES_REMITENTE_SISTEMA = List.of(
+            "no-reply", "noreply", "no.reply", "mailer-daemon", "postmaster", "notification", "notifications"
+    );
+
     @Scheduled(fixedDelay = 60000)
     public void revisarBandejaEntrada() {
         if (!pollingEnabled) {
@@ -149,9 +155,16 @@ public class EmailListenerService {
 
     private boolean esRemitenteDeSistema(String remitente) {
         if (remitente == null) return false;
-        String dominio = remitente.substring(remitente.indexOf('@') + 1).toLowerCase();
-        return DOMINIOS_SISTEMA_BLOQUEADOS.stream()
+        String remitenteLower = remitente.toLowerCase();
+        String dominio = remitenteLower.substring(remitenteLower.indexOf('@') + 1);
+
+        boolean dominioBloqueado = DOMINIOS_SISTEMA_BLOQUEADOS.stream()
                 .anyMatch(bloqueado -> dominio.equals(bloqueado) || dominio.endsWith("." + bloqueado));
+
+        boolean patronBloqueado = PATRONES_REMITENTE_SISTEMA.stream()
+                .anyMatch(remitenteLower::contains);
+
+        return dominioBloqueado || patronBloqueado;
     }
 
     private void procesarSinOrden(String asunto, String cuerpo, String remitente, String messageId) {

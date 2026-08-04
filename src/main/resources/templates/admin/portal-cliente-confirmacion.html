@@ -8,6 +8,7 @@
     <link th:href="@{/css/dashboard.css}" rel="stylesheet">
     <link th:href="@{/css/usuario-form.css}" rel="stylesheet">
     <link th:href="@{/css/comprar-visa.css}" rel="stylesheet">
+    <link th:href="@{/css/portal-chat.css}" rel="stylesheet">
 </head>
 <body>
 
@@ -61,16 +62,18 @@
                 <div class="resumen-total" style="margin-bottom:8px; background:#dbeafe; color:#1d4ed8;">
                     <span>Agente asignado</span>
                     <span id="portal-agente-valor"
-                            th:text="${conversacion.teammateCurrentlyAssigned == 'CSMate'} ? 'CSMate (Bot IA)' :
+                          th:text="${conversacion.teammateCurrentlyAssigned == 'CSMate'} ? 'CSMate (Bot IA)' :
                                     (${conversacion.teammateCurrentlyAssigned != null} ? ${conversacion.teammateCurrentlyAssigned} : 'Pendiente de asignar')">
                     </span>
                 </div>
             </div>
 
-            <!--/* Caso 1: CSMate atendió y está esperando respuesta del cliente */-->
-            <div th:if="${conversacion.teammateCurrentlyAssigned == 'CSMate' and conversacion.currentConversationState == 'pending'}"
+            <!--/* Chat: visible mientras la conversación no esté resuelta, sin importar
+                     si la atiende CSMate o ya fue escalada a un agente humano (incluye
+                     el caso de reembolso, que se escala de inmediato sin pasar por CSMate). */-->
+            <div th:if="${conversacion.currentConversationState != 'resolved'}"
                  id="portal-chat" class="portal-chat" th:attr="data-id=${conversacion.conversacionId}">
-                <div class="portal-chat-titulo">Conversación con CSMate</div>
+                <div class="portal-chat-titulo">Conversación</div>
                 <div id="portal-mensajes-list" class="portal-chat-mensajes">
                     <div style="text-align:center; color:#94a3b8; font-size:12px; padding:10px;">Cargando mensajes...</div>
                 </div>
@@ -85,8 +88,9 @@
                         </button>
                     </div>
                 </div>
-                <div id="portal-escalado-msg" class="portal-chat-escalado" style="display:none;">
-                    Tu consulta fue derivada a un agente humano. Te contactaremos pronto.
+                <div id="portal-escalado-msg" class="portal-chat-escalado"
+                     th:style="${conversacion.teammateCurrentlyAssigned != 'CSMate'} ? 'display:block;' : 'display:none;'">
+                    Tu solicitud fue recibida y derivada a un agente humano. Te contactaremos pronto.
                 </div>
                 <div id="portal-reply-row" class="portal-chat-input-row">
                     <input type="text" id="portal-reply-input" class="portal-chat-input"
@@ -96,16 +100,10 @@
                         <i class="ti ti-send"></i>
                     </button>
                 </div>
-                <button id="portal-btn-no-mas" class="portal-chat-no-mas" onclick="cerrarSinMasPreguntas()">
+                <button id="portal-btn-no-mas" class="portal-chat-no-mas" onclick="cerrarSinMasPreguntas()"
+                        th:style="${conversacion.teammateCurrentlyAssigned == 'CSMate'} ? 'display:inline-flex;' : 'display:none;'">
                     No tengo más preguntas, gracias
                 </button>
-            </div>
-
-            <!--/* Caso 2: escalado a agente humano (incluye refund_request) */-->
-            <div th:if="${conversacion.currentConversationState == 'open' and conversacion.teammateCurrentlyAssigned != 'CSMate'}"
-                 class="portal-chat-escalado"
-                 style="max-width:360px; margin:24px auto 0;">
-                Tu solicitud fue recibida y derivada a un agente humano. Te contactaremos pronto.
             </div>
 
             <a href="/admin/portal-cliente" class="btn-guardar"

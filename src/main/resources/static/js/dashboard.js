@@ -1,6 +1,9 @@
 let conversacionActualId = null;
 let chatIniciado = false;
 let emReembolsoContactReason = null;
+let intervaloPanelMensajes = null;
+let intervaloPortalMensajes = null;
+
 const usuarioActualEsSupervisorOAdmin =
     !!document.getElementById('rol-admin-flag') || !!document.getElementById('rol-supervisor-flag');
 
@@ -133,6 +136,9 @@ function openPanel(id) {
             aplicarPermisosPanel(c.agente, c.estado);
 
             cargarMensajes(id);
+
+            if (intervaloPanelMensajes) clearInterval(intervaloPanelMensajes);
+            intervaloPanelMensajes = setInterval(() => cargarMensajes(id), 1500);
             // Mostrar u ocultar el botón de reembolso según el contact reason
             const btnReembolsoWrap = document.getElementById('btn-reembolso-wrap');
             if (btnReembolsoWrap) {
@@ -163,14 +169,13 @@ function reabrirYDerivar() {
 
 function cargarMensajes(id) {
     const lista = document.getElementById('mensajes-list');
-    lista.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Cargando...</div>';
+    const cantidadAntes = lista.querySelectorAll('.msg-wrap, .nota-interna').length;
+    const estabaAbajo = (lista.scrollTop + lista.clientHeight) >= (lista.scrollHeight - 30);
+    const esCargaInicial = cantidadAntes === 0;
+
     fetch('/quejas/' + id + '/mensajes')
-        .then(res => {
-            console.log('Status mensajes:', res.status);
-            return res.json();
-        })
+        .then(res => res.json())
         .then(mensajes => {
-            console.log('Mensajes recibidos:', mensajes);
             if (mensajes.length === 0) {
                 lista.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Sin mensajes aún.</div>';
                 return;
@@ -193,6 +198,11 @@ function cargarMensajes(id) {
                 `;
                 lista.appendChild(div);
             });
+
+            const hayMensajesNuevos = mensajes.length > cantidadAntes;
+            if (esCargaInicial || hayMensajesNuevos || estabaAbajo) {
+                lista.scrollTop = lista.scrollHeight;
+            }
         })
         .catch(err => console.error('Error cargando mensajes:', err));
 }
@@ -281,6 +291,11 @@ function closePanel() {
     document.getElementById('overlay').classList.remove('show');
     cerrarPanelReembolso();
     conversacionActualId = null;
+
+    if (intervaloPanelMensajes) {
+        clearInterval(intervaloPanelMensajes);
+        intervaloPanelMensajes = null;
+    }
 }
 
 function openEmailPanel(id) {
@@ -846,18 +861,59 @@ function copiarLink() {
 // === Chat CSMate (Portal Cliente) ===
 function cargarMensajesPortal(id) {
     const lista = document.getElementById('portal-mensajes-list');
+    const cantidadAntes = lista.querySelectorAll('.portal-bubble').length;
+    const estabaAbajo = (lista.scrollTop + lista.clientHeight) >= (lista.scrollHeight - 30);
+    const esCargaInicial = cantidadAntes === 0;
+
     fetch('/quejas/' + id + '/mensajes')
         .then(res => res.json())
         .then(mensajes => {
             lista.innerHTML = '';
+            let hayMensajeAgente = false;
+
             mensajes.forEach(m => {
-                const esBot = m.remitente === 'BOT';
-                const div = document.createElement('div');
-                div.className = esBot ? 'portal-bubble portal-bubble-bot' : 'portal-bubble portal-bubble-cliente';
-                div.textContent = m.contenido;
-                lista.appendChild(div);
+                let claseBurbuja, claseWrap, etiquetaRemitente;
+
+                if (m.remitente === 'BOT') {
+                    claseBurbuja = 'portal-bubble-bot';
+                    claseWrap = 'portal-msg-wrap-der';
+                    etiquetaRemitente = 'CSMate';
+                } else if (m.remitente === 'AGENTE') {
+                    claseBurbuja = 'portal-bubble-agente';
+                    claseWrap = 'portal-msg-wrap-der';
+                    etiquetaRemitente = 'Agente';
+                    hayMensajeAgente = true;
+                } else {
+                    claseBurbuja = 'portal-bubble-cliente';
+                    claseWrap = 'portal-msg-wrap-izq';
+                    etiquetaRemitente = 'Tú';
+                }
+
+                const wrap = document.createElement('div');
+                wrap.className = 'portal-msg-wrap ' + claseWrap;
+
+                const burbuja = document.createElement('div');
+                burbuja.className = 'portal-bubble ' + claseBurbuja;
+                burbuja.textContent = m.contenido;
+
+                const etiqueta = document.createElement('div');
+                etiqueta.className = 'portal-bubble-time';
+                etiqueta.textContent = etiquetaRemitente + ' · ' + m.fechaEnvio;
+
+                wrap.appendChild(burbuja);
+                wrap.appendChild(etiqueta);
+                lista.appendChild(wrap);
             });
-            lista.scrollTop = lista.scrollHeight; // auto-scroll al último mensaje
+
+            const hayMensajesNuevos = mensajes.length > cantidadAntes;
+            if (esCargaInicial || hayMensajesNuevos || estabaAbajo) {
+                lista.scrollTop = lista.scrollHeight;
+            }
+
+            if (hayMensajeAgente) {
+                const banner = document.getElementById('portal-escalado-msg');
+                if (banner) banner.style.display = 'none';
+            }
         })
         .catch(err => console.error('Error cargando mensajes del portal:', err));
 }
@@ -926,11 +982,16 @@ function enviarMensajePortal() {
 
 function mostrarEscribiendoPortal() {
     const lista = document.getElementById('portal-mensajes-list');
+    const wrap = document.createElement('div');
+    wrap.id = 'portal-typing';
+    wrap.className = 'portal-msg-wrap portal-msg-wrap-der';
+
     const typing = document.createElement('div');
-    typing.id = 'portal-typing';
     typing.className = 'portal-bubble portal-bubble-bot portal-typing';
     typing.innerHTML = '<span></span><span></span><span></span>';
-    lista.appendChild(typing);
+
+    wrap.appendChild(typing);
+    lista.appendChild(wrap);
     lista.scrollTop = lista.scrollHeight;
 }
 
@@ -958,8 +1019,13 @@ function copiarLinkPortal() {
 
 const portalChatDiv = document.getElementById('portal-chat');
 if (portalChatDiv) {
-    cargarMensajesPortal(portalChatDiv.getAttribute('data-id'));
+    const idConversacionPortal = portalChatDiv.getAttribute('data-id');
+    cargarMensajesPortal(idConversacionPortal);
+    intervaloPortalMensajes = setInterval(() => {
+        if (!portalEnviando) cargarMensajesPortal(idConversacionPortal);
+    }, 1500);
 }
+
 // === Panel de reembolso ===
 let reembolsoData = {};
 

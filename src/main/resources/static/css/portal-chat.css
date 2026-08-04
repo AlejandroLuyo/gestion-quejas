@@ -1,0 +1,236 @@
+/* === Chat del Portal Cliente (CSMate / Agente) === */
+
+.portal-chat {
+    text-align: left;
+    max-width: 390px;
+    margin: 28px auto 0;
+}
+
+.portal-chat-titulo {
+    font-size: 14px;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 12px;
+}
+
+.portal-chat-mensajes {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    max-height: 280px;
+    overflow-y: auto;
+    margin-bottom: 14px;
+    padding-right: 4px;
+}
+
+.portal-bubble {
+    padding: 11px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.portal-bubble-cliente {
+    background: #f1f5f9;
+    color: #1e293b;
+    border-bottom-left-radius: 6px;
+}
+
+.portal-bubble-bot {
+    background: linear-gradient(135deg, #16a34a, #14b8a6);
+    color: #fff;
+    border-bottom-right-radius: 6px;
+}
+
+.portal-bubble-agente {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-bottom-right-radius: 6px;
+}
+
+.portal-msg-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 82%;
+}
+
+.portal-msg-wrap-izq {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+
+.portal-msg-wrap-der {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.portal-bubble-time {
+    font-size: 10px;
+    color: #94a3b8;
+}
+
+.portal-chat-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 9px;
+}
+
+.portal-chat-input {
+    flex: 1;
+    border: 1px solid #dbeafe;
+    border-radius: 14px;
+    padding: 11px 13px;
+    font-size: 13px;
+    outline: none;
+    background: #fff;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.portal-chat-input:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 4px rgba(34,197,94,.12);
+}
+
+.portal-chat-send {
+    background: linear-gradient(135deg, #16a34a, #14b8a6);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: 900;
+}
+
+.portal-chat-no-mas {
+    width: 100%;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 10px;
+    border-radius: 14px;
+    cursor: pointer;
+}
+
+.portal-chat-escalado {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    color: #92400e;
+    border: 1px solid #fde68a;
+    padding: 13px 16px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.portal-chat-link-box {
+    background: #ecfdf5;
+    border: 1px solid #bbf7d0;
+    border-radius: 16px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.portal-chat-link-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: #166534;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.portal-chat-link-row {
+    display: flex;
+    gap: 8px;
+}
+
+.portal-chat-link-input {
+    flex: 1;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 8px 11px;
+    font-size: 12px;
+    background: #fff;
+    outline: none;
+}
+
+.portal-chat-link-copiar {
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 8px 11px;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.portal-chat-send:disabled,
+.portal-chat-no-mas:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.portal-typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 14px;
+}
+
+.portal-typing span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #166534;
+    opacity: .55;
+}
+
+/* DARK MODE */
+body.dark .portal-chat-titulo {
+    color: #e2e8f0;
+}
+
+body.dark .portal-chat-link-box {
+    background: rgba(5,46,22,.65);
+    border-color: rgba(34,197,94,.35);
+    color: #bbf7d0;
+}
+
+body.dark .portal-bubble-cliente {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+body.dark .portal-bubble-bot {
+    background: linear-gradient(135deg, #14532d, #166534);
+    color: #bbf7d0;
+}
+
+body.dark .portal-bubble-agente {
+    background: rgba(29,78,216,.25);
+    color: #bfdbfe;
+}
+
+body.dark .portal-chat-input,
+body.dark .portal-chat-link-input {
+    background: #020617;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+
+body.dark .portal-chat-no-mas {
+    background: rgba(255,255,255,.04);
+    border-color: rgba(255,255,255,.10);
+    color: #94a3b8;
+}
+
+body.dark .portal-chat-link-label {
+    color: #bbf7d0;
+}
+
+body.dark .portal-typing span {
+    background: #bbf7d0;
+}

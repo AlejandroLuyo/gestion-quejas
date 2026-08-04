@@ -198,6 +198,28 @@ public class ConversacionController {
         return response;
     }
 
+    @PostMapping("/{id}/contact-reason")
+    @ResponseBody
+    public Map<String, String> cambiarContactReason(@PathVariable Long id,
+                                                    @RequestParam String nuevoContactReason,
+                                                    java.security.Principal principal) {
+        Map<String, String> response = new HashMap<>();
+        Conversacion c = conversacionService.buscarPorId(id);
+        if (c == null) {
+            response.put("status", "error");
+            return response;
+        }
+        if (!tienePermiso(c, principal)) {
+            response.put("status", "sin_permiso");
+            response.put("mensaje", "No tienes permiso para modificar este caso.");
+            return response;
+        }
+        c.setContactReason(nuevoContactReason);
+        conversacionService.guardar(c);
+        response.put("status", "ok");
+        return response;
+    }
+
     @PostMapping("/{id}/estado")
     @ResponseBody
     public Map<String, String> cambiarEstado(@PathVariable Long id, @RequestParam String estado,
@@ -303,12 +325,32 @@ public class ConversacionController {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, HH:mm");
         for (Mensaje m : mensajes) {
             Map<String, String> msg = new HashMap<>();
-            msg.put("contenido", m.getContenido());
+            msg.put("contenido", limpiarTextoCitadoParaMostrar(m.getContenido()));
             msg.put("remitente", m.getRemitente());
             msg.put("fechaEnvio", m.getFechaEnvio().format(formatter));
             result.add(msg);
         }
         return result;
+    }
+
+    private String limpiarTextoCitadoParaMostrar(String cuerpo) {
+        if (cuerpo == null) return "";
+
+        int idx = cuerpo.toLowerCase().indexOf("escribió:");
+        if (idx == -1) idx = cuerpo.toLowerCase().indexOf("escribio:");
+        if (idx != -1) {
+            int inicioParrafo = cuerpo.lastIndexOf("\n\n", idx);
+            cuerpo = inicioParrafo != -1 ? cuerpo.substring(0, inicioParrafo) : cuerpo.substring(0, idx);
+        }
+
+        String[] lineas = cuerpo.split("\\r?\\n");
+        StringBuilder resultado = new StringBuilder();
+        for (String linea : lineas) {
+            if (linea.trim().startsWith(">")) continue;
+            resultado.append(linea).append("\n");
+        }
+
+        return resultado.toString().trim();
     }
 
     @PostMapping("/{id}/responder")

@@ -3,6 +3,7 @@ let chatIniciado = false;
 let emReembolsoContactReason = null;
 let intervaloPanelMensajes = null;
 let intervaloPortalMensajes = null;
+let spReclasificarValorPrevio = null;
 
 const usuarioActualEsSupervisorOAdmin =
     !!document.getElementById('rol-admin-flag') || !!document.getElementById('rol-supervisor-flag');
@@ -69,6 +70,55 @@ function toggleDark() {
     localStorage.setItem('darkMode', isDark);
 }
 
+function onCambioContactReasonPanel() {
+    const select = document.getElementById('sp-reclasificar-select');
+    const nuevoValor = select.value;
+
+    if (nuevoValor === spReclasificarValorPrevio) return;
+
+    document.getElementById('sp-reclasificar-nuevo-texto').textContent = traducirContactReason(nuevoValor);
+    document.getElementById('sp-reclasificar-confirm').style.display = 'block';
+}
+
+function cancelarCambioContactReasonPanel() {
+    document.getElementById('sp-reclasificar-select').value = spReclasificarValorPrevio;
+    document.getElementById('sp-reclasificar-confirm').style.display = 'none';
+}
+
+function confirmarCambioContactReasonPanel() {
+    const nuevoValor = document.getElementById('sp-reclasificar-select').value;
+
+    fetch('/quejas/' + conversacionActualId + '/contact-reason', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'nuevoContactReason=' + encodeURIComponent(nuevoValor)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                spReclasificarValorPrevio = nuevoValor;
+                document.getElementById('sp-reason').textContent = traducirContactReason(nuevoValor);
+                document.getElementById('sp-sub').textContent = traducirContactReason(nuevoValor);
+                document.getElementById('sp-reclasificar-confirm').style.display = 'none';
+
+                const btnReembolsoWrap = document.getElementById('btn-reembolso-wrap');
+                if (btnReembolsoWrap) {
+                    btnReembolsoWrap.style.display = nuevoValor === 'refund_request' ? 'block' : 'none';
+                }
+            } else if (data.status === 'sin_permiso') {
+                alert(data.mensaje || 'No tienes permiso para modificar este caso.');
+                cancelarCambioContactReasonPanel();
+            } else {
+                alert('No se pudo actualizar el motivo de contacto.');
+                cancelarCambioContactReasonPanel();
+            }
+        })
+        .catch(err => {
+            console.error('Error reclasificando contact reason:', err);
+            cancelarCambioContactReasonPanel();
+        });
+}
+
 function traducirContactReason(valor) {
     const mapa = {
         'payment_issues':          'Problemas de pago',
@@ -108,6 +158,9 @@ function openPanel(id) {
             document.getElementById('sp-name').textContent = c.orderId || '-';
             document.getElementById('sp-sub').textContent = traducirContactReason(c.contactReason);
             document.getElementById('sp-reason').textContent = traducirContactReason(c.contactReason);
+            spReclasificarValorPrevio = c.contactReason;
+            document.getElementById('sp-reclasificar-select').value = c.contactReason;
+            document.getElementById('sp-reclasificar-confirm').style.display = 'none';
             document.getElementById('sp-estado').textContent = traducirEstado(c.estado);
             document.getElementById('sp-origen').textContent = c.canal || '-';
             document.getElementById('sp-fecha').textContent = c.orderId || '-';
@@ -923,10 +976,14 @@ function cargarMensajesPortal(id) {
     fetch('/quejas/' + id + '/mensajes')
         .then(res => res.json())
         .then(mensajes => {
+            // Las notas internas (ej. reasignaciones entre agentes) son solo para
+            // uso interno del equipo; el cliente nunca debería verlas.
+            const mensajesVisibles = mensajes.filter(m => m.remitente !== 'NOTA_INTERNA');
+
             lista.innerHTML = '';
             let hayMensajeAgente = false;
 
-            mensajes.forEach(m => {
+            mensajesVisibles.forEach(m => {
                 let claseBurbuja, claseWrap, etiquetaRemitente;
 
                 if (m.remitente === 'BOT') {
@@ -960,7 +1017,7 @@ function cargarMensajesPortal(id) {
                 lista.appendChild(wrap);
             });
 
-            const hayMensajesNuevos = mensajes.length > cantidadAntes;
+            const hayMensajesNuevos = mensajesVisibles.length > cantidadAntes;
             if (esCargaInicial || hayMensajesNuevos || estabaAbajo) {
                 lista.scrollTop = lista.scrollHeight;
             }

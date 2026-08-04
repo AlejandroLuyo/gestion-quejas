@@ -10,6 +10,8 @@ import com.cibertec.gestion_quejas.service.FeatureFlagService;
 import com.cibertec.gestion_quejas.service.IaService;
 import com.cibertec.gestion_quejas.service.ResultadoCsmate;
 import com.cibertec.gestion_quejas.service.ResultadoTurno;
+import com.cibertec.gestion_quejas.service.AsignacionService;
+import com.cibertec.gestion_quejas.service.AuditoriaService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -39,6 +41,12 @@ public class PortalClienteController {
 
     @Autowired
     private FeatureFlagService featureFlagService;
+
+    @Autowired
+    private AsignacionService asignacionService;
+
+    @Autowired
+    private AuditoriaService auditoriaService;
 
     @Value("${app.base-url}")
     private String baseUrl;
@@ -132,6 +140,13 @@ public class PortalClienteController {
 
         conversacionService.guardar(conversacion);
 
+        if (conversacion.getTeammateCurrentlyAssigned() != null
+                && !"CSMate".equals(conversacion.getTeammateCurrentlyAssigned())) {
+            asignacionService.registrarAsignacion(conversacion, conversacion.getTeammateCurrentlyAssigned());
+            auditoriaService.registrarCambio(conversacion, conversacion.getTeammateCurrentlyAssigned(),
+                    "ASIGNACION", null, conversacion.getTeammateCurrentlyAssigned());
+        }
+
         model.addAttribute("conversacion", conversacion);
         return "admin/portal-cliente-confirmacion";
     }
@@ -200,12 +215,19 @@ public class PortalClienteController {
             contenidoBot = contenidoBot + "\n\nPor favor califica tu experiencia aquí: " + linkAbsoluto;
             response.put("link", linkRelativo);
         } else if (resultado.getEstado() == ResultadoTurno.Estado.ESCALAR) {
+            String agenteAnterior = conversacion.getTeammateCurrentlyAssigned();
             String agente = conversacionService.seleccionarAgenteConMenosCarga();
             conversacion.setTeammateCurrentlyAssigned(agente);
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
             conversacion.setCurrentConversationState("open");
             conversacionService.guardar(conversacion);
             response.put("agenteAsignado", agente);
+
+            if (agente != null) {
+                asignacionService.registrarAsignacion(conversacion, agente);
+                auditoriaService.registrarCambio(conversacion, agente,
+                        "ASIGNACION", agenteAnterior, agente);
+            }
         }
 
         Mensaje msgBot = new Mensaje();

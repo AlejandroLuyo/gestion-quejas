@@ -243,6 +243,30 @@
             <div><div class="attr-label">Fecha</div><div class="attr-value" id="sp-fechaCreacion"></div></div>
         </div>
 
+        <div id="sp-reclasificar-wrap" style="padding:0 18px 14px;">
+            <div class="attr-label" style="margin-bottom:6px;">Reclasificar motivo de contacto</div>
+            <select id="sp-reclasificar-select" onchange="onCambioContactReasonPanel()"
+                    style="width:100%; font-size:13px; padding:8px 10px; border-radius:8px; border:1px solid #e2e8f0;">
+                <option value="refund_request">Solicitud de reembolso</option>
+                <option value="status_information">Información de estado</option>
+                <option value="payment_issues">Problemas de pago</option>
+                <option value="cx_modify">Modificación de orden</option>
+                <option value="deliverable_information">Información de entrega</option>
+                <option value="requirements_assistance">Asistencia de requisitos</option>
+                <option value="upload_support">Soporte de carga</option>
+                <option value="consulta_general">Consulta general</option>
+            </select>
+            <div id="sp-reclasificar-confirm" style="display:none; margin-top:8px; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px;">
+                <div style="font-size:12px; color:#92400e; font-weight:700; margin-bottom:8px;">
+                    ¿Confirmas cambiar el motivo de contacto a "<span id="sp-reclasificar-nuevo-texto"></span>"?
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button onclick="confirmarCambioContactReasonPanel()" style="flex:1; background:#16a34a; color:#fff; border:none; font-size:12px; font-weight:700; padding:8px; border-radius:8px; cursor:pointer;">Sí, cambiar</button>
+                    <button onclick="cancelarCambioContactReasonPanel()" style="flex:1; background:#e2e8f0; color:#334155; border:none; font-size:12px; font-weight:700; padding:8px; border-radius:8px; cursor:pointer;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+
         <div class="conversation">
             <div class="conv-title">Conversación</div>
             <div id="mensajes-list" style="display:flex; flex-direction:column; gap:10px; padding:0 18px 16px;">

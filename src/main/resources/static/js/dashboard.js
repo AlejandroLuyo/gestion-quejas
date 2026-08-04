@@ -138,7 +138,9 @@ function openPanel(id) {
             cargarMensajes(id);
 
             if (intervaloPanelMensajes) clearInterval(intervaloPanelMensajes);
-            intervaloPanelMensajes = setInterval(() => cargarMensajes(id), 1500);
+            intervaloPanelMensajes = setInterval(() => {
+                if (!document.hidden) cargarMensajes(id);
+            }, 5000);
             // Mostrar u ocultar el botón de reembolso según el contact reason
             const btnReembolsoWrap = document.getElementById('btn-reembolso-wrap');
             if (btnReembolsoWrap) {
@@ -1147,11 +1149,11 @@ if (portalChatDiv) {
     cargarMensajesPortal(idConversacionPortal);
     actualizarEstadoPortal(idConversacionPortal);
     intervaloPortalMensajes = setInterval(() => {
-        if (!portalEnviando) {
+        if (!document.hidden && !portalEnviando) {
             cargarMensajesPortal(idConversacionPortal);
             actualizarEstadoPortal(idConversacionPortal);
         }
-    }, 1500);
+    }, 5000);
 }
 
 // === Panel de reembolso ===

@@ -135,4 +135,12 @@ public class ConversacionService {
         return conversacionRepository.findFirstByOrderIdAndChannelAndCurrentConversationStateIn(orderId, channel, estados);
     }
 
+    public List<Conversacion> buscarActivasPorRemitenteYCanal(String remitenteEmail, String channel, List<String> estados) {
+        return conversacionRepository.findAllConOrden(Sort.unsorted()).stream()
+                .filter(c -> channel.equals(c.getChannel()))
+                .filter(c -> c.getRemitenteEmail() != null && c.getRemitenteEmail().equalsIgnoreCase(remitenteEmail))
+                .filter(c -> estados.contains(c.getCurrentConversationState()))
+                .toList();
+    }
+
 }

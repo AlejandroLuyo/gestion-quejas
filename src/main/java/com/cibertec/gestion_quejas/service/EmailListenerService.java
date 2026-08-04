@@ -62,8 +62,17 @@ public class EmailListenerService {
     @Autowired
     private EmailService emailService;
 
-    private static final Pattern PATRON_ORDEN =
+    // Reconoce "orden 14", "pedido #14", "order 14"
+    private static final Pattern PATRON_ORDEN_CON_PALABRA =
             Pattern.compile("(?i)(?:orden|pedido|order)\\s*#?\\s*(?:ord-?)?(\\d+)");
+
+    // Reconoce el código de orden solo, en su formato real: "ORD-00014" o "ORD00014"
+    private static final Pattern PATRON_CODIGO_ORDEN =
+            Pattern.compile("(?i)\\bORD-?\\s?(\\d{4,})\\b");
+
+    // Corta el texto citado que Gmail agrega al responder: "El lun, 3 ago... escribió:"
+    private static final Pattern PATRON_CITA_GMAIL =
+            Pattern.compile("(?m)^El .+ escribi[oó]:\\s*$");
 
     private static final List<String> ESTADOS_ACTIVOS = List.of("open", "pending");
 
@@ -114,8 +123,6 @@ public class EmailListenerService {
             String messageId = (msg.getHeader("Message-ID") != null && msg.getHeader("Message-ID").length > 0)
                     ? msg.getHeader("Message-ID")[0] : null;
 
-            // Dedupe a nivel de MENSAJE individual (ya no a nivel de conversación,
-            // porque ahora una misma conversación puede recibir varios correos/turnos)
             if (messageId != null && mensajeRepository.existsByEmailMessageId(messageId)) {
                 return;
             }
@@ -127,23 +134,46 @@ public class EmailListenerService {
                 return;
             }
 
-
             String asunto = msg.getSubject() != null ? msg.getSubject() : "(sin asunto)";
-            String cuerpo = extraerCuerpo(msg);
+            String cuerpoCrudo = extraerCuerpo(msg);
+            String cuerpo = limpiarTextoCitado(cuerpoCrudo);
             String textoCompleto = asunto + " " + cuerpo;
 
+            // Primero: ¿ya existe un hilo activo de este remitente con este mismo asunto?
+            // Esto manda por encima de si el mensaje trae o no el número de orden.
+            Optional<Conversacion> hiloActivo = conversacionService
+                    .buscarActivasPorRemitenteYCanal(remitente, "email", ESTADOS_ACTIVOS)
+                    .stream()
+                    .filter(c -> mismoHilo(c.getAsunto(), asunto))
+                    .findFirst();
+
+            if (hiloActivo.isPresent()) {
+                Conversacion conversacion = hiloActivo.get();
+
+                if (conversacion.getOrderId() == null) {
+                    // Este hilo seguía esperando el número de orden.
+                    Orden ordenEncontrada = buscarOrden(textoCompleto, remitente);
+                    if (ordenEncontrada != null) {
+                        completarConversacionSinOrden(conversacion, ordenEncontrada, cuerpo, remitente, messageId, textoCompleto);
+                    } else {
+                        continuarSinOrden(conversacion, cuerpo, remitente, messageId);
+                    }
+                } else {
+                    // Ya se sabe la orden de este hilo: se continúa pase lo que pase,
+                    // sin exigir que el cliente la repita en cada mensaje.
+                    Orden orden = ordenRepository.findById(conversacion.getOrderId()).orElse(null);
+                    if (orden != null) {
+                        continuarConversacionEmail(conversacion, orden, cuerpo, remitente, messageId);
+                    }
+                }
+                return;
+            }
+
+            // No hay ningún hilo activo con este remitente + asunto: es un caso nuevo.
             Orden ordenEncontrada = buscarOrden(textoCompleto, remitente);
 
             if (ordenEncontrada == null) {
                 procesarSinOrden(asunto, cuerpo, remitente, messageId);
-                return;
-            }
-
-            Optional<Conversacion> conversacionActiva = conversacionService
-                    .buscarActivaPorOrdenYCanal(ordenEncontrada.getOrderId(), "email", ESTADOS_ACTIVOS);
-
-            if (conversacionActiva.isPresent()) {
-                continuarConversacionEmail(conversacionActiva.get(), ordenEncontrada, cuerpo, remitente, messageId);
             } else {
                 iniciarConversacionEmail(ordenEncontrada, asunto, cuerpo, remitente, messageId, textoCompleto);
             }
@@ -151,6 +181,17 @@ public class EmailListenerService {
         } catch (Exception e) {
             System.err.println("Error procesando correo individual: " + e.getMessage());
         }
+    }
+
+    private boolean mismoHilo(String asuntoGuardado, String asuntoNuevo) {
+        if (asuntoGuardado == null || asuntoNuevo == null) return false;
+        String limpio1 = normalizarAsunto(asuntoGuardado);
+        String limpio2 = normalizarAsunto(asuntoNuevo);
+        return limpio1.equalsIgnoreCase(limpio2);
+    }
+
+    private String normalizarAsunto(String asunto) {
+        return asunto.replaceAll("(?i)^(re:\\s*)+", "").trim();
     }
 
     private boolean esRemitenteDeSistema(String remitente) {
@@ -165,6 +206,32 @@ public class EmailListenerService {
                 .anyMatch(remitenteLower::contains);
 
         return dominioBloqueado || patronBloqueado;
+    }
+
+    private String limpiarTextoCitado(String cuerpo) {
+        if (cuerpo == null) return "";
+
+        int idx = indexOfCaseInsensitive(cuerpo, "escribió:");
+        if (idx == -1) {
+            idx = indexOfCaseInsensitive(cuerpo, "escribio:"); // por si la tilde se pierde en la codificación
+        }
+        if (idx != -1) {
+            int inicioParrafo = cuerpo.lastIndexOf("\n\n", idx);
+            cuerpo = inicioParrafo != -1 ? cuerpo.substring(0, inicioParrafo) : cuerpo.substring(0, idx);
+        }
+
+        String[] lineas = cuerpo.split("\\r?\\n");
+        StringBuilder resultado = new StringBuilder();
+        for (String linea : lineas) {
+            if (linea.trim().startsWith(">")) continue;
+            resultado.append(linea).append("\n");
+        }
+
+        return resultado.toString().trim();
+    }
+
+    private int indexOfCaseInsensitive(String texto, String buscado) {
+        return texto.toLowerCase().indexOf(buscado.toLowerCase());
     }
 
     private void procesarSinOrden(String asunto, String cuerpo, String remitente, String messageId) {
@@ -188,6 +255,97 @@ public class EmailListenerService {
                 "Re: " + asunto,
                 "Hola,\n\nPara poder registrar tu consulta correctamente, por favor " +
                         "respóndenos indicando tu número de orden.\n\nGracias.");
+    }
+
+    // El remitente ya tenía una conversación "sin orden" abierta y volvió a escribir
+    // sin que se pudiera identificar el número de orden en este nuevo mensaje tampoco.
+    private void continuarSinOrden(Conversacion conversacion, String cuerpo, String remitente, String messageId) {
+        Mensaje msgCliente = new Mensaje();
+        msgCliente.setConversacion(conversacion);
+        msgCliente.setContenido(cuerpo);
+        msgCliente.setRemitente("CLIENTE");
+        msgCliente.setCanal("EMAIL");
+        msgCliente.setEmailMessageId(messageId);
+        mensajeRepository.save(msgCliente);
+
+        String asuntoRespuesta = conversacion.getAsunto() != null
+                ? "Re: " + conversacion.getAsunto()
+                : "Re: tu consulta en CSManager";
+
+        emailService.enviarCorreo(remitente, asuntoRespuesta,
+                "Hola,\n\nAún no pudimos identificar tu número de orden en tu mensaje. " +
+                        "Por favor respóndenos indicando tu número de orden en el formato ORD-00000.\n\nGracias.");
+    }
+
+    // El remitente ya tenía una conversación "sin orden" abierta y en este mensaje
+    // finalmente se pudo identificar la orden: se completa esa misma conversación.
+    private void completarConversacionSinOrden(Conversacion conversacion, Orden orden, String cuerpo,
+                                               String remitente, String messageId, String textoCompleto) {
+        conversacion.setOrderId(orden.getOrderId());
+        conversacion.setRequiereRevisionManual(false);
+
+        boolean esReembolso = textoCompleto.toLowerCase().contains("reembolso");
+        conversacion.setContactReason(esReembolso ? "refund_request" : "consulta_general");
+        conversacion.setTeammateCurrentlyAssigned("CSMate");
+        conversacionService.guardar(conversacion);
+
+        Mensaje msgCliente = new Mensaje();
+        msgCliente.setConversacion(conversacion);
+        msgCliente.setContenido(cuerpo);
+        msgCliente.setRemitente("CLIENTE");
+        msgCliente.setCanal("EMAIL");
+        msgCliente.setEmailMessageId(messageId);
+        mensajeRepository.save(msgCliente);
+
+        // Junta TODOS los mensajes del cliente hasta ahora (la consulta original +
+        // esta respuesta con el número de orden), para que la IA tenga el contexto completo.
+        List<Mensaje> historial = mensajeRepository
+                .findByConversacionConversacionIdOrderByFechaEnvioAsc(conversacion.getConversacionId());
+        String descripcionCompleta = historial.stream()
+                .filter(m -> "CLIENTE".equals(m.getRemitente()))
+                .map(Mensaje::getContenido)
+                .collect(Collectors.joining("\n\n"));
+
+        ResultadoCsmate resultado = iaService.evaluarConsulta(
+                conversacion.getContactReason(),
+                descripcionCompleta,
+                orden.getProducto() != null ? orden.getProducto().getProductName() : "-",
+                orden.getDestinationCountry() != null ? orden.getDestinationCountry() : "-",
+                orden.getOrderStatus() != null ? orden.getOrderStatus() : "-",
+                orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-"
+        );
+
+        String asuntoRespuesta = conversacion.getAsunto() != null
+                ? "Re: " + conversacion.getAsunto()
+                : "Re: tu consulta en CSManager";
+
+        if (resultado.isPuedeResolver()) {
+            Mensaje respuestaBot = new Mensaje();
+            respuestaBot.setConversacion(conversacion);
+            respuestaBot.setContenido(resultado.getRespuesta());
+            respuestaBot.setRemitente("BOT");
+            respuestaBot.setCanal("EMAIL");
+            mensajeRepository.save(respuestaBot);
+
+            conversacion.setCurrentConversationState("pending");
+            emailService.enviarCorreo(remitente, asuntoRespuesta, resultado.getRespuesta());
+        } else {
+            conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
+            conversacion.setTeammateCurrentlyAssigned(
+                    conversacionService.seleccionarAgenteConMenosCarga());
+            conversacion.setCurrentConversationState("open");
+            emailService.enviarCorreo(remitente, asuntoRespuesta,
+                    "Hola,\n\nGracias por tu mensaje. Uno de nuestros agentes revisará tu caso " +
+                            "y te responderá a la brevedad.\n\nGracias.");
+        }
+        conversacionService.guardar(conversacion);
+
+        if (conversacion.getTeammateCurrentlyAssigned() != null
+                && !"CSMate".equals(conversacion.getTeammateCurrentlyAssigned())) {
+            asignacionService.registrarAsignacion(conversacion, conversacion.getTeammateCurrentlyAssigned());
+            auditoriaService.registrarCambio(conversacion, conversacion.getTeammateCurrentlyAssigned(),
+                    "ASIGNACION", null, conversacion.getTeammateCurrentlyAssigned());
+        }
     }
 
     private void iniciarConversacionEmail(Orden orden, String asunto, String cuerpo,
@@ -236,6 +394,9 @@ public class EmailListenerService {
             conversacion.setTeammateCurrentlyAssigned(
                     conversacionService.seleccionarAgenteConMenosCarga());
             conversacion.setCurrentConversationState("open");
+            emailService.enviarCorreo(remitente, "Re: " + asunto,
+                    "Hola,\n\nGracias por tu mensaje. Uno de nuestros agentes revisará tu caso " +
+                            "y te responderá a la brevedad.\n\nGracias.");
         }
         conversacionService.guardar(conversacion);
 
@@ -285,7 +446,6 @@ public class EmailListenerService {
                     conversacionService.seleccionarAgenteConMenosCarga());
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
             conversacion.setCurrentConversationState("open");
-            // Mensaje por defecto si la IA no generó respuesta (ej. error de conexión con Groq)
             if (contenidoBot == null || contenidoBot.isBlank()) {
                 contenidoBot = "Gracias por tu mensaje. Uno de nuestros agentes revisará tu caso y te responderá a la brevedad.";
             }
@@ -313,9 +473,19 @@ public class EmailListenerService {
     }
 
     private Orden buscarOrden(String textoCompleto, String remitente) {
-        Matcher matcher = PATRON_ORDEN.matcher(textoCompleto);
-        if (matcher.find()) {
-            String soloNumero = matcher.group(1);
+        String soloNumero = null;
+
+        Matcher matcherPalabra = PATRON_ORDEN_CON_PALABRA.matcher(textoCompleto);
+        if (matcherPalabra.find()) {
+            soloNumero = matcherPalabra.group(1);
+        } else {
+            Matcher matcherCodigo = PATRON_CODIGO_ORDEN.matcher(textoCompleto);
+            if (matcherCodigo.find()) {
+                soloNumero = matcherCodigo.group(1);
+            }
+        }
+
+        if (soloNumero != null) {
             String codigoOrden = "ORD-" + String.format("%05d", Integer.parseInt(soloNumero));
             Orden orden = ordenRepository.findById(codigoOrden).orElse(null);
             if (orden != null && orden.getEmailCliente() != null

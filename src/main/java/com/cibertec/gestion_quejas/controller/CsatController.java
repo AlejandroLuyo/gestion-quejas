@@ -40,7 +40,7 @@ public class CsatController {
         return response;
     }
 
-    @GetMapping("/responder")
+    /*@GetMapping("/responder")
     public String mostrarEncuesta(@RequestParam String token, Model model) {
         Conversacion conv = conversacionService.buscarPorToken(token);
         if (conv == null) {
@@ -54,6 +54,38 @@ public class CsatController {
         model.addAttribute("token", token);
         model.addAttribute("yaRespondio", yaRespondio);
         model.addAttribute("orderId", conv.getOrderId());
+        return "csat/encuesta";
+    }*/
+
+    @GetMapping("/responder")
+    public String mostrarEncuesta(@RequestParam String token, Model model) {
+
+        System.out.println("================================");
+        System.out.println("TOKEN RECIBIDO: " + token);
+
+        Conversacion conv = conversacionService.buscarPorToken(token);
+
+        if (conv == null) {
+            System.out.println("NO SE ENCONTRÓ LA CONVERSACIÓN");
+        } else {
+            System.out.println("CONVERSACIÓN ID: " + conv.getConversacionId());
+            System.out.println("TOKEN BD: " + conv.getCsatToken());
+        }
+
+        if (conv == null) {
+            model.addAttribute("linkInvalido", true);
+            return "csat/encuesta";
+        }
+
+        boolean yaRespondio = csatRepository
+                .findByConversacionConversacionId(conv.getConversacionId())
+                .isPresent();
+
+        model.addAttribute("linkInvalido", false);
+        model.addAttribute("token", token);
+        model.addAttribute("yaRespondio", yaRespondio);
+        model.addAttribute("orderId", conv.getOrderId());
+
         return "csat/encuesta";
     }
 

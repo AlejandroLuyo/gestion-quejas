@@ -450,6 +450,41 @@ function resolverYEnviarEncuestaEmail() {
         .catch(err => console.error('Error generando encuesta:', err));
 }
 
+/*function resolverYEnviarEncuestaEmail() {
+    if (!conversacionActualId) return;
+
+    document.getElementById('em-reembolso-wrap').style.display = 'none';
+    document.getElementById('em-transferencia-wrap').style.display = 'none';
+
+    fetch('/quejas/' + conversacionActualId + '/estado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'estado=resolved'
+    })
+        .then(() => openEmailPanel(conversacionActualId))
+        .then(() => fetch('/csat/generar/' + conversacionActualId))
+        .then(res => res.json())
+        .then(data => {
+
+            console.log("Respuesta del backend:", data);
+
+            if (data.status === 'ok') {
+                const baseUrl = window.location.origin;
+                const linkCompleto = baseUrl + data.link;
+
+                console.log("Base URL:", baseUrl);
+                console.log("Link recibido:", data.link);
+                console.log("Link completo:", linkCompleto);
+
+                document.getElementById('em-encuesta-url').value = linkCompleto;
+                document.getElementById('em-link-encuesta').style.display = 'block';
+            } else {
+                console.error("El backend respondió con error:", data);
+            }
+        })
+        .catch(err => console.error('Error generando encuesta:', err));
+}*/
+
 function aplicarPermisosEmail(agenteAsignado, estado) {
     const tienePermiso = usuarioActualEsSupervisorOAdmin ||
         (agenteAsignado && agenteAsignado === usuarioActualNombre);
@@ -834,8 +869,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function resolverYEnviarEncuesta() {
     if (!conversacionActualId) return;
-    cambiarEstado('resolved');
-    fetch('/csat/generar/' + conversacionActualId)
+
+    fetch('/quejas/' + conversacionActualId + '/estado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'estado=resolved'
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                document.getElementById('sp-estado').textContent = traducirEstado('resolved');
+                const agenteActual = data.agente || document.getElementById('sp-agente').textContent;
+                if (data.agente) {
+                    document.getElementById('sp-agente').textContent = data.agente;
+                }
+                actualizarFilaConversacion(conversacionActualId, 'resolved', data.agente);
+                aplicarPermisosPanel(agenteActual, 'resolved');
+            }
+            // Recién ahora, con el estado ya guardado en BD, se genera el token
+            return fetch('/csat/generar/' + conversacionActualId);
+        })
         .then(res => res.json())
         .then(data => {
             if (data.status === 'ok') {
@@ -845,7 +898,7 @@ function resolverYEnviarEncuesta() {
                 document.getElementById('link-encuesta').style.display = 'block';
             }
         })
-        .catch(err => console.error('Error generando encuesta:', err));
+        .catch(err => console.error('Error al resolver y generar encuesta:', err));
 }
 
 function copiarLink() {

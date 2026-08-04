@@ -918,6 +918,42 @@ function cargarMensajesPortal(id) {
         .catch(err => console.error('Error cargando mensajes del portal:', err));
 }
 
+function actualizarEstadoPortal(id) {
+    fetch('/quejas/' + id + '/json')
+        .then(res => res.json())
+        .then(c => {
+            const estadoTexto = c.estado === 'open' ? 'En proceso' :
+                c.estado === 'pending' ? 'Pendiente' :
+                    c.estado === 'resolved' ? 'Resuelto' : c.estado;
+            document.getElementById('portal-estado-valor').textContent = estadoTexto;
+
+            const estadoBox = document.getElementById('portal-estado-box');
+            if (c.estado === 'resolved') {
+                estadoBox.style.background = '#dcfce7';
+                estadoBox.style.color = '#166534';
+            }
+
+            document.getElementById('portal-agente-valor').textContent =
+                c.agente === 'CSMate' ? 'CSMate (Bot IA)' : (c.agente || 'Pendiente de asignar');
+
+            // Caso resuelto: ya no tiene sentido seguir escribiendo
+            if (c.estado === 'resolved') {
+                const replyRow = document.getElementById('portal-reply-row');
+                if (replyRow) replyRow.style.display = 'none';
+                const noMasBtn = document.getElementById('portal-btn-no-mas');
+                if (noMasBtn) noMasBtn.style.display = 'none';
+                const escaladoMsg = document.getElementById('portal-escalado-msg');
+                if (escaladoMsg) escaladoMsg.style.display = 'none';
+
+                if (intervaloPortalMensajes) {
+                    clearInterval(intervaloPortalMensajes);
+                    intervaloPortalMensajes = null;
+                }
+            }
+        })
+        .catch(err => console.error('Error actualizando estado del portal:', err));
+}
+
 let portalEnviando = false;
 
 function enviarMensajePortal() {
@@ -995,6 +1031,41 @@ function mostrarEscribiendoPortal() {
     lista.scrollTop = lista.scrollHeight;
 }
 
+function toggleIngresoConversacion() {
+    const box = document.getElementById('ingreso-conversacion-box');
+    box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
+}
+
+function ingresarConversacionExistente() {
+    const id = document.getElementById('ingreso-conversacion-id').value.trim();
+    const orderId = document.getElementById('ingreso-order-id').value.trim();
+    const email = document.getElementById('ingreso-email').value.trim();
+    const errorBox = document.getElementById('ingreso-error');
+
+    if (!id || !orderId || !email) {
+        errorBox.textContent = 'Completa los 3 campos para continuar.';
+        errorBox.style.display = 'block';
+        return;
+    }
+    errorBox.style.display = 'none';
+
+    const formTemp = document.createElement('form');
+    formTemp.method = 'POST';
+    formTemp.action = '/admin/portal-cliente/ingresar';
+
+    const campos = { conversacionId: id, orderId: orderId, email: email };
+    for (const nombre in campos) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = nombre;
+        input.value = campos[nombre];
+        formTemp.appendChild(input);
+    }
+
+    document.body.appendChild(formTemp);
+    formTemp.submit();
+}
+
 function ocultarEscribiendoPortal() {
     const typing = document.getElementById('portal-typing');
     if (typing) typing.remove();
@@ -1021,8 +1092,12 @@ const portalChatDiv = document.getElementById('portal-chat');
 if (portalChatDiv) {
     const idConversacionPortal = portalChatDiv.getAttribute('data-id');
     cargarMensajesPortal(idConversacionPortal);
+    actualizarEstadoPortal(idConversacionPortal);
     intervaloPortalMensajes = setInterval(() => {
-        if (!portalEnviando) cargarMensajesPortal(idConversacionPortal);
+        if (!portalEnviando) {
+            cargarMensajesPortal(idConversacionPortal);
+            actualizarEstadoPortal(idConversacionPortal);
+        }
     }, 1500);
 }
 

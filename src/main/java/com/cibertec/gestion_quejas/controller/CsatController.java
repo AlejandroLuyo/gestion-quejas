@@ -44,11 +44,13 @@ public class CsatController {
     public String mostrarEncuesta(@RequestParam String token, Model model) {
         Conversacion conv = conversacionService.buscarPorToken(token);
         if (conv == null) {
-            return "redirect:/";
+            model.addAttribute("linkInvalido", true);
+            return "csat/encuesta";
         }
         boolean yaRespondio = csatRepository
                 .findByConversacionConversacionId(conv.getConversacionId())
                 .isPresent();
+        model.addAttribute("linkInvalido", false);
         model.addAttribute("token", token);
         model.addAttribute("yaRespondio", yaRespondio);
         model.addAttribute("orderId", conv.getOrderId());

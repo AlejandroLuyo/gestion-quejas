@@ -8,14 +8,21 @@
 </head>
 <body>
 <div class="card">
-    <div th:if="${yaRespondio}">
+    <div th:if="${linkInvalido}">
+        <div class="logo">CS<span>Manager</span></div>
+        <div class="ya-respondio">
+            Este link ya no está disponible. Es posible que haya expirado o que el enlace no sea válido.
+        </div>
+    </div>
+
+    <div th:if="${!linkInvalido and yaRespondio}">
         <div class="logo">CS<span>Manager</span></div>
         <div class="ya-respondio">
             Ya has respondido esta encuesta anteriormente. ¡Gracias por tu tiempo!
         </div>
     </div>
 
-    <div th:if="${!yaRespondio}" id="formulario">
+    <div th:if="${!linkInvalido and !yaRespondio}" id="formulario">
         <div class="logo">CS<span>Manager</span></div>
         <div class="order-id" th:text="'Orden: ' + ${orderId}"></div>
         <div class="titulo">¿Cómo calificarías tu atención?</div>
@@ -49,7 +56,7 @@
     </div>
 </div>
 
-<script th:inline="javascript">
+<script th:if="${!linkInvalido}" th:inline="javascript">
     const token = [[${token}]];
 </script>
 <script th:src="@{/js/encuesta.js}"></script>

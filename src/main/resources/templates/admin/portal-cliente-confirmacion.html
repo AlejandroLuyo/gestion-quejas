@@ -51,9 +51,9 @@
                     <span>ID de conversación</span>
                     <span th:text="'#' + ${conversacion.conversacionId}"></span>
                 </div>
-                <div class="resumen-total" style="margin-bottom:8px; background:#fef3c7; color:#92400e;">
+                <div class="resumen-total" id="portal-estado-box" style="margin-bottom:8px; background:#fef3c7; color:#92400e;">
                     <span>Estado</span>
-                    <span th:text="${conversacion.currentConversationState == 'open'} ? 'En proceso' :
+                    <span id="portal-estado-valor" th:text="${conversacion.currentConversationState == 'open'} ? 'En proceso' :
                                   (${conversacion.currentConversationState == 'pending'} ? 'Pendiente' :
                                   (${conversacion.currentConversationState == 'resolved'} ? 'Resuelto' :
                                   ${conversacion.currentConversationState}))">
@@ -71,8 +71,7 @@
             <!--/* Chat: visible mientras la conversación no esté resuelta, sin importar
                      si la atiende CSMate o ya fue escalada a un agente humano (incluye
                      el caso de reembolso, que se escala de inmediato sin pasar por CSMate). */-->
-            <div th:if="${conversacion.currentConversationState != 'resolved'}"
-                 id="portal-chat" class="portal-chat" th:attr="data-id=${conversacion.conversacionId}">
+            <div id="portal-chat" class="portal-chat" th:attr="data-id=${conversacion.conversacionId}">
                 <div class="portal-chat-titulo">Conversación</div>
                 <div id="portal-mensajes-list" class="portal-chat-mensajes">
                     <div style="text-align:center; color:#94a3b8; font-size:12px; padding:10px;">Cargando mensajes...</div>
@@ -89,10 +88,11 @@
                     </div>
                 </div>
                 <div id="portal-escalado-msg" class="portal-chat-escalado"
-                     th:style="${conversacion.teammateCurrentlyAssigned != 'CSMate'} ? 'display:block;' : 'display:none;'">
+                     th:style="${conversacion.currentConversationState != 'resolved' and conversacion.teammateCurrentlyAssigned != 'CSMate'} ? 'display:block;' : 'display:none;'">
                     Tu solicitud fue recibida y derivada a un agente humano. Te contactaremos pronto.
                 </div>
-                <div id="portal-reply-row" class="portal-chat-input-row">
+                <div id="portal-reply-row" class="portal-chat-input-row"
+                     th:style="${conversacion.currentConversationState == 'resolved'} ? 'display:none;' : 'display:flex;'">
                     <input type="text" id="portal-reply-input" class="portal-chat-input"
                            placeholder="Escribe tu mensaje..."
                            onkeydown="if(event.key==='Enter') enviarMensajePortal()"/>
@@ -101,7 +101,7 @@
                     </button>
                 </div>
                 <button id="portal-btn-no-mas" class="portal-chat-no-mas" onclick="cerrarSinMasPreguntas()"
-                        th:style="${conversacion.teammateCurrentlyAssigned == 'CSMate'} ? 'display:inline-flex;' : 'display:none;'">
+                        th:style="${conversacion.currentConversationState != 'resolved' and conversacion.teammateCurrentlyAssigned == 'CSMate'} ? 'display:inline-flex;' : 'display:none;'">
                     No tengo más preguntas, gracias
                 </button>
             </div>

@@ -42,6 +42,9 @@
 
                 <div class="wizard-part active" data-part="1">
                     <h3>Datos del solicitante</h3>
+
+                    <div th:if="${errorIngreso}" class="campo-error" style="margin-bottom:14px;" th:text="${errorIngreso}"></div>
+
                     <p style="font-size:13px; color:#64748b; margin-bottom:16px;">
                         Ingresa tu número de orden y email para continuar.
                     </p>
@@ -61,6 +64,36 @@
                         <button type="button" class="btn-guardar" onclick="verificarOrden()">
                             Continuar <i class="ti ti-arrow-right"></i>
                         </button>
+                    </div>
+
+                    <div style="margin-top:18px; text-align:center;">
+                        <button type="button" onclick="toggleIngresoConversacion()"
+                                style="background:none; border:none; color:#16a34a; font-size:12px; font-weight:800; cursor:pointer; text-decoration:underline;">
+                            ¿Conoces el código de tu conversación anterior? Pulsa aquí para regresar
+                        </button>
+                    </div>
+
+                    <div id="ingreso-conversacion-box"
+                         th:style="${errorIngreso} ? 'display:block; margin-top:14px; border-top:1px solid #e2e8f0; padding-top:16px;' : 'display:none;'">
+                        <div class="form-group">
+                            <label>ID de conversación</label>
+                            <input type="text" id="ingreso-conversacion-id" placeholder="Ej: 16"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Número de orden (Order ID)</label>
+                            <input type="text" id="ingreso-order-id" placeholder="Ej: ORD-00001"/>
+                        </div>
+                        <div class="form-group">
+                            <label>Correo electrónico</label>
+                            <input type="email" id="ingreso-email" placeholder="Ej: cliente@email.com"/>
+                        </div>
+                        <div id="ingreso-error" class="campo-error" style="display:none;"></div>
+                        <div class="form-actions">
+                            <span></span>
+                            <button type="button" class="btn-guardar" onclick="ingresarConversacionExistente()">
+                                Ver mi conversación <i class="ti ti-arrow-right"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 

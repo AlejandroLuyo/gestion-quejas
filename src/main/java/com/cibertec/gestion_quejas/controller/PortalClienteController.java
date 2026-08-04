@@ -221,6 +221,37 @@ public class PortalClienteController {
         return response;
     }
 
+    @PostMapping("/ingresar")
+    public String ingresarConversacionExistente(@RequestParam Long conversacionId,
+                                                @RequestParam String orderId,
+                                                @RequestParam String email,
+                                                Model model) {
+
+        if (!featureFlagService.isEnabled("modulo_pruebas")) {
+            return "redirect:/configuracion?error=funcionalidadDeshabilitada";
+        }
+
+        Conversacion conversacion = conversacionService.buscarPorId(conversacionId);
+
+        boolean valido = conversacion != null
+                && conversacion.getOrderId() != null
+                && conversacion.getOrderId().equalsIgnoreCase(orderId.trim());
+
+        if (valido) {
+            Orden orden = ordenRepository.findById(conversacion.getOrderId()).orElse(null);
+            valido = orden != null && orden.getEmailCliente().equalsIgnoreCase(email.trim());
+        }
+
+        if (!valido) {
+            model.addAttribute("errorIngreso",
+                    "No se encontró ninguna conversación con esos datos. Verifica el ID, el número de orden y el email.");
+            return "admin/portal-cliente";
+        }
+
+        model.addAttribute("conversacion", conversacion);
+        return "admin/portal-cliente-confirmacion";
+    }
+
     @GetMapping("/probar-ia")
     @ResponseBody
     public String probarIa() {

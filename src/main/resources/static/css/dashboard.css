@@ -2423,3 +2423,115 @@ body.dark .email-msg-header {
 body.dark .email-msg-body {
     color: #e2e8f0;
 }
+
+/* ===== Detalle de orden (overlay desplegable) ===== */
+.orden-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+}
+
+.orden-toggle-chevron {
+    font-size: 15px;
+    color: #94a3b8;
+    transition: transform .18s ease;
+}
+
+.orden-toggle-chevron.open {
+    transform: rotate(180deg);
+}
+
+.orden-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, .35);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    padding: 78px 16px 16px;
+    overflow-y: auto;
+}
+
+.orden-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.slide-fixed-info {
+    flex-shrink: 0;
+}
+
+.orden-card {
+    width: 100%;
+    max-width: 360px;
+    height: fit-content;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .28);
+    transform: translateY(-8px);
+    transition: transform .18s ease;
+    overflow: hidden;
+}
+
+.orden-overlay.show .orden-card {
+    transform: translateY(0);
+}
+
+.orden-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.orden-card-header span {
+    font-size: 12px;
+    font-weight: 900;
+    color: #0f172a;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.orden-card-close {
+    cursor: pointer;
+    color: #64748b;
+    font-size: 16px;
+}
+
+.orden-card-grid {
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.orden-card-grid .attr-full {
+    grid-column: 1 / -1;
+}
+
+/* Dark mode */
+body.dark .orden-card {
+    background: #1e293b;
+    box-shadow: 0 14px 34px rgba(0,0,0,.5);
+}
+
+body.dark .orden-card-header {
+    border-color: rgba(255,255,255,.08);
+}
+
+body.dark .orden-card-header span {
+    color: #f8fafc;
+}
+
+body.dark .orden-card-close {
+    color: #94a3b8;
+}
+
+body.dark .orden-toggle-chevron {
+    color: #94a3b8;
+}

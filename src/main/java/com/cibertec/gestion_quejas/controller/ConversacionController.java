@@ -1,8 +1,6 @@
 package com.cibertec.gestion_quejas.controller;
 
-import com.cibertec.gestion_quejas.model.Conversacion;
-import com.cibertec.gestion_quejas.model.Csat;
-import com.cibertec.gestion_quejas.model.Usuario;
+import com.cibertec.gestion_quejas.model.*;
 import com.cibertec.gestion_quejas.repository.CsatRepository;
 import com.cibertec.gestion_quejas.repository.UsuarioRepository;
 import com.cibertec.gestion_quejas.service.AsignacionService;
@@ -13,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import com.cibertec.gestion_quejas.model.Mensaje;
 import com.cibertec.gestion_quejas.repository.MensajeRepository;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -179,6 +176,29 @@ public class ConversacionController {
 
         Optional<Csat> csat = csatRepository.findByConversacionConversacionId(id);
         data.put("csatPuntuacion", csat.map(x -> String.valueOf(x.getPuntuacion())).orElse(null));
+
+        // Datos de la orden para el detalle desplegable
+        Orden orden = c.getOrden();
+        if (orden != null) {
+            data.put("ordenProducto", orden.getProducto() != null && orden.getProducto().getProductName() != null
+                    ? orden.getProducto().getProductName() : "-");
+            data.put("ordenPrecio", orden.getPrecio() != null ? String.format("S/ %.2f", orden.getPrecio()) : "-");
+            data.put("ordenEstado", orden.getOrderStatus() != null ? orden.getOrderStatus() : "-");
+            data.put("ordenVelocidad", orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-");
+            data.put("ordenDestino", orden.getDestinationCountry() != null ? orden.getDestinationCountry() : "-");
+            data.put("ordenNacionalidad", orden.getUserNationality() != null ? orden.getUserNationality() : "-");
+            data.put("ordenClienteNombre", orden.getNombreCliente() != null ? orden.getNombreCliente() : "-");
+            data.put("ordenClienteEmail", orden.getEmailCliente() != null ? orden.getEmailCliente() : "-");
+        } else {
+            data.put("ordenProducto", "-");
+            data.put("ordenPrecio", "-");
+            data.put("ordenEstado", "-");
+            data.put("ordenVelocidad", "-");
+            data.put("ordenDestino", "-");
+            data.put("ordenNacionalidad", "-");
+            data.put("ordenClienteNombre", "-");
+            data.put("ordenClienteEmail", "-");
+        }
 
         return data;
     }

@@ -167,6 +167,9 @@ function openPanel(id) {
             document.getElementById('sp-agente').textContent = c.agente || 'Sin asignar';
             document.getElementById('sp-fechaCreacion').textContent = c.fechaCreacion || '-';
 
+            poblarDetalleOrden('sp', c);
+            closeOrdenOverlay('sp');
+
             const banner = document.getElementById('sp-banner-ia');
             const esRevisionIA = c.estado === 'resolved' && c.agente === 'CSMate';
 
@@ -224,8 +227,9 @@ function reabrirYDerivar() {
 
 function cargarMensajes(id) {
     const lista = document.getElementById('mensajes-list');
+    const scrollCont = document.getElementById('slide-body');
     const cantidadAntes = lista.querySelectorAll('.msg-wrap, .nota-interna').length;
-    const estabaAbajo = (lista.scrollTop + lista.clientHeight) >= (lista.scrollHeight - 30);
+    const estabaAbajo = (scrollCont.scrollTop + scrollCont.clientHeight) >= (scrollCont.scrollHeight - 30);
     const esCargaInicial = cantidadAntes === 0;
 
     fetch('/quejas/' + id + '/mensajes')
@@ -256,7 +260,7 @@ function cargarMensajes(id) {
 
             const hayMensajesNuevos = mensajes.length > cantidadAntes;
             if (esCargaInicial || hayMensajesNuevos || estabaAbajo) {
-                lista.scrollTop = lista.scrollHeight;
+                scrollCont.scrollTop = scrollCont.scrollHeight;
             }
         })
         .catch(err => console.error('Error cargando mensajes:', err));
@@ -344,6 +348,7 @@ function actualizarFilaConversacion(id, estadoNuevo, agenteNuevo) {
 function closePanel() {
     document.getElementById('slide-panel').classList.remove('open');
     document.getElementById('overlay').classList.remove('show');
+    closeOrdenOverlay('sp');
     cerrarPanelReembolso();
     conversacionActualId = null;
 
@@ -384,6 +389,9 @@ function openEmailPanel(id) {
             document.getElementById('em-de').textContent = c.remitenteEmail || '-';
             document.getElementById('em-fecha').textContent = c.fechaCreacion || '-';
             document.getElementById('em-asunto').textContent = c.asunto || '-';
+
+            poblarDetalleOrden('em', c);
+            closeOrdenOverlay('em');
 
             aplicarPermisosEmail(c.agente, c.estado);
 
@@ -639,11 +647,14 @@ function formularioReembolsoHTML() {
 function closeEmailPanel() {
     document.getElementById('email-modal-overlay').style.display = 'none';
     document.getElementById('email-modal').style.display = 'none';
+    closeOrdenOverlay('em');
 }
 
 function cargarMensajesEmail(id) {
     const cont = document.getElementById('em-mensajes-list');
-    cont.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px;">Cargando...</div>';
+    const cantidadAntes = cont.querySelectorAll('.email-msg, .nota-interna').length;
+    const estabaAbajo = (cont.scrollTop + cont.clientHeight) >= (cont.scrollHeight - 30);
+    const esCargaInicial = cantidadAntes === 0;
 
     fetch('/quejas/' + id + '/mensajes')
         .then(res => res.json())
@@ -670,6 +681,11 @@ function cargarMensajesEmail(id) {
                 `;
                 cont.appendChild(div);
             });
+
+            const hayMensajesNuevos = mensajes.length > cantidadAntes;
+            if (esCargaInicial || hayMensajesNuevos || estabaAbajo) {
+                cont.scrollTop = cont.scrollHeight;
+            }
         })
         .catch(err => console.error('Error cargando mensajes:', err));
 }
@@ -1182,6 +1198,62 @@ function ocultarEscribiendoPortal() {
     const typing = document.getElementById('portal-typing');
     if (typing) typing.remove();
 }
+
+function toggleOrdenOverlay(prefix) {
+    const overlay = document.getElementById(prefix + '-orden-overlay');
+    const chevron = document.getElementById(prefix + '-orden-chevron');
+    const isOpen = overlay.classList.contains('show');
+    if (isOpen) {
+        overlay.classList.remove('show');
+        chevron.classList.remove('open');
+    } else {
+        overlay.classList.add('show');
+        chevron.classList.add('open');
+    }
+}
+
+function closeOrdenOverlay(prefix) {
+    document.getElementById(prefix + '-orden-overlay').classList.remove('show');
+    document.getElementById(prefix + '-orden-chevron').classList.remove('open');
+}
+
+function poblarDetalleOrden(prefix, c) {
+    document.getElementById(prefix + '-ord-producto').textContent = c.ordenProducto || '-';
+    document.getElementById(prefix + '-ord-precio').textContent = c.ordenPrecio || '-';
+    document.getElementById(prefix + '-ord-estado').textContent = c.ordenEstado || '-';
+    document.getElementById(prefix + '-ord-velocidad').textContent = c.ordenVelocidad || '-';
+    document.getElementById(prefix + '-ord-destino').textContent = c.ordenDestino || '-';
+    document.getElementById(prefix + '-ord-nacionalidad').textContent = c.ordenNacionalidad || '-';
+    document.getElementById(prefix + '-ord-cliente').textContent =
+        (c.ordenClienteNombre || '-') + (c.ordenClienteEmail && c.ordenClienteEmail !== '-' ? ' · ' + c.ordenClienteEmail : '');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    ['sp', 'em'].forEach(prefix => {
+        const toggle = document.getElementById(prefix + '-orden-toggle');
+        const close = document.getElementById(prefix + '-orden-close');
+        const overlay = document.getElementById(prefix + '-orden-overlay');
+
+        if (toggle) {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleOrdenOverlay(prefix);
+            });
+        }
+        if (close) {
+            close.addEventListener('click', (e) => {
+                e.stopPropagation();
+                closeOrdenOverlay(prefix);
+            });
+        }
+        if (overlay) {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeOrdenOverlay(prefix);
+            });
+        }
+    });
+});
+
 
 function cerrarSinMasPreguntas() {
     const btn = document.getElementById('portal-btn-no-mas');

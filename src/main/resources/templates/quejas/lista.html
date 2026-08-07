@@ -217,7 +217,10 @@
 <div class="slide-panel" id="slide-panel">
     <div class="slide-header">
         <div>
-            <div class="slide-name" id="sp-name"></div>
+            <span class="orden-toggle" id="sp-orden-toggle">
+                <span class="slide-name" id="sp-name"></span>
+                <i class="ti ti-chevron-down orden-toggle-chevron" id="sp-orden-chevron"></i>
+            </span>
             <div class="slide-sub" id="sp-sub"></div>
         </div>
         <button class="close-btn" onclick="closePanel()">
@@ -225,7 +228,25 @@
         </button>
     </div>
 
-    <div class="slide-body">
+    <div class="orden-overlay" id="sp-orden-overlay">
+        <div class="orden-card">
+            <div class="orden-card-header">
+                <span>Detalle de la orden</span>
+                <i class="ti ti-x orden-card-close" id="sp-orden-close"></i>
+            </div>
+            <div class="orden-card-grid">
+                <div><div class="attr-label">Producto</div><div class="attr-value" id="sp-ord-producto"></div></div>
+                <div><div class="attr-label">Precio</div><div class="attr-value" id="sp-ord-precio"></div></div>
+                <div><div class="attr-label">Estado de orden</div><div class="attr-value" id="sp-ord-estado"></div></div>
+                <div><div class="attr-label">Velocidad</div><div class="attr-value" id="sp-ord-velocidad"></div></div>
+                <div><div class="attr-label">Destino</div><div class="attr-value" id="sp-ord-destino"></div></div>
+                <div><div class="attr-label">Nacionalidad</div><div class="attr-value" id="sp-ord-nacionalidad"></div></div>
+                <div class="attr-full"><div class="attr-label">Cliente</div><div class="attr-value" id="sp-ord-cliente"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="slide-fixed-info">
         <div id="sp-banner-ia" class="banner-resuelta-ia" style="display:none;">
             <div class="banner-resuelta-ia-titulo">
                 <i class="ti ti-robot"></i> Resuelta automáticamente por CSMate
@@ -266,7 +287,9 @@
                 </div>
             </div>
         </div>
+    </div>
 
+    <div class="slide-body" id="slide-body">
         <div class="conversation">
             <div class="conv-title">Conversación</div>
             <div id="mensajes-list" style="display:flex; flex-direction:column; gap:10px; padding:0 18px 16px;">
@@ -349,7 +372,10 @@
     <div class="email-modal-header">
         <div class="email-modal-titlebar">
             <div>
-                <div class="email-modal-orderid" id="em-orderid"></div>
+                <span class="orden-toggle" id="em-orden-toggle">
+                    <div class="email-modal-orderid" id="em-orderid"></div>
+                    <i class="ti ti-chevron-down orden-toggle-chevron" id="em-orden-chevron"></i>
+                </span>
                 <div class="email-modal-reason" id="em-reason"></div>
             </div>
             <button class="close-btn" onclick="closeEmailPanel()">
@@ -368,6 +394,24 @@
                 <button class="email-action-btn email-action-resolver" onclick="resolverYEnviarEncuestaEmail()">
                     <i class="ti ti-circle-check"></i> Resolver
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="orden-overlay" id="em-orden-overlay">
+        <div class="orden-card">
+            <div class="orden-card-header">
+                <span>Detalle de la orden</span>
+                <i class="ti ti-x orden-card-close" id="em-orden-close"></i>
+            </div>
+            <div class="orden-card-grid">
+                <div><div class="attr-label">Producto</div><div class="attr-value" id="em-ord-producto"></div></div>
+                <div><div class="attr-label">Precio</div><div class="attr-value" id="em-ord-precio"></div></div>
+                <div><div class="attr-label">Estado de orden</div><div class="attr-value" id="em-ord-estado"></div></div>
+                <div><div class="attr-label">Velocidad</div><div class="attr-value" id="em-ord-velocidad"></div></div>
+                <div><div class="attr-label">Destino</div><div class="attr-value" id="em-ord-destino"></div></div>
+                <div><div class="attr-label">Nacionalidad</div><div class="attr-value" id="em-ord-nacionalidad"></div></div>
+                <div class="attr-full"><div class="attr-label">Cliente</div><div class="attr-value" id="em-ord-cliente"></div></div>
             </div>
         </div>
     </div>

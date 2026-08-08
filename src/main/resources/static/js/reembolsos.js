@@ -42,6 +42,8 @@ function renderDetalle(data) {
 
     document.getElementById('dp-titulo').textContent = (conv?.orderId || '?') + ' — Reembolso';
     document.getElementById('dp-sub').textContent = (conv?.agente || '-') + ' · ' + (conv?.fecha || '-');
+    poblarDetalleOrden('dp', data.orden || {});
+    closeOrdenOverlay('dp');
 
     const esPendiente = data.botRefundStatus === 'pendiente_supervisor';
     const esCerrado   = data.botRefundStatus === 'cerrado';

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Comparator;
 
 @Controller
 @RequestMapping("/reembolso")
@@ -38,6 +39,8 @@ public class ReembolsoController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String desde,
             @RequestParam(required = false) String hasta,
+            @RequestParam(required = false, defaultValue = "fecha") String orden,
+            @RequestParam(required = false, defaultValue = "desc") String dir,
             Model model) {
 
         List<Reembolso> todos = reembolsoRepository.findAll();
@@ -80,6 +83,23 @@ public class ReembolsoController {
                 .sorted()
                 .toList();
 
+        Comparator<Reembolso> comparador = switch (orden) {
+            case "agente" -> Comparator.comparing(
+                    (Reembolso r) -> r.getConversacion().getTeammateCurrentlyAssigned() != null
+                            ? r.getConversacion().getTeammateCurrentlyAssigned() : "",
+                    String.CASE_INSENSITIVE_ORDER);
+            case "monto" -> Comparator.comparing(
+                    (Reembolso r) -> r.getRefundAmount() != null ? r.getRefundAmount() : 0.0);
+            case "estado" -> Comparator.comparing(
+                    (Reembolso r) -> r.getRefundResult() != null ? r.getRefundResult()
+                            : (r.getBotRefundStatus() != null ? r.getBotRefundStatus() : ""));
+            default -> Comparator.comparing(
+                    (Reembolso r) -> r.getConversacion().getConversationCreatedAt(),
+                    Comparator.nullsFirst(Comparator.naturalOrder()));
+        };
+        if ("desc".equalsIgnoreCase(dir)) comparador = comparador.reversed();
+        filtrados = filtrados.stream().sorted(comparador).toList();
+
         model.addAttribute("reembolsos", filtrados);
         model.addAttribute("totalReembolsos", todos.size());
         model.addAttribute("pendientes", pendientes);
@@ -91,6 +111,8 @@ public class ReembolsoController {
         model.addAttribute("q", q);
         model.addAttribute("desde", desde);
         model.addAttribute("hasta", hasta);
+        model.addAttribute("orden", orden);
+        model.addAttribute("dir", dir);
 
         return "reembolsos/lista";
     }
@@ -259,6 +281,33 @@ public class ReembolsoController {
                 ? ordenRepository.findById(conv.getOrderId()).orElse(null)
                 : null;
         double precio = (orden != null && orden.getPrecio() != null) ? orden.getPrecio() : 0.0;
+
+        Map<String, String> ordenData = new HashMap<>();
+        if (orden != null) {
+            ordenData.put("ordenProducto", orden.getProducto() != null && orden.getProducto().getProductName() != null
+                    ? orden.getProducto().getProductName() : "-");
+            ordenData.put("ordenPrecio", orden.getPrecio() != null ? String.format("S/ %.2f", orden.getPrecio()) : "-");
+            ordenData.put("ordenEstado", orden.getOrderStatus() != null ? orden.getOrderStatus() : "-");
+            ordenData.put("ordenVelocidad", orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-");
+            ordenData.put("ordenDestino", orden.getDestinationCountry() != null ? orden.getDestinationCountry() : "-");
+            ordenData.put("ordenNacionalidad", orden.getUserNationality() != null ? orden.getUserNationality() : "-");
+            ordenData.put("ordenClienteNombre", orden.getNombreCliente() != null ? orden.getNombreCliente() : "-");
+            ordenData.put("ordenClienteEmail", orden.getEmailCliente() != null ? orden.getEmailCliente() : "-");
+            ordenData.put("ordenFechaCreacion", orden.getDateEnteredOrderStatus() != null
+                    ? orden.getDateEnteredOrderStatus().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"))
+                    : "-");
+            ordenData.put("ordenSlaVencido", String.valueOf(orden.isSlaVencido()));
+            ordenData.put("ordenSlaLimite", orden.getSlaVencimiento() != null
+                    ? orden.getSlaVencimiento().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"))
+                    : "-");
+        } else {
+            for (String k : new String[]{"ordenProducto","ordenPrecio","ordenEstado","ordenVelocidad","ordenDestino",
+                    "ordenNacionalidad","ordenClienteNombre","ordenClienteEmail","ordenFechaCreacion","ordenSlaLimite"}) {
+                ordenData.put(k, "-");
+            }
+            ordenData.put("ordenSlaVencido", "false");
+        }
+        response.put("orden", ordenData);
 
         Map<String, String> convData = new HashMap<>();
         convData.put("orderId", conv.getOrderId() != null ? String.valueOf(conv.getOrderId()) : "-");

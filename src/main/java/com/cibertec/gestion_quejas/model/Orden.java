@@ -2,6 +2,8 @@ package com.cibertec.gestion_quejas.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Data
 @Entity
@@ -25,9 +27,6 @@ public class Orden {
     @Column(name = "email_cliente")
     private String emailCliente;
 
-    @Column(name = "date_entered_order_status")
-    private String dateEnteredOrderStatus;
-
     @Column(name = "processing_speed")
     private String processingSpeed;
 
@@ -45,4 +44,23 @@ public class Orden {
 
     @Column(name = "precio")
     private Double precio;
+
+    @Column(name = "date_entered_order_status")
+    private LocalDateTime dateEnteredOrderStatus;
+
+    // --- SLA (no persistido) ---
+    public LocalDateTime getSlaVencimiento() {
+        if (dateEnteredOrderStatus == null || processingSpeed == null) return null;
+        return switch (processingSpeed) {
+            case "standard" -> dateEnteredOrderStatus.plusHours(24);
+            case "rush" -> dateEnteredOrderStatus.plusHours(4);
+            case "super_rush" -> dateEnteredOrderStatus.plusMinutes(15);
+            default -> null;
+        };
+    }
+
+    public boolean isSlaVencido() {
+        LocalDateTime limite = getSlaVencimiento();
+        return limite != null && LocalDateTime.now().isAfter(limite);
+    }
 }

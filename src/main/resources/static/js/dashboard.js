@@ -632,6 +632,7 @@ function formularioReembolsoHTML() {
             <option value="amenaza_legal">Amenaza de acción legal</option>
             <option value="redes_sociales">Publicación en redes sociales</option>
             <option value="error_empresa">Error comprobado de la empresa</option>
+            <option value="otro">Otro motivo</option>
         </select>
 
         <label class="email-form-label">Monto (S/)</label>
@@ -1224,12 +1225,22 @@ function poblarDetalleOrden(prefix, c) {
     document.getElementById(prefix + '-ord-velocidad').textContent = c.ordenVelocidad || '-';
     document.getElementById(prefix + '-ord-destino').textContent = c.ordenDestino || '-';
     document.getElementById(prefix + '-ord-nacionalidad').textContent = c.ordenNacionalidad || '-';
+    document.getElementById(prefix + '-ord-fecha').textContent = c.ordenFechaCreacion || '-';
+    const slaEl = document.getElementById(prefix + '-ord-sla');
+    if (c.ordenSlaLimite && c.ordenSlaLimite !== '-') {
+        const vencido = c.ordenSlaVencido === 'true';
+        slaEl.textContent = vencido ? ('Vencido · límite ' + c.ordenSlaLimite) : ('En plazo · hasta ' + c.ordenSlaLimite);
+        slaEl.className = 'sla-badge ' + (vencido ? 'vencido' : 'vigente');
+    } else {
+        slaEl.textContent = '-';
+        slaEl.className = '';
+    }
     document.getElementById(prefix + '-ord-cliente').textContent =
         (c.ordenClienteNombre || '-') + (c.ordenClienteEmail && c.ordenClienteEmail !== '-' ? ' · ' + c.ordenClienteEmail : '');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    ['sp', 'em'].forEach(prefix => {
+    ['sp', 'em', 'dp'].forEach(prefix => {
         const toggle = document.getElementById(prefix + '-orden-toggle');
         const close = document.getElementById(prefix + '-orden-close');
         const overlay = document.getElementById(prefix + '-orden-overlay');
@@ -1344,6 +1355,7 @@ function renderPanelReembolso(data) {
                 <option value="amenaza_legal" ${data.refundReasonCategory === 'amenaza_legal' ? 'selected' : ''}>Amenaza de acción legal</option>
                 <option value="redes_sociales" ${data.refundReasonCategory === 'redes_sociales' ? 'selected' : ''}>Publicación en redes sociales</option>
                 <option value="error_empresa" ${data.refundReasonCategory === 'error_empresa' ? 'selected' : ''}>Error comprobado de la empresa</option>
+                <option value="otro" ${data.refundReasonCategory === 'otro' ? 'selected' : ''}>Otro motivo</option>
             </select>
         </div>
         <div class="reembolso-grid">
@@ -1424,6 +1436,7 @@ function renderPanelReembolso(data) {
                 <option value="amenaza_legal">Amenaza de acción legal</option>
                 <option value="redes_sociales">Publicación en redes sociales</option>
                 <option value="error_empresa">Error comprobado de la empresa</option>
+                <option value="otro">Otro motivo</option>
             </select>
         </div>
         <div class="reembolso-grid">
@@ -1456,7 +1469,8 @@ function traducirMotivo(key) {
     const map = {
         'amenaza_legal': 'Amenaza de acción legal',
         'redes_sociales': 'Publicación en redes sociales',
-        'error_empresa': 'Error comprobado de la empresa'
+        'error_empresa': 'Error comprobado de la empresa',
+        'otro': 'Otro motivo'
     };
     return map[key] || key;
 }

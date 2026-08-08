@@ -3,6 +3,7 @@ package com.cibertec.gestion_quejas.service;
 import com.cibertec.gestion_quejas.model.Usuario;
 import com.cibertec.gestion_quejas.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +22,22 @@ public class UsuarioService {
         return usuarioRepository.findAll();
     }
 
+    public List<Usuario> listarTodos(Sort sort) {
+        return usuarioRepository.findAll(sort);
+    }
+
     public Usuario buscarPorId(Long id) {
         return usuarioRepository.findById(id).orElse(null);
     }
 
-    public void guardar(Usuario usuario, String passwordPlano) {
+    public String guardar(Usuario usuario, String passwordPlano) {
+        if (usuarioRepository.findByEmail(usuario.getEmail()).isPresent()) {
+            return "email_duplicado";
+        }
         usuario.setPasswordHash(passwordEncoder.encode(passwordPlano));
+        usuario.setActivo(true);
         usuarioRepository.save(usuario);
+        return null;
     }
 
     public void toggleActivo(Long id) {

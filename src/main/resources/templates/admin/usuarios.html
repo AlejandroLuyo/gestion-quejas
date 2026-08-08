@@ -50,11 +50,43 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th>Nombre</th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'nombre'} ? ' active' : ''"
+                           th:href="@{/admin/usuarios(orden='nombre', dir=${orden == 'nombre' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Nombre
+                            <i th:if="${orden == 'nombre' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'nombre' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'nombre'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
                     <th>Email</th>
-                    <th>Rol</th>
-                    <th>Estado</th>
-                    <th>Fecha creación</th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'rol'} ? ' active' : ''"
+                           th:href="@{/admin/usuarios(orden='rol', dir=${orden == 'rol' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Rol
+                            <i th:if="${orden == 'rol' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'rol' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'rol'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'activo'} ? ' active' : ''"
+                           th:href="@{/admin/usuarios(orden='activo', dir=${orden == 'activo' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Estado
+                            <i th:if="${orden == 'activo' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'activo' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'activo'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'fechaCreacion'} ? ' active' : ''"
+                           th:href="@{/admin/usuarios(orden='fechaCreacion', dir=${orden == 'fechaCreacion' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Fecha creación
+                            <i th:if="${orden == 'fechaCreacion' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'fechaCreacion' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'fechaCreacion'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
                     <th></th>
                 </tr>
                 </thead>

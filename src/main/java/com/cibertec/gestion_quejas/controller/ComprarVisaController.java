@@ -10,6 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.PageRequest;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 import java.time.LocalDate;
@@ -71,7 +73,7 @@ public class ComprarVisaController {
         orden.setCountry(destinationCountry);
         orden.setContinent("");
         orden.setOrderStatus("in_progress");
-        orden.setDateEnteredOrderStatus(LocalDate.now().toString());
+        orden.setDateEnteredOrderStatus(LocalDateTime.now());
         ordenRepository.save(orden);
 
         return "redirect:/admin/comprar-visa?ordenGenerada=" + orden.getOrderId();

@@ -189,6 +189,13 @@ public class ConversacionController {
             data.put("ordenNacionalidad", orden.getUserNationality() != null ? orden.getUserNationality() : "-");
             data.put("ordenClienteNombre", orden.getNombreCliente() != null ? orden.getNombreCliente() : "-");
             data.put("ordenClienteEmail", orden.getEmailCliente() != null ? orden.getEmailCliente() : "-");
+            data.put("ordenFechaCreacion", orden.getDateEnteredOrderStatus() != null
+                    ? orden.getDateEnteredOrderStatus().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"))
+                    : "-");
+            data.put("ordenSlaVencido", String.valueOf(orden.isSlaVencido()));
+            data.put("ordenSlaLimite", orden.getSlaVencimiento() != null
+                    ? orden.getSlaVencimiento().format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"))
+                    : "-");
         } else {
             data.put("ordenProducto", "-");
             data.put("ordenPrecio", "-");

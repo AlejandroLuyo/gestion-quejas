@@ -115,11 +115,43 @@
                 <thead>
                 <tr>
                     <th>Order ID</th>
-                    <th>Agente</th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'agente'} ? ' active' : ''"
+                           th:href="@{/reembolso/lista(estado=${estadoFiltro}, agente=${agenteFiltro}, q=${q}, desde=${desde}, hasta=${hasta}, orden='agente', dir=${orden == 'agente' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Agente
+                            <i th:if="${orden == 'agente' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'agente' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'agente'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
                     <th>Motivo</th>
-                    <th>Monto solicitado</th>
-                    <th>Estado</th>
-                    <th>Fecha</th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'monto'} ? ' active' : ''"
+                           th:href="@{/reembolso/lista(estado=${estadoFiltro}, agente=${agenteFiltro}, q=${q}, desde=${desde}, hasta=${hasta}, orden='monto', dir=${orden == 'monto' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Monto solicitado
+                            <i th:if="${orden == 'monto' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'monto' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'monto'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'estado'} ? ' active' : ''"
+                           th:href="@{/reembolso/lista(estado=${estadoFiltro}, agente=${agenteFiltro}, q=${q}, desde=${desde}, hasta=${hasta}, orden='estado', dir=${orden == 'estado' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Estado
+                            <i th:if="${orden == 'estado' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'estado' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'estado'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a class="th-sort" th:classappend="${orden == 'fecha'} ? ' active' : ''"
+                           th:href="@{/reembolso/lista(estado=${estadoFiltro}, agente=${agenteFiltro}, q=${q}, desde=${desde}, hasta=${hasta}, orden='fecha', dir=${orden == 'fecha' && dir == 'asc' ? 'desc' : 'asc'})}">
+                            Fecha
+                            <i th:if="${orden == 'fecha' && dir == 'asc'}" class="ti ti-arrow-up"></i>
+                            <i th:if="${orden == 'fecha' && dir == 'desc'}" class="ti ti-arrow-down"></i>
+                            <i th:if="${orden != 'fecha'}" class="ti ti-arrows-sort"></i>
+                        </a>
+                    </th>
                     <th></th>
                 </tr>
                 </thead>
@@ -132,7 +164,8 @@
                     <td th:text="${r.refundReasonCategory != null ?
                         (r.refundReasonCategory == 'amenaza_legal' ? 'Amenaza de acción legal' :
                         (r.refundReasonCategory == 'redes_sociales' ? 'Publicación en redes sociales' :
-                        'Error comprobado de la empresa')) : '-'}">-</td>
+                        (r.refundReasonCategory == 'error_empresa' ? 'Error comprobado de la empresa' :
+                        'Otro motivo'))) : '-'}">-</td>
                     <td>
                         <span th:if="${r.refundAmount != null}"
                               th:text="'S/ ' + ${#numbers.formatDecimal(r.refundAmount, 1, 2)}">-</span>
@@ -172,12 +205,35 @@
 <div class="slide-panel" id="detalle-panel">
     <div class="slide-header">
         <div>
-            <div class="slide-name" id="dp-titulo">Solicitud de reembolso</div>
+            <span class="orden-toggle" id="dp-orden-toggle">
+                <span class="slide-name" id="dp-titulo">Solicitud de reembolso</span>
+                <i class="ti ti-chevron-down orden-toggle-chevron" id="dp-orden-chevron"></i>
+            </span>
             <div class="slide-sub" id="dp-sub"></div>
         </div>
         <button class="close-btn" onclick="cerrarDetalle()">
             <i class="ti ti-x"></i>
         </button>
+    </div>
+
+    <div class="orden-overlay" id="dp-orden-overlay">
+        <div class="orden-card">
+            <div class="orden-card-header">
+                <span>Detalle de la orden</span>
+                <i class="ti ti-x orden-card-close" id="dp-orden-close"></i>
+            </div>
+            <div class="orden-card-grid">
+                <div><div class="attr-label">Producto</div><div class="attr-value" id="dp-ord-producto"></div></div>
+                <div><div class="attr-label">Precio</div><div class="attr-value" id="dp-ord-precio"></div></div>
+                <div><div class="attr-label">Estado de orden</div><div class="attr-value" id="dp-ord-estado"></div></div>
+                <div><div class="attr-label">Velocidad</div><div class="attr-value" id="dp-ord-velocidad"></div></div>
+                <div><div class="attr-label">Destino</div><div class="attr-value" id="dp-ord-destino"></div></div>
+                <div><div class="attr-label">Nacionalidad</div><div class="attr-value" id="dp-ord-nacionalidad"></div></div>
+                <div><div class="attr-label">Fecha de creación</div><div class="attr-value" id="dp-ord-fecha"></div></div>
+                <div><div class="attr-label">Plazo SLA</div><div class="attr-value"><span class="sla-badge" id="dp-ord-sla"></span></div></div>
+                <div class="attr-full"><div class="attr-label">Cliente</div><div class="attr-value" id="dp-ord-cliente"></div></div>
+            </div>
+        </div>
     </div>
     <div class="slide-body" id="dp-body">
         <div style="text-align:center; color:#94a3b8; font-size:13px; padding:40px;">

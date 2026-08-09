@@ -1030,7 +1030,8 @@ body.dark .email-action-resolver {
 
 .email-action-btn:disabled,
 .reply-send:disabled,
-.btn-estado:disabled {
+.btn-estado:disabled,
+.btn-procesar-reembolso:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     filter: grayscale(60%);

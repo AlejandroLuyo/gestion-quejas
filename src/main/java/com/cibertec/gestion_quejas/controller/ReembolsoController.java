@@ -2,6 +2,7 @@ package com.cibertec.gestion_quejas.controller;
 
 import com.cibertec.gestion_quejas.model.Conversacion;
 import com.cibertec.gestion_quejas.model.Reembolso;
+import com.cibertec.gestion_quejas.model.Usuario;
 import com.cibertec.gestion_quejas.repository.OrdenRepository;
 import com.cibertec.gestion_quejas.repository.ReembolsoRepository;
 import com.cibertec.gestion_quejas.service.ConversacionService;
@@ -18,6 +19,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Comparator;
+import com.cibertec.gestion_quejas.repository.UsuarioRepository;
+import com.cibertec.gestion_quejas.model.Usuario;
+
 
 @Controller
 @RequestMapping("/reembolso")
@@ -31,6 +35,9 @@ public class ReembolsoController {
 
     @Autowired
     private OrdenRepository ordenRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
     @GetMapping("/lista")
     public String vistaLista(
@@ -162,12 +169,17 @@ public class ReembolsoController {
             @RequestParam String reasonCategory,
             @RequestParam Double amount,
             @RequestParam Double precio,
-            @RequestParam(required = false) String agentNotes) {
+            @RequestParam(required = false) String agentNotes,
+            java.security.Principal principal) {
 
         Map<String, String> response = new HashMap<>();
         Conversacion conv = conversacionService.buscarPorId(conversacionId);
         if (conv == null) {
             response.put("status", "error");
+            return response;
+        }
+        if (!tienePermiso(conv, principal)) {
+            response.put("status", "sin_permiso");
             return response;
         }
 
@@ -192,11 +204,15 @@ public class ReembolsoController {
     // Agente deniega el reembolso
     @PostMapping("/{conversacionId}/denegar")
     @ResponseBody
-    public Map<String, String> denegar(@PathVariable Long conversacionId) {
+    public Map<String, String> denegar(@PathVariable Long conversacionId, java.security.Principal principal) {
         Map<String, String> response = new HashMap<>();
         Conversacion conv = conversacionService.buscarPorId(conversacionId);
         if (conv == null) {
             response.put("status", "error");
+            return response;
+        }
+        if (!tienePermiso(conv, principal)) {
+            response.put("status", "sin_permiso");
             return response;
         }
 
@@ -330,6 +346,7 @@ public class ReembolsoController {
         return response;
     }
 
+
     @PostMapping("/{reembolsoId}/aprobar-por-id")
     @ResponseBody
     public Map<String, String> aprobarPorId(
@@ -389,4 +406,19 @@ public class ReembolsoController {
         return response;
     }
 
+    private boolean tienePermiso(Conversacion c, java.security.Principal principal) {
+        if (c == null || principal == null) {
+            return false;
+        }
+        Usuario usuario = usuarioRepository.findByNombre(principal.getName()).orElse(null);
+        if (usuario == null) {
+            return false;
+        }
+        boolean esSupervisorOAdmin = "SUPERVISOR".equals(usuario.getRol())
+                || "ADMINISTRADOR".equals(usuario.getRol());
+        if (esSupervisorOAdmin) {
+            return true;
+        }
+        return principal.getName().equals(c.getTeammateCurrentlyAssigned());
+    }
 }

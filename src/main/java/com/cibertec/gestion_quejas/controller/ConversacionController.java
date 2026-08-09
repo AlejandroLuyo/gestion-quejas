@@ -158,6 +158,8 @@ public class ConversacionController {
         return principal.getName().equals(c.getTeammateCurrentlyAssigned());
     }
 
+
+
     @GetMapping("/{id}/json")
     @ResponseBody
     public Map<String, String> detalleJson(@PathVariable Long id) {

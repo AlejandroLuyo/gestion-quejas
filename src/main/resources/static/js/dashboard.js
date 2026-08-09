@@ -4,6 +4,7 @@ let emReembolsoContactReason = null;
 let intervaloPanelMensajes = null;
 let intervaloPortalMensajes = null;
 let spReclasificarValorPrevio = null;
+let emReclasificarValorPrevio = null;
 
 const usuarioActualEsSupervisorOAdmin =
     !!document.getElementById('rol-admin-flag') || !!document.getElementById('rol-supervisor-flag');
@@ -378,6 +379,9 @@ function openEmailPanel(id) {
             document.getElementById('em-reclasificar-aviso').style.display = 'none';
             document.getElementById('em-form-reembolso').style.display = 'none';
 
+            emReclasificarValorPrevio = c.contactReason;
+            document.getElementById('em-reclasificar-select').value = c.contactReason;
+
             const badge = document.getElementById('em-estado-badge');
             const estadoTexto = c.estado === 'open' ? 'En proceso' : c.estado === 'pending' ? 'Pendiente' : c.estado === 'resolved' ? 'Resuelto' : '-';
             badge.textContent = estadoTexto;
@@ -407,6 +411,10 @@ function aplicarPermisosPanel(agenteAsignado, estado) {
     const tienePermiso = usuarioActualEsSupervisorOAdmin ||
         (agenteAsignado && agenteAsignado === usuarioActualNombre) ||
         agenteAsignado === 'CSMate' || !agenteAsignado;
+    const tienePermisoEstricto = usuarioActualEsSupervisorOAdmin ||
+        (agenteAsignado && agenteAsignado === usuarioActualNombre);
+    const reclasificarSelectPanel = document.getElementById('sp-reclasificar-select');
+    if (reclasificarSelectPanel) reclasificarSelectPanel.disabled = !tienePermisoEstricto;
 
     const bloqueos = calcularBloqueosPorEstado(estado);
 
@@ -416,6 +424,8 @@ function aplicarPermisosPanel(agenteAsignado, estado) {
 
     const replyInput = document.getElementById('reply-input');
     const replyBtn = document.querySelector('#slide-panel .reply-send');
+    const btnReembolso = document.querySelector('.btn-procesar-reembolso');
+    if (btnReembolso) btnReembolso.disabled = !tienePermiso;
     if (replyInput) replyInput.disabled = !tienePermiso;
     if (replyBtn) replyBtn.disabled = !tienePermiso;
 
@@ -513,44 +523,11 @@ function resolverYEnviarEncuestaEmail() {
         .catch(err => console.error('Error generando encuesta:', err));
 }
 
-/*function resolverYEnviarEncuestaEmail() {
-    if (!conversacionActualId) return;
-
-    document.getElementById('em-reembolso-wrap').style.display = 'none';
-    document.getElementById('em-transferencia-wrap').style.display = 'none';
-
-    fetch('/quejas/' + conversacionActualId + '/estado', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'estado=resolved'
-    })
-        .then(() => openEmailPanel(conversacionActualId))
-        .then(() => fetch('/csat/generar/' + conversacionActualId))
-        .then(res => res.json())
-        .then(data => {
-
-            console.log("Respuesta del backend:", data);
-
-            if (data.status === 'ok') {
-                const baseUrl = window.location.origin;
-                const linkCompleto = baseUrl + data.link;
-
-                console.log("Base URL:", baseUrl);
-                console.log("Link recibido:", data.link);
-                console.log("Link completo:", linkCompleto);
-
-                document.getElementById('em-encuesta-url').value = linkCompleto;
-                document.getElementById('em-link-encuesta').style.display = 'block';
-            } else {
-                console.error("El backend respondió con error:", data);
-            }
-        })
-        .catch(err => console.error('Error generando encuesta:', err));
-}*/
-
 function aplicarPermisosEmail(agenteAsignado, estado) {
     const tienePermiso = usuarioActualEsSupervisorOAdmin ||
         (agenteAsignado && agenteAsignado === usuarioActualNombre);
+    const reclasificarSelectEmail = document.getElementById('em-reclasificar-select');
+    if (reclasificarSelectEmail) reclasificarSelectEmail.disabled = !tienePermiso;
 
     const bloqueos = calcularBloqueosPorEstado(estado);
 
@@ -588,6 +565,52 @@ function copiarLinkEmail() {
     });
 }
 
+function onCambioContactReasonEmail() {
+    const select = document.getElementById('em-reclasificar-select');
+    const nuevoValor = select.value;
+
+    if (nuevoValor === emReclasificarValorPrevio) return;
+
+    document.getElementById('em-reclasificar-nuevo-texto').textContent = traducirContactReason(nuevoValor);
+    document.getElementById('em-reclasificar-confirm').style.display = 'block';
+}
+
+function cancelarCambioContactReasonEmail() {
+    document.getElementById('em-reclasificar-select').value = emReclasificarValorPrevio;
+    document.getElementById('em-reclasificar-confirm').style.display = 'none';
+}
+
+function confirmarCambioContactReasonEmail() {
+    const nuevoValor = document.getElementById('em-reclasificar-select').value;
+
+    fetch('/quejas/' + conversacionActualId + '/contact-reason', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'nuevoContactReason=' + encodeURIComponent(nuevoValor)
+    })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                emReclasificarValorPrevio = nuevoValor;
+                document.getElementById('em-reason').textContent = traducirContactReason(nuevoValor);
+                document.getElementById('em-reclasificar-confirm').style.display = 'none';
+
+                const btn = document.getElementById('em-btn-reembolso');
+                if (btn) btn.style.display = nuevoValor === 'refund_request' ? 'block' : 'none';
+            } else if (data.status === 'sin_permiso') {
+                alert(data.mensaje || 'No tienes permiso para modificar este caso.');
+                cancelarCambioContactReasonEmail();
+            } else {
+                alert('No se pudo actualizar el motivo de contacto.');
+                cancelarCambioContactReasonEmail();
+            }
+        })
+        .catch(err => {
+            console.error('Error reclasificando contact reason:', err);
+            cancelarCambioContactReasonEmail();
+        });
+}
+
 function cargarEstadoReembolso(id) {
     fetch('/reembolso/' + id)
         .then(res => res.json())
@@ -616,11 +639,22 @@ function cargarEstadoReembolso(id) {
 
             let extra = wrap.querySelector('.email-reembolso-estado');
             if (!extra) {
-                extra = document.createElement('p');
+                extra = document.createElement('div');
                 extra.className = 'email-reembolso-estado';
                 wrap.insertBefore(extra, document.getElementById('em-reclasificar-aviso'));
             }
-            extra.textContent = mensaje;
+
+            const detalleCerrado = (data.botRefundStatus === 'cerrado')
+                ? `<div class="reembolso-info-box" style="margin-top:8px;">
+                        <div class="reembolso-info-row"><span>Motivo</span><span>${traducirMotivo(data.refundReasonCategory)}</span></div>
+                        ${data.refundAmount != null ? `<div class="reembolso-info-row"><span>Monto final</span><span>S/ ${data.refundAmount.toFixed(2)}</span></div>` : ''}
+                        ${data.refundPercent != null ? `<div class="reembolso-info-row"><span>Porcentaje</span><span>${data.refundPercent}%</span></div>` : ''}
+                        ${data.agentNotes ? `<div class="reembolso-info-row"><span>Notas agente</span><span>${data.agentNotes}</span></div>` : ''}
+                        ${data.supervisorNotes ? `<div class="reembolso-info-row"><span>Nota del supervisor</span><span>${data.supervisorNotes}</span></div>` : ''}
+                   </div>`
+                : '';
+
+            extra.innerHTML = `<p style="margin:0;">${mensaje}</p>${detalleCerrado}`;
         })
         .catch(err => console.error('Error consultando estado de reembolso:', err));
 }
@@ -1394,7 +1428,15 @@ function renderPanelReembolso(data) {
             'aprobado': '✅ Reembolso aprobado y enviado a finanzas.',
             'denegado': '❌ Reembolso denegado definitivamente.',
         };
-        body.innerHTML = `<div class="reembolso-resultado">${textos[data.refundResult] || 'Caso cerrado.'}</div>`;
+        body.innerHTML = `
+            <div class="reembolso-resultado">${textos[data.refundResult] || 'Caso cerrado.'}</div>
+            <div class="reembolso-info-box" style="margin-top:12px;">
+                <div class="reembolso-info-row"><span>Motivo</span><span>${traducirMotivo(data.refundReasonCategory)}</span></div>
+                ${data.refundAmount != null ? `<div class="reembolso-info-row"><span>Monto final</span><span>S/ ${data.refundAmount.toFixed(2)}</span></div>` : ''}
+                ${data.refundPercent != null ? `<div class="reembolso-info-row"><span>Porcentaje</span><span>${data.refundPercent}%</span></div>` : ''}
+                ${data.agentNotes ? `<div class="reembolso-info-row"><span>Notas agente</span><span>${data.agentNotes}</span></div>` : ''}
+                ${data.supervisorNotes ? `<div class="reembolso-info-row"><span>Nota del supervisor</span><span>${data.supervisorNotes}</span></div>` : ''}
+            </div>`;
         return;
     }
 
@@ -1494,7 +1536,13 @@ function enviarASupervisor(precio) {
         body: `reasonCategory=${encodeURIComponent(motivo)}&amount=${monto}&precio=${precio}&agentNotes=${encodeURIComponent(notas)}`
     })
         .then(res => res.json())
-        .then(data => { if (data.status === 'ok') abrirPanelReembolso(); })
+        .then(data => {
+            if (data.status === 'ok') {
+                abrirPanelReembolso();
+            } else if (data.status === 'sin_permiso') {
+                alert('No tienes permiso para procesar el reembolso de este caso.');
+            }
+        })
         .catch(err => console.error(err));
 }
 
@@ -1502,7 +1550,13 @@ function denegarReembolso() {
     if (!confirm('¿Confirmas que el reembolso será denegado?')) return;
     fetch('/reembolso/' + conversacionActualId + '/denegar', { method: 'POST' })
         .then(res => res.json())
-        .then(data => { if (data.status === 'ok') abrirPanelReembolso(); })
+        .then(data => {
+            if (data.status === 'ok') {
+                abrirPanelReembolso();
+            } else if (data.status === 'sin_permiso') {
+                alert('No tienes permiso para procesar el reembolso de este caso.');
+            }
+        })
         .catch(err => console.error(err));
 }
 

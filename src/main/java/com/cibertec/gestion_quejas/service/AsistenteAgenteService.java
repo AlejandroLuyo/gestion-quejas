@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -90,22 +92,30 @@ public class AsistenteAgenteService {
     }
 
     private String responderConIA(String mensaje, Usuario usuario) {
+        String fechaHoraActual = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("EEEE d 'de' MMMM 'de' yyyy, HH:mm", new Locale("es")));
+
         String prompt = """
-                Eres el asistente interno de CSManager, una plataforma de gestión de quejas
+                Eres CSMate, el asistente interno de CSManager, una plataforma de gestión de quejas
                 para empresas del sector turismo. Ayudas a agentes y supervisores del sistema
                 (uso interno, nunca hablas con clientes finales).
 
+                En este momento es %s (hora exacta del servidor). Usa este dato tal cual si te
+                preguntan la fecha o la hora — no calcules ni asumas otra hora.
+
                 El usuario que te consulta es %s, con rol %s.
 
-                Responde de forma breve, clara y en español, orientando sobre cómo usar el
-                sistema (cambiar estados de quejas, transferir casos, generar CSAT, aprobar
-                reembolsos, etc.) o respondiendo dudas generales de trabajo.
+                Tu prioridad es ayudar con el uso del sistema (cambiar estados de quejas,
+                transferir casos, generar CSAT, aprobar reembolsos, etc.), pero también puedes
+                responder preguntas generales de trabajo o de utilidad cotidiana para el agente
+                (por ejemplo, la fecha, cálculos simples, dudas generales), siempre de forma
+                breve y en español.
 
-                Si la pregunta no tiene relación con el sistema CSManager, responde amablemente
-                que solo puedes ayudar con temas del sistema.
+                Evita únicamente temas que no tengan nada que ver con el trabajo, con contenido
+                inapropiado, o que impliquen que actúes fuera de tu rol de asistente de CSManager.
 
                 Pregunta del usuario: "%s"
-                """.formatted(usuario.getNombre(), usuario.getRol(), mensaje);
+                """.formatted(fechaHoraActual, usuario.getNombre(), usuario.getRol(), mensaje);
 
         String respuesta = iaService.responderConsultaAgente(prompt);
         return respuesta != null ? respuesta.trim()

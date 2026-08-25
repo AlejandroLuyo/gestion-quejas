@@ -359,7 +359,8 @@ public class EmailListenerService {
                 orden.getProducto() != null ? orden.getProducto().getProductName() : "-",
                 orden.getDestinationCountry() != null ? orden.getDestinationCountry() : "-",
                 orden.getOrderStatus() != null ? orden.getOrderStatus() : "-",
-                orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-"
+                orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-",
+                orden.getOrderId()
         );
 
         String asuntoRespuesta = conversacion.getAsunto() != null
@@ -423,7 +424,8 @@ public class EmailListenerService {
                 orden.getProducto() != null ? orden.getProducto().getProductName() : "-",
                 orden.getDestinationCountry() != null ? orden.getDestinationCountry() : "-",
                 orden.getOrderStatus() != null ? orden.getOrderStatus() : "-",
-                orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-"
+                orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-",
+                orden.getOrderId()
         );
 
         if (resultado.isPuedeResolver()) {
@@ -486,7 +488,8 @@ public class EmailListenerService {
                 orden.getProducto() != null ? orden.getProducto().getProductName() : "-",
                 orden.getDestinationCountry() != null ? orden.getDestinationCountry() : "-",
                 orden.getOrderStatus() != null ? orden.getOrderStatus() : "-",
-                orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-"
+                orden.getProcessingSpeed() != null ? orden.getProcessingSpeed() : "-",
+                orden.getOrderId()
         );
 
         String contenidoBot = resultado.getRespuesta();

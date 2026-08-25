@@ -53,13 +53,15 @@ new Chart(document.getElementById('chart3'), {
     data: {
         labels: contactReasons.map(function(r) {
             var mapa = {
-                'payment_issues':          'Problemas de pago',
                 'refund_request':          'Solicitud de reembolso',
                 'status_information':      'Información de estado',
                 'cx_modify':               'Modificación de orden',
                 'deliverable_information': 'Información de entrega',
                 'requirements_assistance': 'Asistencia de requisitos',
-                'upload_support':          'Soporte de carga'
+                'upload_support':          'Soporte de carga',
+                'download_support':        'Soporte de descarga',
+                'spam':                    'Spam',
+                'consulta_general':        'Otro motivo'
             };
             return mapa[r] || r;
         }),

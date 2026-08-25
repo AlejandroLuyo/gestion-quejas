@@ -121,7 +121,8 @@ public class PortalClienteController {
                 orden.getProducto().getProductName(),
                 orden.getDestinationCountry(),
                 orden.getOrderStatus(),
-                orden.getProcessingSpeed()
+                orden.getProcessingSpeed(),
+                orden.getOrderId()
         );
 
         if (resultado.isPuedeResolver()) {
@@ -202,7 +203,8 @@ public class PortalClienteController {
                 orden.getProducto().getProductName(),
                 orden.getDestinationCountry(),
                 orden.getOrderStatus(),
-                orden.getProcessingSpeed()
+                orden.getProcessingSpeed(),
+                orden.getOrderId()
         );
 
         String contenidoBot = resultado.getRespuesta();
@@ -288,7 +290,8 @@ public class PortalClienteController {
                     "Visa Turismo",
                     "Estados Unidos",
                     "in_progress",
-                    "standard"
+                    "standard",
+                    "ORD-00001"
             );
             return "OK - puede_resolver: " + r.isPuedeResolver() + " | respuesta: " + r.getRespuesta();
         } catch (Exception e) {

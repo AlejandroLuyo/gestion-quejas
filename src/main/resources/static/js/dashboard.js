@@ -122,14 +122,15 @@ function confirmarCambioContactReasonPanel() {
 
 function traducirContactReason(valor) {
     const mapa = {
-        'payment_issues':          'Problemas de pago',
         'refund_request':          'Solicitud de reembolso',
         'status_information':      'Información de estado',
         'cx_modify':               'Modificación de orden',
         'deliverable_information': 'Información de entrega',
         'requirements_assistance': 'Asistencia de requisitos',
         'upload_support':          'Soporte de carga',
-        'consulta_general':        'Consulta general'
+        'download_support':        'Soporte de descarga',
+        'spam':                    'Spam',
+        'consulta_general':        'Otro motivo'
     };
     return mapa[valor] || valor || '-';
 }

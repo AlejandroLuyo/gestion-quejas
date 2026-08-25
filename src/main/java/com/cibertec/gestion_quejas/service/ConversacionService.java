@@ -7,6 +7,7 @@ import com.cibertec.gestion_quejas.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 
@@ -19,14 +20,15 @@ import java.util.UUID;
 public class ConversacionService {
 
     private static final java.util.Map<String, String> CONTACT_REASON_LABELS = java.util.Map.ofEntries(
-            java.util.Map.entry("payment_issues", "problemas de pago"),
             java.util.Map.entry("refund_request", "solicitud de reembolso"),
             java.util.Map.entry("status_information", "información de estado"),
             java.util.Map.entry("cx_modify", "modificación de orden"),
             java.util.Map.entry("deliverable_information", "información de entrega"),
             java.util.Map.entry("requirements_assistance", "asistencia de requisitos"),
             java.util.Map.entry("upload_support", "soporte de carga"),
-            java.util.Map.entry("consulta_general", "consulta general")
+            java.util.Map.entry("download_support", "soporte de descarga"),
+            java.util.Map.entry("consulta_general", "otro motivo"),
+            java.util.Map.entry("spam", "spam")
     );
 
     @Autowired

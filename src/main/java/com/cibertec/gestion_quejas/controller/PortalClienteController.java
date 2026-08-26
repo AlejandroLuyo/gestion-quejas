@@ -135,6 +135,15 @@ public class PortalClienteController {
 
             conversacion.setCurrentConversationState("pending");
         } else {
+            if (resultado.getRespuesta() != null && !resultado.getRespuesta().isBlank()) {
+                Mensaje msgBot = new Mensaje();
+                msgBot.setConversacion(conversacion);
+                msgBot.setContenido(resultado.getRespuesta());
+                msgBot.setRemitente("BOT");
+                msgBot.setCanal("TICKET");
+                mensajeRepository.save(msgBot);
+            }
+
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
             conversacion.setTeammateCurrentlyAssigned(conversacionService.seleccionarAgenteConMenosCarga());
         }

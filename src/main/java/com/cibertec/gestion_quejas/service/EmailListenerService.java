@@ -378,13 +378,25 @@ public class EmailListenerService {
             conversacion.setCurrentConversationState("pending");
             emailService.enviarCorreo(remitente, asuntoRespuesta, resultado.getRespuesta());
         } else {
+            if (resultado.getRespuesta() != null && !resultado.getRespuesta().isBlank()) {
+                Mensaje respuestaBot = new Mensaje();
+                respuestaBot.setConversacion(conversacion);
+                respuestaBot.setContenido(resultado.getRespuesta());
+                respuestaBot.setRemitente("BOT");
+                respuestaBot.setCanal("EMAIL");
+                mensajeRepository.save(respuestaBot);
+            }
+
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
             conversacion.setTeammateCurrentlyAssigned(
                     conversacionService.seleccionarAgenteConMenosCarga());
             conversacion.setCurrentConversationState("open");
-            emailService.enviarCorreo(remitente, asuntoRespuesta,
-                    "Hola,\n\nGracias por tu mensaje. Uno de nuestros agentes revisará tu caso " +
-                            "y te responderá a la brevedad.\n\nGracias.");
+
+            String textoCorreo = resultado.getRespuesta() != null && !resultado.getRespuesta().isBlank()
+                    ? resultado.getRespuesta() + "\n\nUno de nuestros agentes revisará tu caso y te responderá a la brevedad."
+                    : "Hola,\n\nGracias por tu mensaje. Uno de nuestros agentes revisará tu caso " +
+                      "y te responderá a la brevedad.\n\nGracias.";
+            emailService.enviarCorreo(remitente, asuntoRespuesta, textoCorreo);
         }
         conversacionService.guardar(conversacion);
 
@@ -439,13 +451,25 @@ public class EmailListenerService {
             conversacion.setCurrentConversationState("pending");
             emailService.enviarCorreo(remitente, "Re: " + asunto, resultado.getRespuesta());
         } else {
+            if (resultado.getRespuesta() != null && !resultado.getRespuesta().isBlank()) {
+                Mensaje respuestaBot = new Mensaje();
+                respuestaBot.setConversacion(conversacion);
+                respuestaBot.setContenido(resultado.getRespuesta());
+                respuestaBot.setRemitente("BOT");
+                respuestaBot.setCanal("EMAIL");
+                mensajeRepository.save(respuestaBot);
+            }
+
             conversacion.setBotTransferReason(resultado.getMotivoEscalamiento());
             conversacion.setTeammateCurrentlyAssigned(
                     conversacionService.seleccionarAgenteConMenosCarga());
             conversacion.setCurrentConversationState("open");
-            emailService.enviarCorreo(remitente, "Re: " + asunto,
-                    "Hola,\n\nGracias por tu mensaje. Uno de nuestros agentes revisará tu caso " +
-                            "y te responderá a la brevedad.\n\nGracias.");
+
+            String textoCorreo = resultado.getRespuesta() != null && !resultado.getRespuesta().isBlank()
+                    ? resultado.getRespuesta() + "\n\nUno de nuestros agentes revisará tu caso y te responderá a la brevedad."
+                    : "Hola,\n\nGracias por tu mensaje. Uno de nuestros agentes revisará tu caso " +
+                      "y te responderá a la brevedad.\n\nGracias.";
+            emailService.enviarCorreo(remitente, "Re: " + asunto, textoCorreo);
         }
         conversacionService.guardar(conversacion);
 

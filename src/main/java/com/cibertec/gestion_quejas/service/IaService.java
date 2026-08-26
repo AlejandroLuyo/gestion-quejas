@@ -179,8 +179,7 @@ public class IaService {
                 "type", "function",
                 "function", Map.of(
                         "name", "consultar_estado_orden",
-                        "description", "Consulta el estado actual, el plazo de entrega, y el precio pagado de la orden del cliente en el sistema. Úsala siempre que necesites saber el estado, el plazo, si está vencida, o cuánto pagó el cliente.",
-                        "parameters", Map.of(
+                        "description", "Consulta el estado actual, el plazo de entrega, el precio pagado, el tipo de entregable y la elegibilidad de reembolso completo de la orden del cliente en el sistema. Úsala siempre que necesites saber el estado, el plazo, si está vencida, cuánto pagó el cliente, o información sobre qué recibirá como entregable.",                        "parameters", Map.of(
                                 "type", "object",
                                 "properties", Map.of(
                                         "order_id", Map.of(
@@ -289,6 +288,8 @@ public class IaService {
         resultado.put("esta_vencido", vencido);
         resultado.put("tiempo_restante_o_demora", tiempoTexto);
         resultado.put("precio_pagado", "S/ " + orden.getPrecio());
+        resultado.put("tipo_entregable", orden.getProducto() != null ? orden.getProducto().getProductTypeGroup() : "no disponible");
+        resultado.put("reembolso_completo_elegible", orden.getProducto() != null && Boolean.TRUE.equals(orden.getProducto().getFullRefundEligible()));
 
         try {
             return objectMapper.writeValueAsString(resultado);
@@ -342,8 +343,9 @@ public class IaService {
                 Tienes disponible la herramienta "consultar_estado_orden" para obtener el estado real
                 y actualizado de la orden, incluyendo el plazo de entrega correcto y si está vencida.
                 SIEMPRE que el cliente pregunte por el estado, el plazo, la demora, cuándo estará
-                lista su orden, o cuánto pagó/costó su orden, usa esa herramienta en vez de calcular
-                o inventar el dato tú mismo.
+                lista su orden, cuánto pagó/costó su orden, o qué recibirá como entregable (tipo,
+                formato general, o si es reembolsable), usa esa herramienta en vez de calcular o
+                inventar el dato tú mismo.
                 Cuando necesites decir cuánto tiempo falta o cuánto lleva de demora la orden,
                 usa siempre el campo "tiempo_restante_o_demora" que te da la herramienta —
                 nunca calcules la diferencia de tiempo tú mismo.
@@ -367,19 +369,32 @@ public class IaService {
                 - Responde siempre en español, en tono cordial y profesional.
                 
                 REGLA GENERAL DE HONESTIDAD (muy importante): NO tienes información real sobre el
-                  proceso operativo interno del negocio después de la compra (por ejemplo: revisión de
-                  documentos por un equipo, envío a una embajada o consulado, preparación de un
-                  "expediente", aprobación consular, recojo o envío físico del documento), ni sobre
-                  requisitos específicos de documentación (qué documentos exactos se piden, formatos,
-                  tamaños de foto, vigencias mínimas, etc.), ni sobre políticas o costos adicionales que
-                  no estén en los datos reales que tienes disponibles. NUNCA inventes ninguno de esos
-                  detalles, aunque te parezcan plausibles o típicos para este tipo de trámite. Si el
-                  cliente pregunta por el proceso general, los pasos siguientes, requisitos específicos
-                  de documentos, u otro detalle operativo que no puedas confirmar con datos reales o con
-                  una herramienta, responde honestamente que no cuentas con ese detalle exacto, y
-                  ofrécele escalar su caso a un agente que pueda explicárselo, o pregúntale si tiene
-                  alguna otra duda puntual que sí puedas ayudarle a resolver (por ejemplo, sobre su orden).
+                proceso operativo interno del negocio después de la compra (por ejemplo: revisión de
+                documentos por un equipo, envío a una embajada o consulado, preparación de un
+                "expediente", aprobación consular, recojo o envío físico del documento), ni sobre
+                requisitos específicos de documentación (qué documentos exactos se piden, formatos,
+                tamaños de foto, vigencias mínimas, etc.), ni sobre el detalle exacto o apariencia
+                física del entregable más allá de lo que te da la herramienta. Tampoco tienes forma de
+                modificar datos de la orden (nombre, email, destino, etc.) ni de cambiar las
+                preferencias de notificación/correo del cliente (por ejemplo, si se queja de recibir
+                demasiados mensajes, no puedes desactivarlos tú mismo). No existe ninguna sección de
+                "preferencias" o configuración de cuenta donde el cliente pueda ajustar esto por su
+                cuenta: la única alternativa real es escalar el caso a un agente. NUNCA inventes ninguno
+                de esos detalles ni prometas ejecutar acciones que no puedas garantizar, aunque te
+                parezcan plausibles o típicos para este tipo de trámite. Si el cliente pregunta por el 
+                proceso general, los pasos siguientes, requisitos específicos de documentos, pide modificar 
+                datos de su orden, o se queja de recibir demasiadas notificaciones, responde honestamente 
+                que no cuentas con esa capacidad, y comunícale con una frase declarativa (NO una pregunta) 
+                que vas a derivar su caso a un agente — por ejemplo: "Voy a derivar tu caso a un agente que 
+                podrá ayudarte con esto." Este es tu único mensaje sobre este caso por ahora; no le preguntes 
+                si desea que lo escales, ya que no puedes esperar su respuesta en este momento.
+
+                CRÍTICO: nunca digas que "ya" realizaste una acción que no puedes ejecutar (por
+                ejemplo, "ya desactivé sus notificaciones", "ya corregí sus datos", "ya escalé
+                internamente su caso a revisión"). Si no puedes ejecutar algo, sé claro en que no
+                puedes hacerlo tú directamente, no que ya lo resolviste.
                 
+
                 LIMITACIÓN CONOCIDA: la gestión de documentos (subir la foto del pasaporte, descargar
                 el entregable ya procesado, etc.) se realiza desde la página principal del sistema, no
                 desde este chat. Este chat no tiene forma de verificar ni resolver errores técnicos de
@@ -429,9 +444,9 @@ public class IaService {
                 y actualizado de la orden, incluyendo el plazo de entrega correcto y si está vencida.
                 
                 SIEMPRE que el cliente pregunte (en este turno o en cualquier turno anterior sin resolver)
-                por el estado, el plazo, la demora, cuándo estará lista su orden, o cuánto pagó/costó su
-                orden, usa esa herramienta en vez de calcular o inventar el dato o una explicación
-                genérica tú mismo.   
+                por el estado, el plazo, la demora, cuándo estará lista su orden, cuánto pagó/costó su
+                orden, o qué recibirá como entregable (tipo, formato general, o si es reembolsable), usa
+                esa herramienta en vez de calcular o inventar el dato o una explicación genérica tú mismo.
                   
                 Cuando necesites decir cuánto tiempo falta o cuánto lleva de demora la orden,
                 usa siempre el campo "tiempo_restante_o_demora" que te da la herramienta —
@@ -466,19 +481,30 @@ public class IaService {
                 muestra conforme con esperar (ej. "no, está bien", "no hace falta", "entendido, gracias"),
                 responde con estado "cerrar_satisfecho".
                 
-                REGLA GENERAL DE HONESTIDAD (muy importante): NO tienes información real sobre el
-                 proceso operativo interno del negocio después de la compra (por ejemplo: revisión de
-                 documentos por un equipo, envío a una embajada o consulado, preparación de un
-                 "expediente", aprobación consular, recojo o envío físico del documento), ni sobre
-                 requisitos específicos de documentación (qué documentos exactos se piden, formatos,
-                 tamaños de foto, vigencias mínimas, etc.), ni sobre políticas o costos adicionales que
-                 no estén en los datos reales que tienes disponibles. NUNCA inventes ninguno de esos
-                 detalles, aunque te parezcan plausibles o típicos para este tipo de trámite. Si el
-                 cliente pregunta por el proceso general, los pasos siguientes, requisitos específicos
-                 de documentos, u otro detalle operativo que no puedas confirmar con datos reales o con
-                 una herramienta, responde honestamente que no cuentas con ese detalle exacto, y
-                 ofrécele escalar su caso a un agente que pueda explicárselo, o pregúntale si tiene
-                 alguna otra duda puntual que sí puedas ayudarle a resolver (por ejemplo, sobre su orden).
+               REGLA GENERAL DE HONESTIDAD (muy importante): NO tienes información real sobre el
+               proceso operativo interno del negocio después de la compra (por ejemplo: revisión de
+               documentos por un equipo, envío a una embajada o consulado, preparación de un
+               "expediente", aprobación consular, recojo o envío físico del documento), ni sobre
+               requisitos específicos de documentación (qué documentos exactos se piden, formatos,
+               tamaños de foto, vigencias mínimas, etc.), ni sobre el detalle exacto o apariencia
+               física del entregable más allá de lo que te da la herramienta. Tampoco tienes forma de
+               modificar datos de la orden (nombre, email, destino, etc.) ni de cambiar las
+               preferencias de notificación/correo del cliente (por ejemplo, si se queja de recibir
+               demasiados mensajes, no puedes desactivarlos tú mismo). No existe ninguna sección de
+               "preferencias" o configuración de cuenta donde el cliente pueda ajustar esto por su
+               cuenta: la única alternativa real es escalar el caso a un agente. NUNCA inventes ninguno de esos
+               detalles ni prometas ejecutar acciones que no puedas garantizar, aunque te parezcan
+               plausibles o típicos para este tipo de trámite. Si el cliente pregunta por el proceso general, 
+               los pasos siguientes, requisitos específicos de documentos, pide modificar datos de su orden,
+               o se queja de recibir demasiadas notificaciones, responde honestamente que no cuentas 
+               con esa capacidad, y pregúntale explícitamente si desea que escales su caso a un agente, o 
+               si eso sería todo por ahora. En este caso, responde con estado "continuar" (no "escalar" todavía) 
+               y espera su respuesta en el siguiente turno; la REGLA CRÍTICA 3 se encargará de interpretar su decisión.
+                
+                CRÍTICO: nunca digas que "ya" realizaste una acción que no puedes ejecutar (por
+                ejemplo, "ya desactivé sus notificaciones", "ya corregí sus datos", "ya escalé
+                internamente su caso a revisión"). Si no puedes ejecutar algo, sé claro en que no
+                puedes hacerlo tú directamente, no que ya lo resolviste.
                 
                 LIMITACIÓN CONOCIDA: la gestión de documentos (subir la foto del pasaporte, descargar
                 el entregable ya procesado, etc.) se realiza desde la página principal del sistema, no

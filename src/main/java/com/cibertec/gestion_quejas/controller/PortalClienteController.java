@@ -217,6 +217,9 @@ public class PortalClienteController {
         );
 
         String contenidoBot = resultado.getRespuesta();
+        if (contenidoBot == null || contenidoBot.isBlank()) {
+            contenidoBot = "Tu solicitud fue recibida y derivada a un agente humano. Te contactaremos pronto.";
+        }
 
         if (resultado.getEstado() == ResultadoTurno.Estado.CERRAR_SATISFECHO) {
             conversacion.setCurrentConversationState("resolved");

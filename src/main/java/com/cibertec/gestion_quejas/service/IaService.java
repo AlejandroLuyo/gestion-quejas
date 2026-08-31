@@ -44,6 +44,46 @@ public class IaService {
     @Autowired
     private OrdenRepository ordenRepository;
 
+    private static final String REGLA_HONESTIDAD_COMUN = """
+            REGLA GENERAL DE HONESTIDAD (muy importante): no tienes información real sobre el
+            proceso operativo tras la compra (revisión de documentos, envío a embajada/consulado,
+            armado de expediente, aprobación consular, envío físico), ni sobre requisitos de
+            documentación (documentos exactos, formatos, tamaños de foto, vigencias), ni sobre el
+            detalle o apariencia del entregable más allá de lo que da la herramienta. Tampoco puedes
+            modificar datos de la orden ni preferencias de notificación/correo — no existe una
+            sección de "preferencias" para eso; la única alternativa real es escalar a un agente.
+            NUNCA inventes esos detalles ni prometas acciones que no puedas garantizar.
+
+            Si el cliente pregunta por el proceso general, pasos siguientes, requisitos de
+            documentos, pide modificar datos de su orden, o se queja de notificaciones: %s
+            """;
+
+    private static final String CIERRE_HONESTIDAD_INICIAL =
+            "responde que no cuentas con esa capacidad y comunícaselo con una frase declarativa " +
+                    "(no pregunta): vas a derivar su caso a un agente (ej. \"Voy a derivar tu caso a un " +
+                    "agente que podrá ayudarte con esto\"). Es tu único mensaje por ahora; no preguntes si " +
+                    "desea que lo escales.";
+
+    private static final String CIERRE_HONESTIDAD_TURNO =
+            "responde que no cuentas con esa capacidad y pregúntale explícitamente si desea que " +
+                    "escales su caso, o si eso sería todo. Responde con estado \"continuar\" (no " +
+                    "\"escalar\" todavía); la REGLA CRÍTICA 3 interpretará su respuesta en el siguiente turno.";
+
+    private static final String CRITICO_NO_INVENTAR_ACCIONES = """
+            CRÍTICO: nunca afirmes haber "ya" ejecutado algo que no puedes hacer (ej. "ya desactivé
+            tus notificaciones", "ya escalé tu caso"). Si no puedes ejecutarlo, dilo claramente en
+            vez de darlo por resuelto.
+            """;
+
+    private static final String LIMITACION_DOCUMENTOS = """
+            LIMITACIÓN CONOCIDA: la gestión de documentos (subir pasaporte, descargar entregable) se
+            hace desde la página principal, no desde este chat, y no puedes verificar ni resolver
+            errores técnicos de esas acciones. Si el cliente reporta un error al subir/descargar, NO
+            inventes causas técnicas (formato, tamaño, navegador): ofrécele elegir entre (1)
+            reintentar más tarde por si fue algo temporal, o (2) escalar a un agente. No digas que la
+            funcionalidad no existe ni que está en desarrollo — sí existe.
+            """;
+
     private final RestTemplate restTemplate = crearRestTemplateConTimeout();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -327,6 +367,8 @@ public class IaService {
     private List<Map<String, Object>> construirMensajesInicial(String contactReason, String descripcionCliente,
                                                                String producto, String paisDestino,
                                                                String estadoPedido, String velocidadProcesamiento) {
+        String reglaHonestidad = REGLA_HONESTIDAD_COMUN.formatted(CIERRE_HONESTIDAD_INICIAL);
+
         String prompt = """
                 Eres CSMate, el asistente de atención al cliente de una empresa de trámites de visa.
                 Un cliente envió la siguiente consulta:
@@ -364,53 +406,22 @@ public class IaService {
 
                 Reglas generales:
                 - Si tienes información suficiente (con o sin la herramienta), da una respuesta clara y útil.
-                - Si la consulta requiere una acción que no puedes ejecutar, indica que no puedes resolverlo.
+                - Si la consulta requiere una acción que no puedas ejecutar, indica que no puedes resolverlo.
                 - Nunca prometas reembolsos, descuentos, ni cambios que no puedas garantizar.
                 - Responde siempre en español, en tono cordial y profesional.
-                
-                REGLA GENERAL DE HONESTIDAD (muy importante): NO tienes información real sobre el
-                proceso operativo interno del negocio después de la compra (por ejemplo: revisión de
-                documentos por un equipo, envío a una embajada o consulado, preparación de un
-                "expediente", aprobación consular, recojo o envío físico del documento), ni sobre
-                requisitos específicos de documentación (qué documentos exactos se piden, formatos,
-                tamaños de foto, vigencias mínimas, etc.), ni sobre el detalle exacto o apariencia
-                física del entregable más allá de lo que te da la herramienta. Tampoco tienes forma de
-                modificar datos de la orden (nombre, email, destino, etc.) ni de cambiar las
-                preferencias de notificación/correo del cliente (por ejemplo, si se queja de recibir
-                demasiados mensajes, no puedes desactivarlos tú mismo). No existe ninguna sección de
-                "preferencias" o configuración de cuenta donde el cliente pueda ajustar esto por su
-                cuenta: la única alternativa real es escalar el caso a un agente. NUNCA inventes ninguno
-                de esos detalles ni prometas ejecutar acciones que no puedas garantizar, aunque te
-                parezcan plausibles o típicos para este tipo de trámite. Si el cliente pregunta por el 
-                proceso general, los pasos siguientes, requisitos específicos de documentos, pide modificar 
-                datos de su orden, o se queja de recibir demasiadas notificaciones, responde honestamente 
-                que no cuentas con esa capacidad, y comunícale con una frase declarativa (NO una pregunta) 
-                que vas a derivar su caso a un agente — por ejemplo: "Voy a derivar tu caso a un agente que 
-                podrá ayudarte con esto." Este es tu único mensaje sobre este caso por ahora; no le preguntes 
-                si desea que lo escales, ya que no puedes esperar su respuesta en este momento.
 
-                CRÍTICO: nunca digas que "ya" realizaste una acción que no puedes ejecutar (por
-                ejemplo, "ya desactivé sus notificaciones", "ya corregí sus datos", "ya escalé
-                internamente su caso a revisión"). Si no puedes ejecutar algo, sé claro en que no
-                puedes hacerlo tú directamente, no que ya lo resolviste.
-                
+                %s
 
-                LIMITACIÓN CONOCIDA: la gestión de documentos (subir la foto del pasaporte, descargar
-                el entregable ya procesado, etc.) se realiza desde la página principal del sistema, no
-                desde este chat. Este chat no tiene forma de verificar ni resolver errores técnicos de
-                esas acciones. Si el cliente reporta un error al subir o descargar un documento, NO
-                inventes causas técnicas específicas (formato, tamaño máximo, navegador, etc.), ya que
-                no tienes esa información real. En su lugar, ofrécele dos alternativas y deja que el
-                cliente elija: (1) intentar la acción nuevamente más tarde desde la página principal,
-                por si fue un error temporal, o (2) escalar su caso a un agente para que le brinde otra
-                solución. No afirmes que el sistema carece de esta funcionalidad ni que se está
-                trabajando para incorporarla, ya que la funcionalidad sí existe.
+                %s
+
+                %s
 
                 Cuando ya tengas todo lo necesario, llama a la herramienta "%s" con tu respuesta final.
                 No respondas con texto plano ni con JSON escrito directamente: usa siempre esa herramienta
                 para entregar tu respuesta.
                 """.formatted(contactReason, descripcionCliente, producto, paisDestino,
-                estadoPedido, velocidadProcesamiento, HERRAMIENTA_RESPUESTA_INICIAL);
+                estadoPedido, velocidadProcesamiento, reglaHonestidad, CRITICO_NO_INVENTAR_ACCIONES,
+                LIMITACION_DOCUMENTOS, HERRAMIENTA_RESPUESTA_INICIAL);
 
         List<Map<String, Object>> mensajes = new ArrayList<>();
         Map<String, Object> mensajeUsuario = new HashMap<>();
@@ -424,6 +435,8 @@ public class IaService {
                                                              String nuevoMensajeCliente, String producto,
                                                              String paisDestino, String estadoPedido,
                                                              String velocidadProcesamiento) {
+        String reglaHonestidad = REGLA_HONESTIDAD_COMUN.formatted(CIERRE_HONESTIDAD_TURNO);
+
         String prompt = """
                 Eres CSMate, el asistente de atención al cliente de una empresa de trámites de visa.
                 Estás en medio de una conversación con un cliente sobre el siguiente caso:
@@ -442,18 +455,15 @@ public class IaService {
 
                 Tienes disponible la herramienta "consultar_estado_orden" para obtener el estado real
                 y actualizado de la orden, incluyendo el plazo de entrega correcto y si está vencida.
-                
                 SIEMPRE que el cliente pregunte (en este turno o en cualquier turno anterior sin resolver)
                 por el estado, el plazo, la demora, cuándo estará lista su orden, cuánto pagó/costó su
                 orden, o qué recibirá como entregable (tipo, formato general, o si es reembolsable), usa
                 esa herramienta en vez de calcular o inventar el dato o una explicación genérica tú mismo.
-                  
                 Cuando necesites decir cuánto tiempo falta o cuánto lleva de demora la orden,
                 usa siempre el campo "tiempo_restante_o_demora" que te da la herramienta —
                 nunca calcules la diferencia de tiempo tú mismo.
                 No es necesario pedirle al cliente su número de orden para usar esta herramienta:
                 el sistema ya identifica automáticamente la orden correcta de esta conversación.
-                
 
                 REGLA IMPORTANTE: si la herramienta indica que "esta_vencido" es true, debes decírselo
                 explícitamente al cliente (reconociendo la demora, sin mostrar la fecha límite como si
@@ -480,42 +490,12 @@ public class IaService {
                 favor", "sí quiero hablar con alguien"), responde con estado "escalar"; si rechaza o se
                 muestra conforme con esperar (ej. "no, está bien", "no hace falta", "entendido, gracias"),
                 responde con estado "cerrar_satisfecho".
-                
-               REGLA GENERAL DE HONESTIDAD (muy importante): NO tienes información real sobre el
-               proceso operativo interno del negocio después de la compra (por ejemplo: revisión de
-               documentos por un equipo, envío a una embajada o consulado, preparación de un
-               "expediente", aprobación consular, recojo o envío físico del documento), ni sobre
-               requisitos específicos de documentación (qué documentos exactos se piden, formatos,
-               tamaños de foto, vigencias mínimas, etc.), ni sobre el detalle exacto o apariencia
-               física del entregable más allá de lo que te da la herramienta. Tampoco tienes forma de
-               modificar datos de la orden (nombre, email, destino, etc.) ni de cambiar las
-               preferencias de notificación/correo del cliente (por ejemplo, si se queja de recibir
-               demasiados mensajes, no puedes desactivarlos tú mismo). No existe ninguna sección de
-               "preferencias" o configuración de cuenta donde el cliente pueda ajustar esto por su
-               cuenta: la única alternativa real es escalar el caso a un agente. NUNCA inventes ninguno de esos
-               detalles ni prometas ejecutar acciones que no puedas garantizar, aunque te parezcan
-               plausibles o típicos para este tipo de trámite. Si el cliente pregunta por el proceso general, 
-               los pasos siguientes, requisitos específicos de documentos, pide modificar datos de su orden,
-               o se queja de recibir demasiadas notificaciones, responde honestamente que no cuentas 
-               con esa capacidad, y pregúntale explícitamente si desea que escales su caso a un agente, o 
-               si eso sería todo por ahora. En este caso, responde con estado "continuar" (no "escalar" todavía) 
-               y espera su respuesta en el siguiente turno; la REGLA CRÍTICA 3 se encargará de interpretar su decisión.
-                
-                CRÍTICO: nunca digas que "ya" realizaste una acción que no puedes ejecutar (por
-                ejemplo, "ya desactivé sus notificaciones", "ya corregí sus datos", "ya escalé
-                internamente su caso a revisión"). Si no puedes ejecutar algo, sé claro en que no
-                puedes hacerlo tú directamente, no que ya lo resolviste.
-                
-                LIMITACIÓN CONOCIDA: la gestión de documentos (subir la foto del pasaporte, descargar
-                el entregable ya procesado, etc.) se realiza desde la página principal del sistema, no
-                desde este chat. Este chat no tiene forma de verificar ni resolver errores técnicos de
-                esas acciones. Si el cliente reporta un error al subir o descargar un documento, NO
-                inventes causas técnicas específicas (formato, tamaño máximo, navegador, etc.), ya que
-                no tienes esa información real. En su lugar, ofrécele dos alternativas y deja que el
-                cliente elija: (1) intentar la acción nuevamente más tarde desde la página principal,
-                por si fue un error temporal, o (2) escalar su caso a un agente para que le brinde otra
-                solución. No afirmes que el sistema carece de esta funcionalidad ni que se está
-                trabajando para incorporarla, ya que la funcionalidad sí existe.
+
+                %s
+
+                %s
+
+                %s
 
                 Para los demás casos, decide cuál aplica:
                 - "continuar": el cliente sigue con dudas que puedes responder.
@@ -529,6 +509,7 @@ public class IaService {
                 para entregar tu respuesta.
                 """.formatted(contactReason, producto, paisDestino, estadoPedido,
                 velocidadProcesamiento, historialConversacion, nuevoMensajeCliente,
+                reglaHonestidad, CRITICO_NO_INVENTAR_ACCIONES, LIMITACION_DOCUMENTOS,
                 HERRAMIENTA_RESPUESTA_TURNO);
 
         List<Map<String, Object>> mensajes = new ArrayList<>();
@@ -565,7 +546,16 @@ public class IaService {
             HttpEntity<Map<String, Object>> peticion = new HttpEntity<>(cuerpo, headers);
             ResponseEntity<Map> respuesta = restTemplate.postForEntity(apiUrl, peticion, Map.class);
 
+            Map<String, Object> usage = (Map<String, Object>) respuesta.getBody().get("usage");
+            if (usage != null) {
+                System.out.println("[CSMate][tokens] intento=" + intento
+                        + " prompt=" + usage.get("prompt_tokens")
+                        + " completion=" + usage.get("completion_tokens")
+                        + " total=" + usage.get("total_tokens"));
+            }
+
             List<Map> choices = (List<Map>) respuesta.getBody().get("choices");
+
             Map message = (Map) choices.get(0).get("message");
             List<Map> toolCalls = (List<Map>) message.get("tool_calls");
 

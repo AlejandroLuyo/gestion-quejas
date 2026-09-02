@@ -35,6 +35,18 @@ public class IaService {
     @Value("${ia.api.url}")
     private String apiUrl;
 
+    @Value("${claude.api.key}")
+    private String apiKeyClaude;
+
+    @Value("${claude.api.model}")
+    private String modeloClaude;
+
+    @Value("${claude.api.url}")
+    private String apiUrlClaude;
+
+    @Value("${ia.proveedor}")
+    private String proveedorIa;
+
     @Autowired
     private ConversacionService conversacionService;
 
@@ -84,6 +96,16 @@ public class IaService {
             funcionalidad no existe ni que está en desarrollo — sí existe.
             """;
 
+    private static final String REGLA_PRECISION_RESPUESTA = """
+            REGLA DE PRECISIÓN EN LA RESPUESTA: cuando el cliente pregunte de forma general por el
+            estado de su orden (ej. "¿cómo va mi orden?", "¿cuál es el estado?"), responde
+            únicamente con el estado actual (y si corresponde, que está vencida). NO incluyas
+            voluntariamente otros datos de la orden — precio pagado, tipo de entregable, velocidad
+            de procesamiento, plazo exacto — aunque los tengas disponibles por la herramienta.
+            Compártelos solo si el cliente los pide explícitamente en su mensaje (ej. "¿cuánto
+            pagué?", "¿qué voy a recibir?", "¿cuándo vence exactamente?").
+            """;
+
     private final RestTemplate restTemplate = crearRestTemplateConTimeout();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -110,21 +132,25 @@ public class IaService {
 
         List<Map<String, Object>> mensajes = construirMensajesInicial(contactReason, descripcionCliente,
                 producto, paisDestino, estadoPedido, velocidadProcesamiento);
-        List<Map<String, Object>> herramientas = List.of(
-                definicionHerramientaConsultarEstadoOrden(),
-                definicionHerramientaEntregarRespuestaInicial()
-        );
+
+        boolean usarClaude = "claude".equals(proveedorIa);
+        List<Map<String, Object>> herramientas = usarClaude
+                ? List.of(definicionHerramientaConsultarEstadoOrdenClaude(), definicionHerramientaEntregarRespuestaInicialClaude())
+                : List.of(definicionHerramientaConsultarEstadoOrden(), definicionHerramientaEntregarRespuestaInicial());
 
         try {
-            String jsonRespuesta = llamarGroqConHerramientas(mensajes, herramientas, orderId,
-                    HERRAMIENTA_RESPUESTA_INICIAL);
+            String jsonRespuesta = usarClaude
+                    ? llamarClaudeConHerramientas(mensajes, herramientas, orderId, HERRAMIENTA_RESPUESTA_INICIAL)
+                    : llamarGroqConHerramientas(mensajes, herramientas, orderId, HERRAMIENTA_RESPUESTA_INICIAL);
+
             Map<String, Object> datos = objectMapper.readValue(jsonRespuesta, Map.class);
             boolean puedeResolver = (Boolean) datos.get("puede_resolver");
             String respuesta = (String) datos.get("respuesta");
             return new ResultadoCsmate(puedeResolver, respuesta,
                     puedeResolver ? null : "ia_no_pudo_resolver");
         } catch (Exception e) {
-            System.err.println("ERROR AL LLAMAR A GROQ: " + e.getClass().getName() + " - " + e.getMessage());
+            System.err.println("ERROR AL LLAMAR A LA IA (" + proveedorIa + "): "
+                    + e.getClass().getName() + " - " + e.getMessage());
             e.printStackTrace();
             return new ResultadoCsmate(false, null, "error_ia");
         }
@@ -136,14 +162,17 @@ public class IaService {
                                        String velocidadProcesamiento, String orderId) {
         List<Map<String, Object>> mensajes = construirMensajesTurno(contactReason, historialConversacion,
                 nuevoMensajeCliente, producto, paisDestino, estadoPedido, velocidadProcesamiento);
-        List<Map<String, Object>> herramientas = List.of(
-                definicionHerramientaConsultarEstadoOrden(),
-                definicionHerramientaEntregarRespuestaTurno()
-        );
+
+        boolean usarClaude = "claude".equals(proveedorIa);
+        List<Map<String, Object>> herramientas = usarClaude
+                ? List.of(definicionHerramientaConsultarEstadoOrdenClaude(), definicionHerramientaEntregarRespuestaTurnoClaude())
+                : List.of(definicionHerramientaConsultarEstadoOrden(), definicionHerramientaEntregarRespuestaTurno());
 
         try {
-            String jsonRespuesta = llamarGroqConHerramientas(mensajes, herramientas, orderId,
-                    HERRAMIENTA_RESPUESTA_TURNO);
+            String jsonRespuesta = usarClaude
+                    ? llamarClaudeConHerramientas(mensajes, herramientas, orderId, HERRAMIENTA_RESPUESTA_TURNO)
+                    : llamarGroqConHerramientas(mensajes, herramientas, orderId, HERRAMIENTA_RESPUESTA_TURNO);
+
             Map<String, Object> datos = objectMapper.readValue(jsonRespuesta, Map.class);
             String estadoTexto = (String) datos.get("estado");
             String respuesta = (String) datos.get("respuesta");
@@ -157,7 +186,8 @@ public class IaService {
             return new ResultadoTurno(estado, respuesta,
                     estado == ResultadoTurno.Estado.ESCALAR ? "ia_no_pudo_resolver" : null);
         } catch (Exception e) {
-            System.err.println("ERROR AL LLAMAR A GROQ: " + e.getClass().getName() + " - " + e.getMessage());
+            System.err.println("ERROR AL LLAMAR A LA IA (" + proveedorIa + "): "
+                    + e.getClass().getName() + " - " + e.getMessage());
             e.printStackTrace();
             return new ResultadoTurno(ResultadoTurno.Estado.ESCALAR, null, "error_ia");
         }
@@ -362,6 +392,68 @@ public class IaService {
         return vencido ? "vencida hace " + cantidad : cantidad + " restantes";
     }
 
+    // ==================== HERRAMIENTAS FORMATO CLAUDE ====================
+
+    private Map<String, Object> definicionHerramientaConsultarEstadoOrdenClaude() {
+        return Map.of(
+                "name", "consultar_estado_orden",
+                "description", "Consulta el estado actual, el plazo de entrega, el precio pagado, el tipo de entregable y la elegibilidad de reembolso completo de la orden del cliente en el sistema. Úsala siempre que necesites saber el estado, el plazo, si está vencida, cuánto pagó el cliente, o información sobre qué recibirá como entregable.",
+                "input_schema", Map.of(
+                        "type", "object",
+                        "properties", Map.of(
+                                "order_id", Map.of(
+                                        "type", "string",
+                                        "description", "Identificador de la orden a consultar"
+                                )
+                        ),
+                        "required", List.of("order_id")
+                )
+        );
+    }
+
+    private Map<String, Object> definicionHerramientaEntregarRespuestaInicialClaude() {
+        return Map.of(
+                "name", HERRAMIENTA_RESPUESTA_INICIAL,
+                "description", "Entrega la respuesta final para el cliente sobre su consulta inicial. Debes llamar esta herramienta como último paso, una vez que ya tengas toda la información necesaria (hayas usado o no otras herramientas antes).",
+                "input_schema", Map.of(
+                        "type", "object",
+                        "properties", Map.of(
+                                "puede_resolver", Map.of(
+                                        "type", "boolean",
+                                        "description", "true si puedes resolver la consulta tú mismo con una respuesta clara y útil; false si el caso requiere que lo revise un agente humano"
+                                ),
+                                "respuesta", Map.of(
+                                        "type", "string",
+                                        "description", "El texto de respuesta para el cliente, en español, tono cordial y profesional"
+                                )
+                        ),
+                        "required", List.of("puede_resolver", "respuesta")
+                )
+        );
+    }
+
+    private Map<String, Object> definicionHerramientaEntregarRespuestaTurnoClaude() {
+        return Map.of(
+                "name", HERRAMIENTA_RESPUESTA_TURNO,
+                "description", "Entrega la respuesta final para el cliente en este turno de la conversación. Debes llamar esta herramienta como último paso, una vez que ya tengas toda la información necesaria (hayas usado o no otras herramientas antes).",
+                "input_schema", Map.of(
+                        "type", "object",
+                        "properties", Map.of(
+                                "estado", Map.of(
+                                        "type", "string",
+                                        "enum", List.of("continuar", "cerrar_satisfecho", "escalar"),
+                                        "description", "El estado de la conversación tras este turno"
+                                ),
+                                "respuesta", Map.of(
+                                        "type", "string",
+                                        "description", "El texto de respuesta para el cliente, en español, tono cordial y profesional"
+                                )
+                        ),
+                        "required", List.of("estado", "respuesta")
+                )
+        );
+    }
+
     // ==================== CONSTRUCCIÓN DE PROMPTS ====================
 
     private List<Map<String, Object>> construirMensajesInicial(String contactReason, String descripcionCliente,
@@ -406,9 +498,11 @@ public class IaService {
 
                 Reglas generales:
                 - Si tienes información suficiente (con o sin la herramienta), da una respuesta clara y útil.
-                - Si la consulta requiere una acción que no puedas ejecutar, indica que no puedes resolverlo.
+                - Si la consulta requiere una acción que no puedas ejecutar, indica que no puedas resolverlo.
                 - Nunca prometas reembolsos, descuentos, ni cambios que no puedas garantizar.
                 - Responde siempre en español, en tono cordial y profesional.
+
+                %s
 
                 %s
 
@@ -420,8 +514,8 @@ public class IaService {
                 No respondas con texto plano ni con JSON escrito directamente: usa siempre esa herramienta
                 para entregar tu respuesta.
                 """.formatted(contactReason, descripcionCliente, producto, paisDestino,
-                estadoPedido, velocidadProcesamiento, reglaHonestidad, CRITICO_NO_INVENTAR_ACCIONES,
-                LIMITACION_DOCUMENTOS, HERRAMIENTA_RESPUESTA_INICIAL);
+                estadoPedido, velocidadProcesamiento, REGLA_PRECISION_RESPUESTA, reglaHonestidad,
+                CRITICO_NO_INVENTAR_ACCIONES, LIMITACION_DOCUMENTOS, HERRAMIENTA_RESPUESTA_INICIAL);
 
         List<Map<String, Object>> mensajes = new ArrayList<>();
         Map<String, Object> mensajeUsuario = new HashMap<>();
@@ -497,6 +591,8 @@ public class IaService {
 
                 %s
 
+                %s
+
                 Para los demás casos, decide cuál aplica:
                 - "continuar": el cliente sigue con dudas que puedes responder.
                 - "cerrar_satisfecho": el cliente confirma que ya no tiene más preguntas.
@@ -509,7 +605,7 @@ public class IaService {
                 para entregar tu respuesta.
                 """.formatted(contactReason, producto, paisDestino, estadoPedido,
                 velocidadProcesamiento, historialConversacion, nuevoMensajeCliente,
-                reglaHonestidad, CRITICO_NO_INVENTAR_ACCIONES, LIMITACION_DOCUMENTOS,
+                REGLA_PRECISION_RESPUESTA, reglaHonestidad, CRITICO_NO_INVENTAR_ACCIONES, LIMITACION_DOCUMENTOS,
                 HERRAMIENTA_RESPUESTA_TURNO);
 
         List<Map<String, Object>> mensajes = new ArrayList<>();
@@ -589,6 +685,107 @@ public class IaService {
 
         throw new IllegalStateException(
                 "CSMate no devolvió una respuesta final tras " + MAX_INTENTOS_HERRAMIENTAS + " intentos con herramientas.");
+    }
+
+    /**
+     * Equivalente a llamarGroqConHerramientas() pero usando el formato de la Messages API
+     * de Claude (Anthropic). Reutiliza los mismos mensajes construidos por
+     * construirMensajesInicial()/construirMensajesTurno(), ya que ambas APIs aceptan
+     * la misma forma básica {"role": "...", "content": "..."}.
+     */
+    private String llamarClaudeConHerramientas(List<Map<String, Object>> mensajes,
+                                               List<Map<String, Object>> herramientasClaude,
+                                               String orderIdReal,
+                                               String nombreHerramientaFinal) {
+        for (int intento = 0; intento < MAX_INTENTOS_HERRAMIENTAS; intento++) {
+            Map<String, Object> cuerpo = new HashMap<>();
+            cuerpo.put("model", modeloClaude);
+            cuerpo.put("max_tokens", 1024);
+            cuerpo.put("messages", mensajes);
+            cuerpo.put("tools", herramientasClaude);
+            cuerpo.put("temperature", 0.3);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("x-api-key", apiKeyClaude);
+            headers.set("anthropic-version", "2023-06-01");
+
+            HttpEntity<Map<String, Object>> peticion = new HttpEntity<>(cuerpo, headers);
+            ResponseEntity<Map> respuesta = restTemplate.postForEntity(apiUrlClaude, peticion, Map.class);
+
+            Map<String, Object> usage = (Map<String, Object>) respuesta.getBody().get("usage");
+            if (usage != null) {
+                System.out.println("[CSMate][tokens][claude] intento=" + intento
+                        + " input=" + usage.get("input_tokens")
+                        + " output=" + usage.get("output_tokens"));
+            }
+
+            List<Map<String, Object>> contenido =
+                    (List<Map<String, Object>>) respuesta.getBody().get("content");
+
+            List<Map<String, Object>> tollUseBlocks = new ArrayList<>();
+            String textoPlano = null;
+
+            for (Map<String, Object> bloque : contenido) {
+                String tipo = (String) bloque.get("type");
+                if ("tool_use".equals(tipo)) {
+                    tollUseBlocks.add(bloque);
+                } else if ("text".equals(tipo)) {
+                    textoPlano = (String) bloque.get("text");
+                }
+            }
+
+            if (tollUseBlocks.isEmpty()) {
+                // Respaldo por si el modelo respondiera en texto plano sin usar herramientas.
+                return textoPlano;
+            }
+
+            // El mensaje del assistant debe llevar el content array completo tal cual vino.
+            Map<String, Object> mensajeAssistant = new HashMap<>();
+            mensajeAssistant.put("role", "assistant");
+            mensajeAssistant.put("content", contenido);
+            mensajes.add(mensajeAssistant);
+
+            List<Map<String, Object>> resultadosHerramientas = new ArrayList<>();
+            String respuestaFinal = null;
+
+            for (Map<String, Object> toolUse : tollUseBlocks) {
+                String toolUseId = (String) toolUse.get("id");
+                String nombreFuncion = (String) toolUse.get("name");
+
+                if (nombreHerramientaFinal.equals(nombreFuncion)) {
+                    try {
+                        respuestaFinal = objectMapper.writeValueAsString(toolUse.get("input"));
+                    } catch (Exception e) {
+                        throw new IllegalStateException("Error serializando la respuesta final de Claude", e);
+                    }
+                    continue;
+                }
+
+                String resultadoFuncion = "consultar_estado_orden".equals(nombreFuncion)
+                        ? ejecutarConsultarEstadoOrden(orderIdReal)
+                        : "{\"error\": \"Función no reconocida.\"}";
+
+                Map<String, Object> toolResult = new HashMap<>();
+                toolResult.put("type", "tool_result");
+                toolResult.put("tool_use_id", toolUseId);
+                toolResult.put("content", resultadoFuncion);
+                resultadosHerramientas.add(toolResult);
+            }
+
+            if (respuestaFinal != null) {
+                return respuestaFinal;
+            }
+
+            // Los resultados de herramientas van en un único mensaje "user" con varios bloques.
+            Map<String, Object> mensajeToolResults = new HashMap<>();
+            mensajeToolResults.put("role", "user");
+            mensajeToolResults.put("content", resultadosHerramientas);
+            mensajes.add(mensajeToolResults);
+        }
+
+        throw new IllegalStateException(
+                "CSMate (Claude) no devolvió una respuesta final tras " + MAX_INTENTOS_HERRAMIENTAS + " intentos con herramientas.");
     }
 
     private String llamarGroq(String prompt, String responseFormat) {

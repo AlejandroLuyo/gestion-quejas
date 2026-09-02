@@ -201,7 +201,17 @@ public class PortalClienteController {
 
         List<Mensaje> historial = mensajeRepository
                 .findByConversacionConversacionIdOrderByFechaEnvioAsc(id);
-        String historialTexto = historial.stream()
+
+        // Ventana de historial: solo se envían a la IA los últimos N mensajes,
+        // para evitar que el prompt crezca sin límite en conversaciones largas.
+        // La IA siempre puede volver a consultar consultar_estado_orden si necesita
+        // datos factuales, así que no se pierde información crítica al recortar.
+        final int VENTANA_HISTORIAL = 6;
+        List<Mensaje> historialVentana = historial.size() > VENTANA_HISTORIAL
+                ? historial.subList(historial.size() - VENTANA_HISTORIAL, historial.size())
+                : historial;
+
+        String historialTexto = historialVentana.stream()
                 .map(m -> m.getRemitente() + ": " + m.getContenido())
                 .collect(Collectors.joining("\n"));
 

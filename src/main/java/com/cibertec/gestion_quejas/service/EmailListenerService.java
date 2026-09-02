@@ -501,7 +501,13 @@ public class EmailListenerService {
 
         List<Mensaje> historial = mensajeRepository
                 .findByConversacionConversacionIdOrderByFechaEnvioAsc(conversacion.getConversacionId());
-        String historialTexto = historial.stream()
+
+        final int VENTANA_HISTORIAL = 6;
+        List<Mensaje> historialVentana = historial.size() > VENTANA_HISTORIAL
+                ? historial.subList(historial.size() - VENTANA_HISTORIAL, historial.size())
+                : historial;
+
+        String historialTexto = historialVentana.stream()
                 .map(m -> m.getRemitente() + ": " + m.getContenido())
                 .collect(Collectors.joining("\n"));
 
